@@ -83,7 +83,7 @@ svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .field.invalid .err{display:block}
 button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:22px}
-.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--red);background:var(--red);color:#fff;padding:11px 18px;border-radius:var(--r-sm);font-weight:700;cursor:pointer;transition:background .15s,transform .05s,box-shadow .15s;box-shadow:0 6px 14px -8px rgba(225,13,28,.6)}
+.btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--red);background:var(--red);color:#fff;padding:11px 18px;border-radius:var(--r-sm);font-weight:700;cursor:pointer;transition:background .15s,transform .05s,box-shadow .15s;box-shadow:0 6px 14px -8px rgba(225,13,28,.6)}
 .btn:hover{background:var(--red-deep);border-color:var(--red-deep)}
 .btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:.6;cursor:progress;transform:none}
@@ -207,6 +207,26 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .previews .pv img{width:100%;height:100%;object-fit:cover}
 .previews .pv button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;line-height:1;cursor:pointer}
 
+/* ---------- brief + tabs + concept picker ---------- */
+.brief{display:grid;gap:10px}
+.bitem{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--canvas)}
+.bitem .bh{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:14px}
+.bitem .bh .st{font-size:12px;font-weight:700;color:var(--grey)}
+.bitem .bh .st.ok{color:var(--green)}
+.bitem .bh .st.miss{color:var(--amber)}
+.bitem .bb{display:none;margin-top:10px;white-space:pre-wrap;font-size:14px;line-height:1.6;border-top:1px solid var(--line);padding-top:10px}
+.bitem.open .bb{display:block}
+.bitem .bb .btn{margin-top:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tabs button{border:1.5px solid var(--line);background:#fff;padding:8px 14px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.concept.pick{cursor:pointer;border-width:1.5px}
+.concept.pick:hover{border-color:var(--grey-2)}
+.concept.pick.on{border-color:var(--red);box-shadow:0 0 0 3px var(--red-tint)}
+.concept.pick .art{height:84px}
+.gitem .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.cats.small label{padding:5px 11px;font-size:12px}
+
 /* ---------- landing preview ---------- */
 .devices{display:flex;gap:6px}
 .devices button{border:1px solid var(--line-2);background:#fff;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
@@ -305,9 +325,18 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
     <div class="working hidden" id="rs_working"><div class="bar"><i></i></div><span>Reading the ads in your niche. This can take a minute.</span></div>
   </div>
   <div id="rs_results" class="hidden">
-    <div class="card"><div class="cap"><div><h2>Winning ads</h2><p>Ads that have run the longest. Long runs mean they make money.</p></div></div><div class="rgrid" id="rs_ads"></div></div>
-    <div class="card"><div class="cap"><div><h2>Winning offers</h2><p>The deals those ads lead with.</p></div></div><div class="rgrid" id="rs_offers"></div></div>
-    <div class="card"><div class="cap"><div><h2>Keywords and trends</h2><p>What your buyers search for.</p></div></div><div class="kw" id="rs_keywords"></div></div>
+    <div class="tabs" id="rs_tabs">
+      <button aria-pressed="true" data-tab="competitors">Competitor Analysis</button>
+      <button aria-pressed="false" data-tab="audience">Audience Insights</button>
+      <button aria-pressed="false" data-tab="keywords">Keywords &amp; Trends</button>
+      <button aria-pressed="false" data-tab="content_ideas">Content Ideas</button>
+      <button aria-pressed="false" data-tab="offer_ideas">Offer Ideas</button>
+    </div>
+    <div class="card rs-panel" data-tab="competitors"><div class="cap"><div><h2>Competitor analysis</h2><p>Who is advertising in your niche, how they position, the offers and calls to action they lead with.</p></div></div><div class="rgrid" id="rs_competitors"></div></div>
+    <div class="card rs-panel hidden" data-tab="audience"><div class="cap"><div><h2>Audience insights</h2><p>Buyer language, objections, desires and where they are on the journey.</p></div></div><div class="rgrid" id="rs_audience"></div></div>
+    <div class="card rs-panel hidden" data-tab="keywords"><div class="cap"><div><h2>Keywords and trends</h2><p>Search terms, topics and market signals.</p></div></div><div class="kw" id="rs_keywords"></div></div>
+    <div class="card rs-panel hidden" data-tab="content_ideas"><div class="cap"><div><h2>Content ideas</h2><p>Research-backed angles for videos and flyers.</p></div></div><div class="rgrid" id="rs_content_ideas"></div></div>
+    <div class="card rs-panel hidden" data-tab="offer_ideas"><div class="cap"><div><h2>Offer ideas</h2><p>Patterns that are winning in the niche, plus new recommendations.</p></div></div><div class="rgrid" id="rs_offer_ideas"></div></div>
   </div>
 </section>
 
@@ -402,34 +431,55 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 
 <!-- ================= AI VIDEOS ================= -->
 <section id="screen-videos" class="screen hidden">
-  <div class="head"><div><h1>AI Videos</h1><p>Eight video concepts for your campaign. Each becomes a real AI video built on your offer and script.</p></div><div class="chip"><span class="lbl">Campaign</span><select class="pick-campaign"></select></div></div>
-  <div class="empty hidden" id="vd_nocmp"><b>Start with a campaign</b>Videos are built from a campaign's offer and script.<br><button class="btn" data-screen-go="campaign">Go to New Campaign</button></div>
+  <div class="head"><div><h1>AI Videos</h1><p>Your campaign already holds the offer and the script. Pick how it should be shot and the agent makes the video.</p></div><div class="chip"><span class="lbl">Campaign</span><select class="pick-campaign"></select></div></div>
+  <div class="empty hidden" id="vd_nocmp"><b>Start with a campaign</b>Videos are made from a campaign's script.<br><button class="btn" data-screen-go="campaign">Go to New Campaign</button></div>
   <div id="vd_body">
-    <div class="concepts" id="vd_concepts"></div>
-    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos take a few minutes to render. They appear here when ready.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a concept above to make your first one.</div></div>
+    <div class="card">
+      <div class="cap"><div><h2>What the agent is working with</h2><p>Everything below comes from the campaign. Change it in New Campaign and it updates here.</p></div><span class="tag yellow" id="vd_stage"></span></div>
+      <div class="brief" id="vd_brief"></div>
+    </div>
+    <div class="card">
+      <div class="cap"><div><h2>How should it be shot?</h2><p>The script stays the same. The concept decides what the viewer sees.</p></div></div>
+      <div class="concepts" id="vd_concepts"></div>
+      <div class="row" style="margin-top:18px">
+        <div class="field"><label for="vd_format">Format</label><select id="vd_format"><option value="9:16">Vertical 9:16, for Reels, TikTok and Stories</option><option value="1:1">Square 1:1, for feed and WhatsApp</option></select></div>
+        <div class="field"><label for="vd_photo">Product photo</label><select id="vd_photo" class="photo-pick"><option value="">Choose from Brand Assets</option></select><div class="hint">From Product Images in Brand Assets.</div></div>
+      </div>
+      <div class="actions"><button class="btn" id="vd_go"><span class="spin"></span>Generate video</button><span class="muted small">Available on higher plans. Takes a few minutes.</span></div>
+      <div class="working hidden" id="vd_working"><div class="bar"><i></i></div><span>Sending your script to the video engine.</span></div>
+    </div>
+    <div class="card"><div class="cap"><div><h2>Your videos</h2><p>Videos render in the background. Press Check on a rendering video to see if it is ready.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a concept above and generate your first one.</div></div>
   </div>
 </section>
 
 <!-- ================= AI GRAPHICS ================= -->
 <section id="screen-graphics" class="screen hidden">
-  <div class="head"><div><h1>AI Graphics</h1><p>Turn your flyer copy into a finished flyer. The design agent uses your brand assets and product photo.</p></div><div class="chip"><span class="lbl">Campaign</span><select class="pick-campaign"></select></div></div>
+  <div class="head"><div><h1>AI Graphics</h1><p>The campaign's flyer copy becomes a finished flyer. The design agent uses your logo, colours and product photo.</p></div><div class="chip"><span class="lbl">Campaign</span><select class="pick-campaign"></select></div></div>
+  <div class="empty hidden" id="gr_nocmp"><b>Start with a campaign</b>Flyers are made from a campaign's flyer copy.<br><button class="btn" data-screen-go="campaign">Go to New Campaign</button></div>
+  <div id="gr_body">
   <div class="card">
-    <div class="stack">
-      <div class="field"><label for="gr_copy">Flyer copy</label><textarea id="gr_copy" placeholder="Filled from Generate, or write your own: a hook, the offer, a call to action"></textarea><div class="err">Add the flyer copy first.</div></div>
-      <div class="row">
-        <div class="field"><label for="gr_photo">Product photo</label><select id="gr_photo"><option value="">Choose from Brand Assets</option></select><div class="hint">Upload product photos under Brand Assets and they show up here.</div></div>
-        <div class="field"><label for="gr_size">Size</label><select id="gr_size"><option value="1:1">Square, for feed and WhatsApp status</option><option value="9:16">Story, 9:16</option><option value="4:5">Feed portrait, 4:5</option></select></div>
-      </div>
+    <div class="cap"><div><h2>What the agent is working with</h2><p>From the campaign. Generate the flyer copy in New Campaign, step 4.</p></div></div>
+    <div class="brief" id="gr_brief"></div>
+    <div class="row" style="margin-top:18px">
+      <div class="field"><label for="gr_photo">Product photo</label><select id="gr_photo" class="photo-pick"><option value="">Choose from Brand Assets</option></select><div class="hint">From Product Images in Brand Assets.</div></div>
+      <div class="field"><label for="gr_size">Size</label><select id="gr_size"><option value="1:1">Square, for feed and WhatsApp status</option><option value="9:16">Story, 9:16</option><option value="4:5">Feed portrait, 4:5</option></select></div>
     </div>
     <div class="actions"><button class="btn" id="gr_go"><span class="spin"></span>Design flyer</button></div>
     <div class="working hidden" id="gr_working"><div class="bar"><i></i></div><span>Designing your flyer.</span></div>
   </div>
   <div class="card"><div class="cap"><div><h2>Your flyers</h2></div></div><div class="gallery" id="gr_list"></div><div class="empty" id="gr_empty"><b>No flyers yet</b>Your first design appears here.</div></div>
+  </div>
 </section>
 
 <!-- ================= LANDING PAGES ================= -->
 <section id="screen-landing" class="screen hidden">
-  <div class="head"><div><h1>Landing Pages</h1><p>The agent writes the hero, the offer and the call to action from your campaign. You add the proof. Publish and get a link for your ads.</p></div><div class="chip"><span class="lbl">Campaign</span><select class="pick-campaign"></select></div></div>
+  <div class="head"><div><h1>Landing Pages</h1><p>The hero, the offer and the call to action come from your campaign. You add the proof. Publish and get a link for your ads.</p></div><div class="chip"><span class="lbl">Campaign</span><select class="pick-campaign"></select></div></div>
+  <div class="empty hidden" id="lp_nocmp"><b>Start with a campaign</b>Pages are built from a campaign's offer and landing page copy.<br><button class="btn" data-screen-go="campaign">Go to New Campaign</button></div>
+  <div id="lp_body">
+  <div class="card">
+    <div class="cap"><div><h2>What the agent is working with</h2><p>From the campaign: the offer, the landing page copy and any videos you marked for the page.</p></div></div>
+    <div class="brief" id="lp_brief"></div>
+  </div>
 
   <div class="card">
     <div class="cap"><div><h2>Customer reviews</h2><p>Proof is the part only you can supply. Add what you have.</p></div></div>
@@ -454,28 +504,33 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
     <div class="actions"><button class="btn ghost" id="lp_revise"><span class="spin"></span>Apply changes</button><button class="btn" id="lp_publish"><span class="spin"></span>Publish</button></div>
     <div class="note green hidden" id="lp_live" style="margin-top:18px"><svg class="i"><use href="#i-link"/></svg><div style="flex:1"><b>Your page is live.</b> Put this link in your ads.<div class="live" style="margin-top:8px"><input id="lp_url" readonly><button class="btn sm" id="lp_copy">Copy link</button><a class="btn ghost sm" id="lp_open" target="_blank" rel="noopener">Open</a></div></div></div>
   </div>
+  </div>
 </section>
 
 <!-- ================= BRAND ASSETS ================= -->
 <section id="screen-brand" class="screen hidden">
-  <div class="head"><div><h1>Brand Assets</h1><p>Logo, product photos, colours and past ads. Everything the agent should know about how your brand looks.</p></div></div>
+  <div class="head"><div><h1>Brand Assets</h1><p>Upload the real material the agent learns your brand from. Winning hooks, customer language, objections and offers become reusable intelligence.</p></div></div>
   <div class="card">
     <div class="stack">
       <div class="field"><label>What are you adding?</label>
         <div class="cats">
-          <label><input type="radio" name="cat" value="Logo" checked>Logo</label>
-          <label><input type="radio" name="cat" value="Product photos">Product photos</label>
-          <label><input type="radio" name="cat" value="Brand colours and guidelines">Colours and guidelines</label>
-          <label><input type="radio" name="cat" value="Past ads">Past ads</label>
-          <label><input type="radio" name="cat" value="Other">Other</label>
+          <label><input type="radio" name="cat" value="Logo and brand colours" checked>Logo and brand colours</label>
+          <label><input type="radio" name="cat" value="Product Images">Product Images</label>
+          <label><input type="radio" name="cat" value="Past Winning Copies / Videos">Past Winning Copies / Videos</label>
+          <label><input type="radio" name="cat" value="Customer Reviews">Customer Reviews</label>
+          <label><input type="radio" name="cat" value="Testimonials / Case Studies">Testimonials / Case Studies</label>
+          <label><input type="radio" name="cat" value="Landing Pages">Landing Pages</label>
+          <label><input type="radio" name="cat" value="Campaign Reports">Campaign Reports</label>
         </div></div>
-      <div class="field"><label class="drop" for="br_file"><input type="file" id="br_file" accept="image/*,.pdf,video/*" multiple><b>Drop files here or click to choose</b>Images, PDFs or short videos. Up to 25 MB each.</label><div class="previews" id="br_pv"></div></div>
+      <div class="field"><label class="drop" for="br_file"><input type="file" id="br_file" accept="image/*,.pdf,video/*,.doc,.docx,.txt" multiple><b>Drop files here or click to choose</b>Images, PDFs, documents or short videos. Up to 25 MB each.</label><div class="previews" id="br_pv"></div></div>
+      <div class="field"><label for="br_link">Or paste a link (optional)</label><input id="br_link" placeholder="https://  a past landing page, an ad, a review page"></div>
       <div class="field"><label for="br_notes">Anything the agent should know (optional)</label><input id="br_notes" placeholder="Main colour is deep red, always use the round logo"></div>
     </div>
     <div class="actions"><button class="btn" id="br_go"><span class="spin"></span>Upload</button></div>
     <div class="working hidden" id="br_working"><div class="bar"><i></i></div><span>Uploading and reading your files.</span></div>
   </div>
-  <div class="card"><div class="cap"><div><h2>Your assets</h2></div></div><div class="gallery" id="br_list"></div><div class="empty" id="br_empty"><b>Nothing here yet</b>Start with your logo and two or three product photos.</div></div>
+  <div class="card"><div class="cap"><div><h2>Brand intelligence</h2><p>What the agent has learned from your uploads. It uses this when it writes offers, copy, videos and pages.</p></div></div><div class="rgrid" id="br_intel"></div><div class="empty" id="br_intel_empty"><b>Nothing learned yet</b>Upload past winning ads, reviews and reports and the agent pulls out what works.</div></div>
+  <div class="card"><div class="cap"><div><h2>Your assets</h2></div><div class="cats small" id="br_filter"></div></div><div class="gallery" id="br_list"></div><div class="empty" id="br_empty"><b>Nothing here yet</b>Start with your logo and two or three product photos.</div></div>
 </section>
 
 </div></main>
@@ -507,23 +562,25 @@ const API = {
   offersGenerate: { path: '/ads-padi/offers/generate',   live: true  }, // {client_id, campaign_id} -> {ok, campaign_id, awareness, offers:[{offer_id, number, title, offer, why_it_works}]}
   offersSelect:   { path: '/ads-padi/offers/select',     live: true  }, // {client_id, campaign_id, offer_id} -> {ok, campaign_id, chosen_offer_id, chosen_offer}
   generate:       { path: '/ads-padi/campaign/generate', live: false }, // {client_id, campaign_id, items:[script|flyer_copy|landing_page_copy]} -> {ok, assets:{script, flyer_copy, landing_page_copy}}
-  research:       { path: '/ads-padi/research',          live: false }, // {client_id, industry, market, product} -> {ok, winning_ads:[{title,text}], winning_offers:[{title,text}], keywords:[]}
-  videoGenerate:  { path: '/ads-padi/video/generate',    live: false }, // {client_id, campaign_id, concept} -> {ok, media_id, status, file_url?}
-  graphicsDesign: { path: '/ads-padi/graphics/design',   live: false }, // {client_id, campaign_id, flyer_copy, product_photo_url, size} -> {ok, media_id, file_url}
-  landingBuild:   { path: '/ads-padi/landing/build',     live: false }, // {client_id, campaign_id, reviews:{text:[], photos:[], videos:[]}, page_id?, changes?} -> {ok, page_id, html}
+  research:       { path: '/ads-padi/research',          live: false }, // {client_id, industry, market, product} -> {ok, competitors:[{title,text}], audience:[{title,text}], keywords:[], content_ideas:[{title,text}], offer_ideas:[{title,text}]}
+  videoGenerate:  { path: '/ads-padi/video/generate',    live: false }, // {client_id, campaign_id, concept, format, product_photo_url} -> {ok, media_id, status, file_url?}   (backend reads script, offer, brand from the campaign)
+  videoStatus:    { path: '/ads-padi/video/status',      live: false }, // {client_id, media_id} -> {ok, status, file_url?}
+  graphicsDesign: { path: '/ads-padi/graphics/design',   live: false }, // {client_id, campaign_id, product_photo_url, size} -> {ok, media_id, file_url}   (backend reads flyer copy and brand from the campaign)
+  landingBuild:   { path: '/ads-padi/landing/build',     live: false }, // {client_id, campaign_id, reviews:{text:[], photos:[], videos:[]}, campaign_videos:[url], page_id?, changes?} -> {ok, page_id, html}
   landingPublish: { path: '/ads-padi/landing/publish',   live: false }, // {client_id, campaign_id, page_id} -> {ok, live_url}
-  brandUpload:    { path: '/ads-padi/brand/upload',      live: false }  // {client_id, category, notes, file_name, file_type, file_base64} -> {ok, file_id, file_url}
+  brandUpload:    { path: '/ads-padi/brand/upload',      live: false }  // {client_id, category, notes, link?, file_name?, file_type?, file_base64?} -> {ok, file_id, file_url, extracted_notes}
 };
 const VIDEO_CONCEPTS = [
-  ['UGC review', 'A customer talks to camera about the product in their own words.'],
+  ['Offer-led UGC', 'A customer talks to camera and leads with the offer.'],
+  ['Problem → Solution', 'Open on the pain, land on the product and the offer.'],
+  ['Founder Story', 'You explain why you started and who this is for.'],
+  ['Customer Proof', 'Screenshots, messages and results stitched into one clip.'],
+  ['Product Demo', 'The product in use, built from your product photo.'],
+  ['POV / Street Style', 'Day-in-the-life scenes that end on the product.'],
   ['Testimonial', 'A happy customer explains the result they got.'],
-  ['Founder story', 'You explain why you started and who this is for.'],
-  ['Customer proof', 'Screenshots, messages and results stitched into one clip.'],
-  ['Before and after', 'The problem, then the change the product made.'],
-  ['Product demo', 'The product in use, shot from your product photo.'],
-  ['POV and street style', 'Day-in-the-life scenes that end on the product.'],
-  ['Problem to solution', 'Open on the pain, land on the offer.']
+  ['Before / After', 'The problem, then the change the product made.']
 ];
+const BRAND_CATS = ['Logo and brand colours', 'Product Images', 'Past Winning Copies / Videos', 'Customer Reviews', 'Testimonials / Case Studies', 'Landing Pages', 'Campaign Reports'];
 const ASSET_NAMES = { script: 'Video script', flyer_copy: 'Flyer copy', landing_page_copy: 'Landing page copy' };
 
 /* ---------- helpers ---------- */
@@ -594,9 +651,8 @@ function progress(c) { if (c.assets && Object.keys(c.assets).length) return [4, 
 function label(c) { return (c.brand || 'Untitled') + (c.product ? ': ' + c.product : ''); }
 function refreshAll() {
   $$('.pick-campaign').forEach(sel => { sel.innerHTML = campaigns.length ? campaigns.map(c => `<option value="${esc(c.campaign_id)}">${esc(label(c))}</option>`).join('') : '<option value="">No campaign yet</option>'; if (current) sel.value = current.campaign_id; });
-  renderOverview(); fillForm(); renderMedia(); renderBrand(); renderPhotoOptions();
+  renderOverview(); fillForm(); renderPhotoOptions(); renderMedia(); renderBrand(); renderBriefs();
   $('#whoName').textContent = settings.name || 'Your business'; $('#whoId').textContent = clientId();
-  const has = !!current; $('#vd_nocmp').classList.toggle('hidden', has); $('#vd_body').classList.toggle('hidden', !has);
 }
 function renderOverview() {
   const ov = $('#cmp_overview'); ov.classList.toggle('hidden', !campaigns.length);
@@ -618,7 +674,6 @@ function fillForm() {
   $$('input[name="aw"]').forEach(r => r.checked = r.value === f.awareness);
   $$('.field.invalid').forEach(x => x.classList.remove('invalid'));
   renderOffers(); renderGenResults();
-  if (!$('#gr_copy').value.trim() || $('#gr_copy').dataset.auto === '1') { $('#gr_copy').value = (current && current.assets && current.assets.flyer_copy) || ''; $('#gr_copy').dataset.auto = '1'; }
   const lp = current && current.page; $('#lp_review').classList.toggle('hidden', !lp); if (lp) { $('#lp_preview').srcdoc = lp.html || ''; showLive(lp.live_url); }
 }
 
@@ -696,7 +751,7 @@ $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_workin
   const items = $$('input[name="gen"]:checked').map(c => c.value); if (!items.length) throw new Error('Tick at least one thing to generate.');
   const r = await call('generate', { campaign_id: current.campaign_id, items });
   upsert({ campaign_id: current.campaign_id, assets: Object.assign({}, current.assets || {}, r.assets || {}) });
-  $('#gr_copy').dataset.auto = '1'; fillForm(); toast('Your copy is ready', 'ok');
+  fillForm(); renderBriefs(); toast('Your copy is ready', 'ok');
 }));
 function renderGenResults() {
   const a = (current && current.assets) || {}; const keys = Object.keys(ASSET_NAMES).filter(k => a[k]); const box = $('#c_gen_results');
@@ -706,48 +761,115 @@ function renderGenResults() {
 }
 
 /* ---------- research ---------- */
+function rsItems(v) {
+  return (Array.isArray(v) ? v : (v ? [v] : [])).map(x => typeof x === 'string'
+    ? `<div class="ritem"><span>${esc(x)}</span></div>`
+    : `<div class="ritem"><b>${esc(x.title || x.brand || x.name || x.heading || '')}</b><span>${esc(x.text || x.summary || x.offer || x.description || x.insight || JSON.stringify(x))}</span></div>`).join('');
+}
 $('#rs_go').addEventListener('click', e => run(e.currentTarget, 'rs_working', async () => {
   const body = { industry: $('#rs_industry').value.trim(), market: $('#rs_market').value.trim(), product: $('#rs_product').value.trim() };
   if (!validate([['rs_industry', !!body.industry]])) return;
   const r = await call('research', body);
-  const items = v => (Array.isArray(v) ? v : [v]).filter(Boolean).map(x => typeof x === 'string' ? `<div class="ritem"><span>${esc(x)}</span></div>` : `<div class="ritem"><b>${esc(x.title || x.brand || x.name || '')}</b><span>${esc(x.text || x.summary || x.offer || x.description || JSON.stringify(x))}</span></div>`).join('');
-  $('#rs_ads').innerHTML = items(r.winning_ads); $('#rs_offers').innerHTML = items(r.winning_offers);
-  $('#rs_keywords').innerHTML = (Array.isArray(r.keywords) ? r.keywords : String(r.keywords || '').split(/,|\n/)).filter(Boolean).map(k => `<span>${esc(typeof k === 'string' ? k : k.keyword || k.term || JSON.stringify(k))}</span>`).join('');
+  $('#rs_competitors').innerHTML = rsItems(r.competitors || r.competitor_analysis);
+  $('#rs_audience').innerHTML = rsItems(r.audience || r.audience_insights);
+  $('#rs_content_ideas').innerHTML = rsItems(r.content_ideas);
+  $('#rs_offer_ideas').innerHTML = rsItems(r.offer_ideas || r.winning_offers);
+  const kw = Array.isArray(r.keywords) ? r.keywords : String(r.keywords || '').split(/,|\n/);
+  $('#rs_keywords').innerHTML = kw.filter(Boolean).map(k => `<span>${esc(typeof k === 'string' ? k : k.keyword || k.term || JSON.stringify(k))}</span>`).join('');
   $('#rs_results').classList.remove('hidden'); toast('Research ready', 'ok');
 }));
+$$('#rs_tabs button').forEach(b => b.addEventListener('click', () => {
+  $$('#rs_tabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $$('.rs-panel').forEach(p => p.classList.toggle('hidden', p.dataset.tab !== b.dataset.tab));
+}));
 
-/* ---------- media (videos + graphics) ---------- */
-const ICONS = ['i-video', 'i-star', 'i-rocket', 'i-image', 'i-layout', 'i-video', 'i-star', 'i-rocket'];
-$('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${n}</b><span>${d}</span><button class="btn sm" data-concept="${n}"><span class="spin"></span>Generate video</button></div></div>`).join('');
-$$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
+/* ---------- campaign brief (shared by videos, graphics, landing) ---------- */
+function briefItem(title, text, opts) {
+  opts = opts || {};
+  const has = !!(text && String(text).trim());
+  return `<div class="bitem ${opts.open && has ? 'open' : ''}"><div class="bh" data-toggle><span>${esc(title)}</span><span class="st ${has ? 'ok' : 'miss'}">${has ? (opts.open ? 'Hide' : 'Show') : 'Missing'}</span></div>
+    <div class="bb">${has ? esc(text) : `<span class="muted">${esc(opts.missing || 'Not generated yet.')}</span>`}${!has && opts.fix ? `<br><button class="btn soft sm" data-fix="${opts.fix}">${esc(opts.fixLabel || 'Generate it')}</button>` : ''}${has && opts.copy ? `<br><button class="btn ghost sm" data-copytext>Copy</button>` : ''}</div></div>`;
+}
+function bindBrief(box) {
+  box.querySelectorAll('[data-toggle]').forEach(h => h.addEventListener('click', () => { const it = h.closest('.bitem'); if (!it.querySelector('.st.miss')) { it.classList.toggle('open'); h.querySelector('.st').textContent = it.classList.contains('open') ? 'Hide' : 'Show'; } }));
+  box.querySelectorAll('[data-fix]').forEach(b => b.addEventListener('click', () => { showScreen('campaign'); showStep(Number(b.dataset.fix)); }));
+  box.querySelectorAll('[data-copytext]').forEach(b => b.addEventListener('click', () => copyText(b.closest('.bb').textContent.replace(/Copy$/, '').trim(), b)));
+}
+function campaignVideos() { return store.get(key('media'), []).filter(m => current && m.campaign_id === current.campaign_id && m.kind === 'video' && m.url); }
+function renderBriefs() {
+  const c = current; const a = (c && c.assets) || {};
+  const brand = store.get(key('brand'), []);
+  const brandLine = brand.length ? brand.length + ' file' + (brand.length === 1 ? '' : 's') + ': ' + Array.from(new Set(brand.map(b => b.category))).join(', ') : '';
+  const stage = c ? [c.goal, c.awareness].filter(Boolean).join(', ') : '';
+  $('#vd_stage').textContent = stage; $('#vd_stage').classList.toggle('hidden', !stage);
+  if (c) {
+    $('#vd_brief').innerHTML = briefItem('Offer', c.chosen_offer, { missing: 'Choose an offer in New Campaign, step 3.', fix: 3, fixLabel: 'Choose the offer' })
+      + briefItem('Video script', a.script, { open: true, copy: true, missing: 'The video is made from this script. Generate it in New Campaign, step 4.', fix: 4, fixLabel: 'Generate the script' })
+      + briefItem('Flyer copy', a.flyer_copy, { missing: 'Optional for video. Generated in step 4.', fix: 4 })
+      + briefItem('Landing page copy', a.landing_page_copy, { missing: 'Optional for video. Generated in step 4.', fix: 4 })
+      + briefItem('Brand assets', brandLine, { missing: 'No brand assets yet. Upload your logo and product photos under Brand Assets.' });
+    $('#gr_brief').innerHTML = briefItem('Flyer copy', a.flyer_copy, { open: true, copy: true, missing: 'The flyer is designed from this copy. Generate it in New Campaign, step 4.', fix: 4, fixLabel: 'Generate the flyer copy' })
+      + briefItem('Offer', c.chosen_offer, { missing: 'Choose an offer in New Campaign, step 3.', fix: 3, fixLabel: 'Choose the offer' })
+      + briefItem('Brand assets', brandLine, { missing: 'No logo or colours yet. Upload them under Brand Assets.' });
+    const vids = campaignVideos().filter(v => v.onPage);
+    $('#lp_brief').innerHTML = briefItem('Offer', c.chosen_offer, { open: true, missing: 'Choose an offer in New Campaign, step 3.', fix: 3, fixLabel: 'Choose the offer' })
+      + briefItem('Landing page copy', a.landing_page_copy, { copy: true, missing: 'The page is written from this. Generate it in New Campaign, step 4.', fix: 4, fixLabel: 'Generate the landing page copy' })
+      + briefItem('Videos for this page', vids.length ? vids.map(v => v.label).join(', ') : '', { missing: 'None yet. Mark a video "Use on page" under AI Videos.' });
+    [$('#vd_brief'), $('#gr_brief'), $('#lp_brief')].forEach(bindBrief);
+  }
+  const has = !!c;
+  ['vd', 'gr', 'lp'].forEach(p => { $('#' + p + '_nocmp').classList.toggle('hidden', has); $('#' + p + '_body').classList.toggle('hidden', !has); });
+}
+
+/* ---------- AI videos ---------- */
+let concept = VIDEO_CONCEPTS[0][0];
+const ICONS = ['i-video', 'i-rocket', 'i-star', 'i-image', 'i-layout', 'i-video', 'i-star', 'i-rocket'];
+$('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept pick ${i === 0 ? 'on' : ''}" data-concept="${esc(n)}" role="radio" aria-checked="${i === 0}" tabindex="0"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${esc(n)}</b><span>${esc(d)}</span></div></div>`).join('');
+$$('#vd_concepts .pick').forEach(c => { const pick = () => { concept = c.dataset.concept; $$('#vd_concepts .pick').forEach(x => { x.classList.toggle('on', x === c); x.setAttribute('aria-checked', x === c); }); }; c.addEventListener('click', pick); c.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(); } }); });
+$('#vd_go').addEventListener('click', e => run(e.currentTarget, 'vd_working', async () => {
   if (!current) throw new Error('Pick a campaign first.');
-  if (!current.chosen_offer_id) { toast('Choose an offer in New Campaign first. Videos are built on it.', 'err'); return; }
-  const r = await call('videoGenerate', { campaign_id: current.campaign_id, concept: b.dataset.concept });
-  addMedia({ kind: 'video', label: b.dataset.concept, url: r.file_url || '', status: r.status || 'rendering', id: r.media_id });
+  if (!current.chosen_offer_id) { toast('Choose an offer in New Campaign first.', 'err'); return; }
+  if (!(current.assets && current.assets.script)) { toast('Generate the script in New Campaign, step 4. The video is made from it.', 'err'); return; }
+  const r = await call('videoGenerate', { campaign_id: current.campaign_id, concept, format: $('#vd_format').value, product_photo_url: $('#vd_photo').value });
+  addMedia({ kind: 'video', label: concept + ' ' + $('#vd_format').value, url: r.file_url || '', status: r.status || 'rendering', id: r.media_id });
   toast('Video started. It appears below when ready.', 'ok');
-})));
+}));
+
+/* ---------- AI graphics ---------- */
 $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', async () => {
   if (!current) throw new Error('Pick a campaign first.');
-  $('#gr_copy').dataset.auto = '0';
-  if (!validate([['gr_copy', !!$('#gr_copy').value.trim()]])) return;
-  const r = await call('graphicsDesign', { campaign_id: current.campaign_id, flyer_copy: $('#gr_copy').value.trim(), product_photo_url: $('#gr_photo').value, size: $('#gr_size').value });
+  if (!(current.assets && current.assets.flyer_copy)) { toast('Generate the flyer copy in New Campaign, step 4. The flyer is designed from it.', 'err'); return; }
+  const r = await call('graphicsDesign', { campaign_id: current.campaign_id, product_photo_url: $('#gr_photo').value, size: $('#gr_size').value });
   addMedia({ kind: 'graphic', label: 'Flyer ' + $('#gr_size').value, url: r.file_url || '', status: 'ready', id: r.media_id });
   toast('Flyer ready', 'ok');
 }));
-function addMedia(m) { const list = store.get(key('media'), []); list.unshift(Object.assign({ campaign_id: current.campaign_id, at: Date.now() }, m)); store.set(key('media'), list); renderMedia(); }
+
+/* ---------- media gallery ---------- */
+function mediaList() { return store.get(key('media'), []); }
+function addMedia(m) { const list = mediaList(); list.unshift(Object.assign({ campaign_id: current.campaign_id, at: Date.now(), onPage: false }, m)); store.set(key('media'), list); renderMedia(); }
+function updateMedia(id, patch) { const list = mediaList(); const m = list.find(x => x.id === id); if (m) Object.assign(m, patch); store.set(key('media'), list); renderMedia(); renderBriefs(); }
+function removeMedia(id) { store.set(key('media'), mediaList().filter(x => x.id !== id)); renderMedia(); renderBriefs(); }
 function renderMedia() {
-  const all = store.get(key('media'), []).filter(m => current && m.campaign_id === current.campaign_id);
+  const all = mediaList().filter(m => current && m.campaign_id === current.campaign_id);
   const draw = (kind, listId, emptyId) => {
     const items = all.filter(m => m.kind === kind); $('#' + emptyId).classList.toggle('hidden', !!items.length);
-    $('#' + listId).innerHTML = items.map(m => `<div class="gitem"><div class="thumb">${m.url ? (kind === 'video' ? `<video src="${esc(m.url)}" muted playsinline></video>` : `<img src="${esc(m.url)}" alt="">`) : `<svg class="i" style="width:28px;height:28px"><use href="#${kind === 'video' ? 'i-video' : 'i-image'}"/></svg>`}</div>
-      <div class="body"><b>${esc(m.label)}</b><div class="ln"><span class="tag ${m.url ? 'green' : 'amber'}">${esc(m.url ? 'ready' : m.status)}</span>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">Open</a>` : ''}</div></div></div>`).join('');
+    $('#' + listId).innerHTML = items.map(m => `<div class="gitem"><div class="thumb">${m.url ? (kind === 'video' ? `<video src="${esc(m.url)}" controls playsinline></video>` : `<img src="${esc(m.url)}" alt="">`) : `<svg class="i" style="width:28px;height:28px"><use href="#${kind === 'video' ? 'i-video' : 'i-image'}"/></svg>`}</div>
+      <div class="body"><b>${esc(m.label)}</b><div class="ln"><span class="tag ${m.url ? 'green' : 'amber'}">${esc(m.url ? 'ready' : m.status)}</span><button class="del" data-del="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button></div>
+      <div class="acts">${m.url ? `<a class="btn ghost sm" href="${esc(m.url)}" target="_blank" rel="noopener" download>Download</a>` : `<button class="btn ghost sm" data-check="${esc(m.id)}"><span class="spin"></span>Check</button>`}${kind === 'video' && m.url ? `<button class="btn ${m.onPage ? '' : 'soft'} sm" data-onpage="${esc(m.id)}">${m.onPage ? 'On the page' : 'Use on page'}</button>` : ''}</div></div></div>`).join('');
   };
   draw('video', 'vd_list', 'vd_empty'); draw('graphic', 'gr_list', 'gr_empty');
+  $$('[data-del]').forEach(b => b.addEventListener('click', () => removeMedia(b.dataset.del)));
+  $$('[data-onpage]').forEach(b => b.addEventListener('click', () => { const m = mediaList().find(x => x.id === b.dataset.onpage); updateMedia(b.dataset.onpage, { onPage: !(m && m.onPage) }); }));
+  $$('[data-check]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
+    const r = await call('videoStatus', { media_id: b.dataset.check });
+    updateMedia(b.dataset.check, { status: r.status || 'rendering', url: r.file_url || '' });
+    toast(r.file_url ? 'Your video is ready' : 'Still rendering. Check again in a minute.', r.file_url ? 'ok' : '');
+  })));
 }
 
 /* ---------- landing pages ---------- */
 const picked = { video: [], photo: [], brand: [] };
-function bindDrop(inputId, pvId, bucket, isImage) {
+function bindDrop(inputId, pvId, bucket) {
   const input = $('#' + inputId), drop = input.closest('.drop'), pv = $('#' + pvId);
   const render = () => { pv.innerHTML = ''; picked[bucket].forEach((f, i) => { const d = document.createElement('div'); d.className = 'pv'; d.innerHTML = `<button aria-label="Remove">&times;</button>`; if (f.type.startsWith('image/')) { const img = document.createElement('img'); img.src = URL.createObjectURL(f); d.prepend(img); } else d.insertAdjacentText('afterbegin', f.name.length > 18 ? f.name.slice(0, 16) + '…' : f.name); d.querySelector('button').addEventListener('click', () => { picked[bucket].splice(i, 1); render(); }); pv.appendChild(d); }); };
   const add = files => { picked[bucket].push(...Array.from(files)); render(); input.value = ''; };
@@ -757,12 +879,14 @@ function bindDrop(inputId, pvId, bucket, isImage) {
   drop.addEventListener('drop', e => add(e.dataTransfer.files));
   return render;
 }
-const renderVideoPv = bindDrop('lp_video_reviews', 'lp_video_pv', 'video'); const renderPhotoPv = bindDrop('lp_photo_reviews', 'lp_photo_pv', 'photo'); const renderBrandPv = bindDrop('br_file', 'br_pv', 'brand');
+bindDrop('lp_video_reviews', 'lp_video_pv', 'video'); bindDrop('lp_photo_reviews', 'lp_photo_pv', 'photo'); const renderBrandPv = bindDrop('br_file', 'br_pv', 'brand');
 async function buildPage(btn, changes) {
   await run(btn, 'lp_working', async () => {
     if (!current) throw new Error('Pick a campaign first.');
     if (!current.chosen_offer_id) { toast('Choose an offer in New Campaign first. The page is built on it.', 'err'); return; }
-    const body = { campaign_id: current.campaign_id, reviews: { text: $('#lp_text_reviews').value.split('\n').map(s => s.trim()).filter(Boolean), photos: await filesPayload(picked.photo, 8), videos: await filesPayload(picked.video, 40) } };
+    if (!(current.assets && current.assets.landing_page_copy)) { toast('Generate the landing page copy in New Campaign, step 4. The page is written from it.', 'err'); return; }
+    const body = { campaign_id: current.campaign_id, campaign_videos: campaignVideos().filter(v => v.onPage).map(v => v.url),
+      reviews: { text: $('#lp_text_reviews').value.split('\n').map(s => s.trim()).filter(Boolean), photos: await filesPayload(picked.photo, 8), videos: await filesPayload(picked.video, 40) } };
     if (changes) { body.page_id = current.page.page_id; body.changes = changes; }
     const r = await call('landingBuild', body);
     upsert({ campaign_id: current.campaign_id, page: { page_id: r.page_id, html: r.html, live_url: null } });
@@ -781,25 +905,34 @@ $('#lp_copy').addEventListener('click', e => copyText($('#lp_url').value, e.curr
 $$('.devices button').forEach(b => b.addEventListener('click', () => { $$('.devices button').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#lp_frame').classList.toggle('phone', b.dataset.dev === 'phone'); }));
 
 /* ---------- brand assets ---------- */
+let brandFilter = '';
 $('#br_go').addEventListener('click', e => run(e.currentTarget, 'br_working', async () => {
-  if (!picked.brand.length) throw new Error('Choose at least one file.');
+  const link = $('#br_link').value.trim();
+  if (!picked.brand.length && !link) throw new Error('Choose a file or paste a link.');
   const cat = ($$('input[name="cat"]').find(r => r.checked) || {}).value; const notes = $('#br_notes').value.trim();
-  const files = await filesPayload(picked.brand, 25); const list = store.get(key('brand'), []);
+  const files = await filesPayload(picked.brand, 25); const list = store.get(key('brand'), []); let n = 0;
   for (const f of files) {
     const r = await call('brandUpload', { category: cat, notes, file_name: f.name, file_type: f.type, file_base64: f.base64 });
-    list.unshift({ category: cat, name: f.name, type: f.type, url: r.file_url, id: r.file_id, at: Date.now() });
+    list.unshift({ category: cat, name: f.name, type: f.type, url: r.file_url, id: r.file_id, notes: r.extracted_notes || '', at: Date.now() }); n++;
   }
-  store.set(key('brand'), list); picked.brand = []; renderBrandPv(); $('#br_notes').value = ''; renderBrand(); renderPhotoOptions();
-  toast(files.length + (files.length === 1 ? ' file uploaded' : ' files uploaded'), 'ok');
+  if (link) { const r = await call('brandUpload', { category: cat, notes, link }); list.unshift({ category: cat, name: link, type: 'link', url: r.file_url || link, id: r.file_id, notes: r.extracted_notes || '', at: Date.now() }); n++; }
+  store.set(key('brand'), list); picked.brand = []; renderBrandPv(); $('#br_notes').value = ''; $('#br_link').value = ''; renderBrand(); renderPhotoOptions(); renderBriefs();
+  toast(n + (n === 1 ? ' item added' : ' items added'), 'ok');
 }));
 function renderBrand() {
-  const list = store.get(key('brand'), []); $('#br_empty').classList.toggle('hidden', !!list.length);
-  $('#br_list').innerHTML = list.map((a, i) => `<div class="gitem"><div class="thumb">${a.type && a.type.startsWith('image/') && a.url ? `<img src="${esc(a.url)}" alt="">` : `<svg class="i" style="width:28px;height:28px"><use href="#i-folder"/></svg>`}</div><div class="body"><b title="${esc(a.name)}">${esc(a.name)}</b><div class="ln"><span class="muted">${esc(a.category)}</span><span>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">Open</a>` : ''} <button class="del" data-i="${i}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button></span></div></div></div>`).join('');
-  $$('#br_list .del').forEach(b => b.addEventListener('click', () => { const l = store.get(key('brand'), []); l.splice(Number(b.dataset.i), 1); store.set(key('brand'), l); renderBrand(); renderPhotoOptions(); }));
+  const all = store.get(key('brand'), []); const list = brandFilter ? all.filter(a => a.category === brandFilter) : all;
+  $('#br_empty').classList.toggle('hidden', !!all.length);
+  const cats = Array.from(new Set(all.map(a => a.category)));
+  $('#br_filter').innerHTML = cats.length > 1 ? `<label><input type="radio" name="bf" value="" ${!brandFilter ? 'checked' : ''}>All</label>` + cats.map(c => `<label><input type="radio" name="bf" value="${esc(c)}" ${brandFilter === c ? 'checked' : ''}>${esc(c)}</label>`).join('') : '';
+  $$('#br_filter input').forEach(r => r.addEventListener('change', () => { brandFilter = r.value; renderBrand(); }));
+  $('#br_list').innerHTML = list.map(a => `<div class="gitem"><div class="thumb">${a.type && a.type.startsWith('image/') && a.url ? `<img src="${esc(a.url)}" alt="">` : `<svg class="i" style="width:28px;height:28px"><use href="#${a.type === 'link' ? 'i-link' : a.type && a.type.startsWith('video/') ? 'i-video' : 'i-folder'}"/></svg>`}</div><div class="body"><b title="${esc(a.name)}">${esc(a.name)}</b><div class="ln"><span class="muted">${esc(a.category)}</span><span>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">Open</a>` : ''} <button class="del" data-bdel="${esc(a.id || a.name)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button></span></div></div></div>`).join('');
+  $$('#br_list .del').forEach(b => b.addEventListener('click', () => { store.set(key('brand'), store.get(key('brand'), []).filter(a => (a.id || a.name) !== b.dataset.bdel)); renderBrand(); renderPhotoOptions(); renderBriefs(); }));
+  const intel = all.filter(a => a.notes); $('#br_intel_empty').classList.toggle('hidden', !!intel.length);
+  $('#br_intel').innerHTML = intel.map(a => `<div class="ritem"><b>${esc(a.category)}: ${esc(a.name)}</b><span>${esc(a.notes)}</span></div>`).join('');
 }
 function renderPhotoOptions() {
-  const sel = $('#gr_photo'); const keep = sel.value; const list = store.get(key('brand'), []).filter(a => a.type && a.type.startsWith('image/') && a.url);
-  sel.innerHTML = '<option value="">No photo</option>' + list.map(a => `<option value="${esc(a.url)}">${esc(a.category)}: ${esc(a.name)}</option>`).join(''); sel.value = keep;
+  const list = store.get(key('brand'), []).filter(a => a.type && a.type.startsWith('image/') && a.url);
+  $$('.photo-pick').forEach(sel => { const keep = sel.value; sel.innerHTML = '<option value="">No photo</option>' + list.map(a => `<option value="${esc(a.url)}">${esc(a.category)}: ${esc(a.name)}</option>`).join(''); sel.value = keep; });
 }
 
 /* ---------- settings ---------- */
