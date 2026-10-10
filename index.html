@@ -301,6 +301,7 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .app.hidden{display:none !important}
 /* ---------- small grids ---------- */
 .row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
+.row3.voicerow{grid-template-columns:1fr 1fr auto}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .chipline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tag.red{background:var(--red-tint);color:var(--red-deep);border-color:var(--red-line)}
@@ -363,6 +364,16 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
 .swatches i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.1)}
 .gitem .notes{font-size:12.5px;color:var(--grey);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .side .foot .icon-btn+.icon-btn{margin-left:-2px}
+/* ---------- voiceover and video jobs ---------- */
+.volist{display:grid;gap:10px}
+.vo{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.vo b{font-size:14px;line-height:1.35}
+.vo .meta{font-size:12.5px;color:var(--grey)}
+.vo audio{width:100%;height:38px;grid-column:1/-1}
+.vo .txt{grid-column:1/-1;font-size:13px;color:var(--grey);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gitem .prog{font-size:12px;color:var(--grey);line-height:1.4}
+.gitem .fail{font-size:12px;color:var(--red-deep);line-height:1.4}
+.out audio{width:100%;height:38px;margin-top:6px}
 @media (max-width:900px){
   .row3,.split,.insight,.status,.intel{grid-template-columns:1fr}
   .fills label{grid-template-columns:1fr}
@@ -411,6 +422,8 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4M3 12h18"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
 </svg>
 
@@ -449,6 +462,7 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
     <button data-screen="videos" title="AI Videos"><svg class="i"><use href="#i-video"/></svg><span>AI Videos</span></button>
     <button data-screen="graphics" title="AI Graphics"><svg class="i"><use href="#i-image"/></svg><span>AI Graphics</span></button>
     <button data-screen="landing" title="Landing Pages"><svg class="i"><use href="#i-layout"/></svg><span>Landing Pages</span></button>
+    <button data-screen="voice" title="AI Voiceover"><svg class="i"><use href="#i-mic"/></svg><span>AI Voiceover</span></button>
   </nav>
   <div class="foot">
     <div class="who"><b id="whoName">Your account</b><span id="whoId"></span></div>
@@ -471,7 +485,7 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
     </div>
     <p class="muted small" id="sp_tip" style="margin-top:10px">Ads that have run the longest are the ones paying for themselves, so they come first.</p>
     <div class="actions"><button class="btn" id="sp_go"><span class="spin"></span>Find winning ads</button></div>
-    <div class="working hidden" id="sp_working"><div class="bar"><i></i></div><span>Pulling live ads from the ad library. This takes 1 to 2 minutes.</span></div>
+    <div class="working hidden" id="sp_working"><div class="bar"><i></i></div><span>Pulling live ads. This takes 1 to 3 minutes. You can stay on this page.</span></div>
   </div>
   <div id="sp_results" class="hidden" style="margin-top:18px">
     <div class="note hidden" id="sp_note" style="margin-bottom:16px"><svg class="i"><use href="#i-info"/></svg><div></div></div>
@@ -617,18 +631,22 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
       <div class="field"><label>Campaign</label><select class="pick-campaign" id="sf_campaign"></select></div>
       <div class="field"><label for="sf_count">How many scripts</label><select id="sf_count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
     </div>
+    <div class="row" style="margin-top:12px">
+      <div class="field"><label for="sf_voice">Voice for videos and voiceovers</label><select id="sf_voice" class="voice-pick"></select></div>
+      <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="sf_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
+    </div>
     <p class="muted small" style="margin-top:10px">No offer yet? That is fine. Short form scripts can be written from the business details alone.</p>
     <div class="actions"><button class="btn" id="sf_go"><span class="spin"></span>Write the scripts</button></div>
     <div class="working hidden" id="sf_working"><div class="bar"><i></i></div><span>Checking what is trending in your niche and writing your scripts. About 2 minutes.</span></div>
   </div>
-  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turning a script into a video</b> switches on when the video tool is connected. Until then, shoot it with your creator using the blueprint in each script.</div></div>
+  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turn any script into a video or a voiceover.</b> Make the video renders it with the voice above and your product photo, in about 3 to 8 minutes; it appears in AI Videos. Voiceover gives you just the spoken lines as an MP3 for your own shoot.</div></div>
   <div class="sfvs" id="sf_list" style="margin-top:18px"></div>
   <div class="empty" id="sf_empty" style="margin-top:18px"><b>No short form scripts yet</b>Pick a campaign and write them.</div>
 </section>
 
 <!-- ================= AI VIDEOS ================= -->
 <section id="screen-videos" class="screen hidden">
-  <div class="head"><div><h1>AI Videos</h1><p>Pick any video type and generate it. Use a campaign you have already written, or describe what you are selling right here.</p></div></div>
+  <div class="head"><div><h1>AI Videos</h1><p>Pick a video type and the agent makes it: it plans the scenes from your script, a Nigerian voice reads it, and the video is built around your product photo. Use a campaign you have already written, or describe what you are selling right here.</p></div></div>
   <div id="vd_body">
     <div class="srcpanel" data-src="vd">
       <div class="srctabs"><button aria-pressed="true" data-mode="campaign">Use a campaign</button><button aria-pressed="false" data-mode="own">Describe it here</button></div>
@@ -645,13 +663,21 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
           <div class="field"><label for="vd_o_audience">Who is it for?</label><input id="vd_o_audience" placeholder="Working women in Lagos"></div>
         </div>
         <div class="field"><label for="vd_o_offer">The offer, or what the video should say</label><textarea id="vd_o_offer" placeholder="Pay on delivery in Lagos. Original, sealed products. Order on WhatsApp."></textarea></div>
-        <div class="row"><div class="field"><label for="vd_format2">Format</label><select id="vd_format2"><option value="9:16">Vertical 9:16, Reels, TikTok, Stories</option><option value="1:1">Square 1:1, feed and WhatsApp</option></select></div><div class="field"><label for="vd_photo">Product photo</label><select id="vd_photo" class="photo-pick"></select></div></div>
+        <div class="field"><label for="vd_format2">Format</label><select id="vd_format2"><option value="9:16">Vertical 9:16, Reels, TikTok, Stories</option><option value="1:1">Square 1:1, feed and WhatsApp</option></select></div>
       </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="row3 voicerow">
+        <div class="field"><label for="vd_photo">Product photo</label><select id="vd_photo" class="photo-pick"></select><div class="hint">The video is built around this photo. Add product photos in Brand Assets.</div></div>
+        <div class="field"><label for="vd_voice">Voiceover</label><select id="vd_voice" class="voice-pick" data-none="1"></select><div class="hint">Reads the script. Pick No voiceover for music only.</div></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="vd_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
+      </div>
+      <p class="muted small" style="margin-top:10px">Each video is 10 to 30 seconds, rendered on Higgsfield (Seedance 2.5) and paid from your Higgsfield API balance.</p>
     </div>
     <h2 style="margin:22px 0 12px">Choose a video type</h2>
     <div class="concepts" id="vd_concepts"></div>
-    <div class="working hidden" id="vd_working" style="margin-top:14px"><div class="bar"><i></i></div><span>Sending your campaign to the video engine.</span></div>
-    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos render in the background. Press Check on a rendering video to see if it is ready.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a video type above and generate your first one.</div></div>
+    <div class="working hidden" id="vd_working" style="margin-top:14px"><div class="bar"><i></i></div><span>Starting your video.</span></div>
+    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos take about 3 to 8 minutes. You can leave this page; they keep rendering and appear here when ready.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a video type above and generate your first one.</div></div>
   </div>
 </section>
 
@@ -741,6 +767,29 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
   </div>
 </section>
 
+<!-- ================= AI VOICEOVER ================= -->
+<section id="screen-voice" class="screen hidden">
+  <div class="head"><div><h1>AI Voiceover</h1><p>Turn a script into a voiceover in a Nigerian voice. Only the spoken lines are read, never the visual notes. It saves under the campaign, and AI Videos uses the same voices.</p></div></div>
+  <div class="card srcpanel" data-src="vo">
+    <div class="srctabs"><button aria-pressed="true" data-mode="campaign">Use a campaign</button><button aria-pressed="false" data-mode="own">Type it here</button></div>
+    <div class="srcbody" data-mode="campaign">
+      <div class="row">
+        <div class="field"><label>Campaign</label><select class="pick-campaign"></select></div>
+        <div class="field"><label for="vo_part">Which script</label><select id="vo_part"></select></div>
+      </div>
+    </div>
+    <div class="srcbody hidden" data-mode="own"><p class="muted small">Type or paste the lines below. Lines that start with Visual or On-screen are skipped.</p></div>
+    <div class="field" style="margin-top:14px"><label for="vo_text">What the voice says</label><textarea id="vo_text" rows="8" placeholder="Still hiding your face because of acne? E don do. The Acne Clear Kit clears breakouts in weeks. Click the link to order now."></textarea><div class="hint" id="vo_count">0 words</div><div class="err">Type the lines to be spoken.</div></div>
+    <div class="row" style="margin-top:12px">
+      <div class="field"><label for="vo_voice">Voice</label><select id="vo_voice" class="voice-pick"></select><div class="hint" id="vo_voice_hint"></div></div>
+      <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="vo_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
+    </div>
+    <div class="actions"><button class="btn" id="vo_go"><span class="spin"></span>Make the voiceover</button><button class="btn ghost" id="vo_refresh" type="button">Refresh voices</button></div>
+    <div class="working hidden" id="vo_working"><div class="bar"><i></i></div><span>Making the voiceover. About 20 seconds.</span></div>
+  </div>
+  <div class="card"><div class="cap"><div><h2>Your voiceovers</h2><p>Play, download, or use them in your own edit.</p></div></div><div class="volist" id="vo_list"></div><div class="empty" id="vo_empty"><b>No voiceovers yet</b>Your first one appears here.</div></div>
+</section>
+
 </div></main>
 </div>
 
@@ -790,8 +839,11 @@ const API = {
   graphicsDesign: { path: '/ads-padi/graphics/design',   live: true }, // {campaign_id | flyer_copy, brand?, product_photo_url?, size: portrait|square, contacts?} -> {ok, media_id, file_url, concept}
   landingBuild:   { path: '/ads-padi/landing/build',     live: true }, // {campaign_id | brief, reviews:{text, photos:[url], videos:[url]}, whatsapp?, page_id? + changes?} -> {ok, page_id, html, blanks}
   landingPublish: { path: '/ads-padi/landing/publish',   live: true }, // {page_id} -> {ok, live_url}; code "blanks" if the page still has [blanks]
-  videoGenerate:  { path: '/ads-padi/video/generate',    live: false }, // switches on when the video tool is connected
-  videoStatus:    { path: '/ads-padi/video/status',      live: false }
+  videoGenerate:  { path: '/ads-padi/video/generate',    live: true }, // {campaign_id | brief, concept, format, product_photo_url?, voice?{voice_id, owner_id, voice_name}, script_text?} -> {ok, job_id, media_id, status: rendering}
+  videoStatus:    { path: '/ads-padi/video/status',      live: true }, // {media_id} -> {ok, status: Rendering|Ready|Failed, file_url}
+  voiceList:      { path: '/ads-padi/voice/list',        live: true }, // {refresh?} -> {ok, voices:[{voice_id, owner_id, name, accent, gender, age, preview_url, source: library|mine}]}
+  voiceGenerate:  { path: '/ads-padi/voice/generate',    live: true }, // {text, voice_id, owner_id?, voice_name?, campaign_id?, label?} -> {ok, media_id, file_url, duration, words}
+  jobStatus:      { path: '/ads-padi/job/status',        live: true }  // {job_id} -> {ok, status: working|done|failed, progress, result, error, code}
 };
 const VIDEO_CONCEPTS = [
   ['Offer-led UGC', 'A customer talks to camera and leads with the offer.'],
@@ -808,6 +860,7 @@ const REVIEW_STATES = ['Draft', 'Sent for approval', 'Approved', 'Sent to client
 const PERF_STATES = ['Not running yet', 'Testing', 'Working', 'Not working'];
 const BLANK_RE = /\[[A-Za-z][^\[\]\n]{0,40}\]/g;
 const PLATFORM_NAMES = { meta: 'Facebook and Instagram', tiktok: 'TikTok', linkedin: 'LinkedIn' };
+const VIDEO_MAX_MIN = 45;
 
 /* ---------- helpers ---------- */
 const $ = s => document.querySelector(s);
@@ -877,6 +930,27 @@ async function waitFor(check, every, max) {
   }
   return null;
 }
+/* Long jobs answer at once with a job id and keep working on the server.
+   We check every few seconds until the result is saved, so no server time limit can cut them. */
+async function runJob(name, body, opts) {
+  const r = await call(name, Object.assign({}, body || {}, { async: true }));
+  if (!r || !r.job_id || r.status === 'done') return r; // an older backend answered in one go
+  return waitJob(r.job_id, opts || {});
+}
+async function waitJob(jobId, opts) {
+  opts = opts || {};
+  const every = opts.every || 4000, max = opts.max || 600000, t0 = Date.now(); let misses = 0;
+  while (Date.now() - t0 < max) {
+    await sleep(every);
+    let j;
+    try { j = await call('jobStatus', { job_id: jobId }); misses = 0; }
+    catch (e) { if (e.auth || e.code === 'job_not_found') throw e; if (++misses > 8) throw e; continue; }
+    if (opts.onProgress && j.progress) opts.onProgress(j.progress);
+    if (j.status === 'done') return Object.assign({ ok: true }, j.result || {});
+    if (j.status === 'failed') { const e = new Error(j.error || 'Something went wrong. Please try again.'); e.code = j.code || ''; e.data = Object.assign({}, j.result || {}, { detail: j.detail || '' }); throw e; }
+  }
+  const e = new Error(opts.slowMsg || 'This is taking longer than usual. Check again in a few minutes.'); e.slow = true; throw e;
+}
 function validate(pairs) { // [[elementId, okBoolean]]
   let ok = true;
   pairs.forEach(([id, good]) => { const el = $('#' + id); if (!el) return; const f = el.classList.contains('field') ? el : el.closest('.field'); if (f) f.classList.toggle('invalid', !good); if (!good) ok = false; });
@@ -927,7 +1001,7 @@ $('#logoutBtn').addEventListener('click', logout); $('#logoutBtn2').addEventList
 
 /* ---------- campaigns (the backend is the source; this browser keeps a copy) ---------- */
 let campaigns = [], current = null;
-const mode = { vd: 'campaign', gr: 'campaign', lp: 'campaign', touched: false };
+const mode = { vd: 'campaign', gr: 'campaign', lp: 'campaign', vo: 'campaign', touched: false };
 function setMode(k, m) { mode[k] = m; const p = document.querySelector(`.srcpanel[data-src="${k}"]`); p.querySelectorAll('.srctabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m)); p.querySelectorAll('.srcbody').forEach(b => b.classList.toggle('hidden', b.dataset.mode !== m)); }
 function loadLocal() {
   campaigns = store.get(key('campaigns'), []);
@@ -967,11 +1041,11 @@ function refreshAll() {
   if (!session) return;
   const opts = campaigns.length ? campaigns.map(c => `<option value="${esc(c.campaign_id)}">${esc(label(c))}</option>`).join('') : '<option value="">No campaign yet</option>';
   $$('.pick-campaign').forEach(sel => { sel.innerHTML = opts; if (current) sel.value = current.campaign_id; });
-  if (!mode.touched) ['vd', 'gr', 'lp'].forEach(k => setMode(k, campaigns.length ? 'campaign' : 'own'));
+  if (!mode.touched) ['vd', 'gr', 'lp', 'vo'].forEach(k => setMode(k, campaigns.length ? 'campaign' : 'own'));
   $('#cmp_pick').innerHTML = '<option value="">New campaign</option>' + campaigns.map(c => `<option value="${esc(c.campaign_id)}">${esc(label(c))}</option>`).join(''); $('#cmp_pick').value = current ? current.campaign_id : '';
   $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = session.email || '';
   const ae = document.activeElement; const typing = ae && ae.closest && ae.closest('#cmp_flow') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
-  renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderLandingState();
+  renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
   if (!$('#cs_detail').classList.contains('hidden') && current && !detailDirty) showDetail(false);
 }
 
@@ -1000,7 +1074,9 @@ function showDetail(scroll) {
   const block = (t, body, copy, extra) => `<div class="out"><div class="oh"><span>${t}</span><span class="chipline">${extra || ''}${copy ? '<button class="btn ghost sm" data-copytext>Copy</button>' : ''}</span></div>${body}</div>`;
   const txt = v => v ? `<pre>${markBlanks(v)}</pre>` : '<span class="muted small">Not generated yet.</span>';
   const graphics = (c.media || []).filter(m => m.type === 'Graphic' && m.file_url);
-  const localVids = mediaList().filter(m => m.campaign_id === c.campaign_id && m.kind === 'video' && m.url);
+  const vids = (c.media || []).filter(m => m.type === 'Video' && m.file_url).map(m => ({ url: m.file_url, label: m.concept || 'Video' }));
+  mediaList().filter(m => m.campaign_id === c.campaign_id && m.kind === 'video' && m.url && !vids.some(v => v.url === m.url)).forEach(m => vids.push({ url: m.url, label: m.label }));
+  const vos = (c.media || []).filter(m => m.type === 'Voiceover' && m.file_url);
   const blanks = c.blanks || [];
   const rs = c.research;
   const statusCard = `<div class="out" style="background:#fff">
@@ -1031,7 +1107,8 @@ function showDetail(scroll) {
     + block('Short form scripts', txt(a.sfv_scripts), !!a.sfv_scripts)
     + block('Flyers', graphics.length ? `<div class="thumbs">${graphics.map(m => `<a href="${esc(m.file_url)}" target="_blank" rel="noopener" title="${esc(m.concept)}"><img src="${esc(m.file_url)}" alt="${esc(m.concept || 'Flyer')}" loading="lazy"></a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Graphics.</span>')
     + block('Landing pages', (c.pages || []).length ? `<div class="pagelist">${c.pages.map(p => `<div class="pg"><span>${p.live_url ? `<a href="${esc(p.live_url)}" target="_blank" rel="noopener">${esc(p.live_url.replace(/^https?:\/\//, ''))}</a>` : 'Draft page'}${p.status === 'Draft' && p.live_url ? ' <span class="tag amber">Changes not published</span>' : ''}</span><span class="muted small">${esc(timeAgo(p.updated_at))}</span></div>`).join('')}</div>` : '<span class="muted small">Not built yet.</span>')
-    + (localVids.length ? block('Videos', `<div class="media">${localVids.map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><svg class="i" style="width:14px;height:14px"><use href="#i-video"/></svg>${esc(m.label)}</a>`).join('')}</div>`) : '')
+    + block('Videos', vids.length ? `<div class="media">${vids.map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><svg class="i" style="width:14px;height:14px"><use href="#i-video"/></svg>${esc(m.label)}</a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Videos or Short Form Videos.</span>')
+    + (vos.length ? block('Voiceovers', vos.map(m => `<div class="small" style="font-weight:700;margin-top:6px">${esc(m.concept || 'Voiceover')}</div><audio controls preload="none" src="${esc(m.file_url)}"></audio>`).join('')) : '')
     + block('Competitor ads picked to model', c.spy_picks ? `<pre>${esc(c.spy_picks)}</pre>` : '<span class="muted small">None. Pick some in Spy on Competitors.</span>', false, c.spy_picks ? '<button class="btn ghost sm" id="sp_clear_campaign"><span class="spin"></span>Clear</button>' : '')
     + block('What is winning in the niche', rs ? `<pre>${esc([rs.competitors ? 'COMPETITORS\n' + rs.competitors : '', rs.audience ? 'AUDIENCE\n' + rs.audience : '', rs.offers ? 'OFFERS WORKING\n' + rs.offers : ''].filter(Boolean).join('\n\n'))}</pre>` : '<span class="muted small">Pulled from the ad library when you generate the copy.</span>')
     + '</div>';
@@ -1067,7 +1144,7 @@ function fillForm() {
 }
 
 /* ---------- navigation ---------- */
-const SCREENS = ['spy', 'research', 'campaign', 'brand', 'sfv', 'videos', 'graphics', 'landing'];
+const SCREENS = ['spy', 'research', 'campaign', 'brand', 'sfv', 'videos', 'graphics', 'landing', 'voice'];
 function showScreen(name) {
   $$('.screen').forEach(s => s.classList.toggle('hidden', s.id !== 'screen-' + name));
   $$('.nav button').forEach(b => { if (b.dataset.screen === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
@@ -1075,6 +1152,8 @@ function showScreen(name) {
   if (name === 'research') { if (!campaigns.length) $('#cs_loading').classList.remove('hidden'); syncQuietly(); }
   if (name === 'brand') loadBrand();
   if (name === 'landing') ensurePageHtml();
+  if (name === 'videos' || name === 'sfv' || name === 'voice') loadVoices();
+  if (name === 'voice') { renderVoiceSource(mode.vo === 'campaign' && !$('#vo_text').value.trim()); renderVoiceList(); }
 }
 $$('.nav button').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.screen)));
 $$('[data-screen-go]').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.screenGo)));
@@ -1156,7 +1235,7 @@ function renderOffers() {
 async function generateCopy(items, extra, workingId) {
   const cid = current.campaign_id; const before = {}; items.forEach(k => { before[k] = ((current.assets || {})[k]) || ''; });
   try {
-    const r = await call('generate', Object.assign({ campaign_id: cid, items }, extra || {}));
+    const r = await runJob('generate', Object.assign({ campaign_id: cid, items }, extra || {}), { max: 900000 });
     const c = campaigns.find(x => x.campaign_id === cid) || {};
     upsert({ campaign_id: cid, assets: Object.assign({}, c.assets || {}, r.assets || {}), winners: r.winners || c.winners || null, grounded: !!r.grounded });
     syncQuietly();
@@ -1202,14 +1281,14 @@ function setSpyMode(m) {
   $('#sp_q').placeholder = m === 'brand' ? 'Koolboks, Nature\'s Field, Glow by Ada' : 'skincare, solar, real estate';
 }
 $$('#sp_mode button').forEach(b => b.addEventListener('click', () => setSpyMode(b.dataset.mode)));
-$('#sp_platform').addEventListener('change', () => { const t = $('#sp_platform').value; $('#sp_tip').textContent = t === 'tiktok' ? 'TikTok shows its top ads for the UK, US, Canada and the UAE. For African countries you get the UK top ads to learn from.' : t === 'linkedin' ? 'LinkedIn ads from the last 30 days. Best for B2B services.' : 'Ads that have run the longest are the ones paying for themselves, so they come first.'; });
+$('#sp_platform').addEventListener('change', () => { const t = $('#sp_platform').value; $('#sp_tip').textContent = t === 'tiktok' ? 'TikTok publishes no ads for Nigeria, Ghana, Kenya or South Africa, so there you get the most-viewed TikTok selling posts made in that country. For the UK, US, Canada and the UAE you get TikTok top ads.' : t === 'linkedin' ? 'LinkedIn ads from the last 30 days. Best for B2B services.' : 'Ads that have run the longest are the ones paying for themselves, so they come first.'; });
 async function spySearch(refresh) {
   const query = $('#sp_q').value.trim();
   if (!validate([['sp_q', query.length >= 2]])) return;
   const body = { mode: spy.mode, query, platform: $('#sp_platform').value, country: $('#sp_country').value };
   if (refresh) body.refresh = true;
   let r;
-  try { r = await call('spySearch', body); }
+  try { r = await runJob('spySearch', body, { max: 600000 }); }
   catch (e) {
     if (!e.timeout) throw e;
     delete body.refresh; // the first run finishes on the server and is saved, so ask again for the saved result
@@ -1217,10 +1296,11 @@ async function spySearch(refresh) {
     if (!r) throw new Error('The ad library is slow right now. Try again in a minute.');
   }
   spy.last = r; spy.picks.clear(); store.set(key('lastSpy'), r); renderSpy();
-  toast(r.ads && r.ads.length ? r.ads.length + ' live ads found' : 'No live ads found for that search', r.ads && r.ads.length ? 'ok' : '');
+  const posts = isOrganic(r); toast(r.ads && r.ads.length ? r.ads.length + (posts ? ' TikTok posts found' : ' live ads found') : 'Nothing found for that search', r.ads && r.ads.length ? 'ok' : '');
 }
 $('#sp_go').addEventListener('click', e => run(e.currentTarget, 'sp_working', () => spySearch(false)));
 $('#sp_q').addEventListener('keydown', e => { if (e.key === 'Enter') $('#sp_go').click(); });
+function isOrganic(r) { return !!(r && r.platform === 'tiktok' && /organic/i.test(r.note || '')); }
 function renderSpy() {
   const r = spy.last; $('#sp_results').classList.toggle('hidden', !r); if (!r) return;
   const ads = r.ads || [];
@@ -1236,7 +1316,8 @@ function renderSpy() {
     const list = (t, a, wide) => a && a.length ? `<div class="box ${wide ? 'wide' : ''}"><b>${esc(t)}</b><ul>${a.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>` : '';
     $('#sp_insight').innerHTML = list('Hooks that stop the scroll', ins.hooks) + list('Offers they run', ins.offers) + list('Angles', ins.angles) + (ins.formats ? `<div class="box"><b>Formats</b><span style="font-size:14px">${esc(ins.formats)}</span></div>` : '') + list('Model this in your ads', ins.model_this, true);
   }
-  $('#sp_count').textContent = ads.length ? ads.length + ' live ad' + (ads.length === 1 ? '' : 's') + ' on ' + (PLATFORM_NAMES[r.platform] || r.platform) : 'No live ads';
+  const organic = isOrganic(r);
+  $('#sp_count').textContent = ads.length ? (organic ? ads.length + ' top TikTok post' + (ads.length === 1 ? '' : 's') + ' in your country' : ads.length + ' live ad' + (ads.length === 1 ? '' : 's') + ' on ' + (PLATFORM_NAMES[r.platform] || r.platform)) : 'Nothing found';
   $('#sp_empty').classList.toggle('hidden', !!ads.length);
   $('#sp_ads').innerHTML = ads.map((a, i) => {
     const thumb = a.thumb_url || (a.media_type === 'image' ? a.media_url : '');
@@ -1246,7 +1327,7 @@ function renderSpy() {
       <div class="body"><div class="brand">${esc(a.brand || 'Unknown brand')}</div>${meta ? `<div class="meta">${esc(meta)}</div>` : ''}
         ${a.headline && a.headline !== a.brand ? `<div style="font-weight:700;font-size:13.5px">${esc(a.headline)}</div>` : ''}
         <div class="txt">${esc(a.text)}</div>${a.text && a.text.length > 220 ? '<button class="more" type="button">Read more</button>' : ''}
-        <div class="chipline">${a.cta ? `<span class="tag">${esc(a.cta)}</span>` : ''}${a.source_url ? `<a class="small" href="${esc(a.source_url)}" target="_blank" rel="noopener">See the ad</a>` : ''}</div>
+        <div class="chipline">${a.cta ? `<span class="tag">${esc(a.cta)}</span>` : ''}${a.source_url ? `<a class="small" href="${esc(a.source_url)}" target="_blank" rel="noopener">${organic ? 'Watch on TikTok' : 'See the ad'}</a>` : ''}</div>
         <div class="foot"><label class="pick"><input type="checkbox" ${spy.picks.has(i) ? 'checked' : ''}>Pick</label></div>
       </div></div>`;
   }).join('');
@@ -1276,9 +1357,15 @@ function renderSfv() {
   const t = current && current.assets && current.assets.sfv_scripts;
   const parts = t ? t.split(/\n-{5,}\n/).map(s => s.trim()).filter(Boolean) : [];
   $('#sf_empty').classList.toggle('hidden', !!parts.length);
-  $('#sf_list').innerHTML = parts.map((p, i) => { const lines = p.split('\n'); const title = lines[0].replace(/^SCRIPT \d+:\s*/i, ''); return `<div class="sfv"><div class="top"><h3>${esc(title)}</h3><button class="btn ghost sm" data-sfcopy="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></div><pre>${markBlanks(lines.slice(1).join('\n').trim())}</pre><div class="acts"><button class="btn soft sm" data-sfvideo="${i}">Make the video</button><span class="muted small">Switches on when the video tool is connected.</span></div></div>`; }).join('');
+  const titleOf = p => p.split('\n')[0].replace(/^SCRIPT \d+:\s*/i, '');
+  $('#sf_list').innerHTML = parts.map((p, i) => { const lines = p.split('\n'); return `<div class="sfv"><div class="top"><h3>${esc(titleOf(p))}</h3><button class="btn ghost sm" data-sfcopy="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></div><pre>${markBlanks(lines.slice(1).join('\n').trim())}</pre><div class="acts"><button class="btn soft sm" data-sfvideo="${i}"><span class="spin"></span>Make the video</button><button class="btn ghost sm" data-sfvoice="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-mic"/></svg>Voiceover</button></div></div>`; }).join('');
   $$('#sf_list [data-sfcopy]').forEach(b => b.addEventListener('click', () => copyText(parts[Number(b.dataset.sfcopy)])));
-  $$('#sf_list [data-sfvideo]').forEach(b => b.addEventListener('click', () => toast('Turning scripts into videos switches on when the video tool is connected. Shoot this one with your creator for now.', '')));
+  $$('#sf_list [data-sfvideo]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
+    const p = parts[Number(b.dataset.sfvideo)];
+    if (blanksIn(p).length) throw new Error('Fill the blanks in this script first: ' + blanksIn(p).join(', ') + '.');
+    await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', script_text: p, product_photo_url: '', voice: selectedVoice('sf_voice') }, 'Short form: ' + titleOf(p));
+  })));
+  $$('#sf_list [data-sfvoice]').forEach(b => b.addEventListener('click', () => { const i = Number(b.dataset.sfvoice); openVoiceover(parts[i], 'Short form: ' + titleOf(parts[i])); }));
 }
 $('#sf_go').addEventListener('click', e => run(e.currentTarget, 'sf_working', async () => {
   if (!current) { toast('Pick or start a campaign first.', 'err'); return; }
@@ -1312,22 +1399,47 @@ function renderSources() {
   $$('[data-fix]').forEach(b => b.onclick = () => { const f = String(b.dataset.fix); if (f.startsWith('own:')) { mode.touched = true; setMode(f.slice(4), 'own'); } else if (f === 'brand') showScreen('brand'); else { showScreen('campaign'); showStep(Number(f)); } });
 }
 
-/* ---------- AI videos (switches on with the video tool) ---------- */
+/* ---------- AI videos: Higgsfield (Seedance 2.5) with an ElevenLabs voiceover ---------- */
+const videoWatch = new Set();
+async function startVideo(body, lbl) {
+  const r = await call('videoGenerate', body);
+  if (!r.job_id) throw new Error('The video could not start. Please try again.');
+  const m = { kind: 'video', id: r.media_id, job_id: r.job_id, label: lbl, url: '', status: 'rendering', progress: 'Planning the video', campaign_id: body.campaign_id || '', at: Date.now() };
+  addMedia(m); trackVideo(m);
+  toast('Video started. It takes about 3 to 8 minutes and appears in AI Videos.', 'ok');
+  return r;
+}
+async function trackVideo(m) {
+  if (!m || !m.job_id || videoWatch.has(m.job_id)) return;
+  videoWatch.add(m.job_id);
+  try {
+    const r = await waitJob(m.job_id, { every: 10000, max: VIDEO_MAX_MIN * 60000, onProgress: p => updateMedia(m.id, { progress: p }), slowMsg: 'Still rendering. Check again later.' });
+    updateMedia(m.id, { url: r.file_url || '', status: r.file_url ? 'ready' : 'failed', progress: '', title: r.title || '', error: r.file_url ? '' : 'No video came back. Try again.' });
+    if (r.file_url) toast('Your video is ready: ' + m.label, 'ok');
+    syncQuietly();
+  } catch (e) {
+    if (e.auth) return;
+    if (e.code === 'job_not_found') { try { const s = await call('videoStatus', { media_id: m.id }); updateMedia(m.id, { status: s.file_url ? 'ready' : (/fail/i.test(s.status) ? 'failed' : 'rendering'), url: s.file_url || '', progress: '' }); } catch (e2) {} return; }
+    if (e.slow) { updateMedia(m.id, { progress: e.message }); return; }
+    updateMedia(m.id, { status: 'failed', progress: '', error: e.message }); toast(m.label + ': ' + e.message, 'err');
+  } finally { videoWatch.delete(m.job_id); }
+}
+function resumeVideos() { mediaList().filter(m => m.kind === 'video' && m.status === 'rendering' && m.job_id && Date.now() - (m.at || 0) < VIDEO_MAX_MIN * 60000 * 2).forEach(trackVideo); }
 const ICONS = ['i-video', 'i-rocket', 'i-star', 'i-image', 'i-layout', 'i-video', 'i-star', 'i-rocket'];
 $('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${esc(n)}</b><span>${esc(d)}</span><button class="btn sm" data-concept="${esc(n)}"><span class="spin"></span>Generate video</button></div></div>`).join('');
 $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () => run(b, 'vd_working', async () => {
   let body, fmt;
+  const voice = selectedVoice('vd_voice');
   if (useCampaign('vd')) {
-    if (!(current.assets && current.assets.script)) { toast('This campaign has no script yet. Generate it in New Campaign, step 4, or describe the video here.', 'err'); return; }
-    fmt = $('#vd_format').value; body = { campaign_id: current.campaign_id, concept: b.dataset.concept, format: fmt, product_photo_url: photoValue('vd_photo') };
+    if (!(current.assets && current.assets.script) && !current.chosen_offer) { toast('This campaign has no script or offer yet. Generate it in New Campaign, or describe the video here.', 'err'); return; }
+    if (current.assets && blanksIn(current.assets.script).length) { toast('The script still has blanks: ' + blanksIn(current.assets.script).join(', ') + '. Pick an offer with the details filled in and generate the copy again.', 'err'); return; }
+    fmt = $('#vd_format').value; body = { campaign_id: current.campaign_id, concept: b.dataset.concept, format: fmt, product_photo_url: photoValue('vd_photo'), voice };
   } else {
     const o = { product: $('#vd_o_product').value.trim(), audience: $('#vd_o_audience').value.trim(), offer: $('#vd_o_offer').value.trim() };
     if (!o.product || !o.offer) { mode.touched = true; setMode('vd', 'own'); if (!validate([['vd_o_product', !!o.product], ['vd_o_offer', !!o.offer]])) return; }
-    fmt = $('#vd_format2').value; body = { brief: o, concept: b.dataset.concept, format: fmt, product_photo_url: photoValue('vd_photo') };
+    fmt = $('#vd_format2').value; body = { brief: o, concept: b.dataset.concept, format: fmt, product_photo_url: photoValue('vd_photo'), voice };
   }
-  const r = await call('videoGenerate', body);
-  addMedia({ kind: 'video', label: b.dataset.concept + ' ' + fmt, url: r.file_url || '', status: r.status || 'rendering', id: r.media_id, campaign_id: body.campaign_id || '' });
-  toast(b.dataset.concept + ' video started. It appears below when ready.', 'ok');
+  await startVideo(body, b.dataset.concept + ' ' + fmt + (voice ? '' : ', no voiceover'));
 })));
 
 /* ---------- AI graphics ---------- */
@@ -1348,7 +1460,7 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   store.set(key('contacts'), common.contacts);
   const cid = body.campaign_id; const known = new Set(((campaigns.find(c => c.campaign_id === cid) || {}).media || []).map(m => m.media_id));
   let r;
-  try { r = await call('graphicsDesign', body); }
+  try { r = await runJob('graphicsDesign', body, { max: 480000 }); }
   catch (er) {
     if (!(er.timeout || er.network) || !cid) throw er;
     const m = await waitFor(async () => { await syncCampaigns(); const c = campaigns.find(x => x.campaign_id === cid); return c && (c.media || []).find(x => x.type === 'Graphic' && x.file_url && !known.has(x.media_id)); }, 12000, 180000);
@@ -1365,23 +1477,137 @@ function mediaList() { return store.get(key('media'), []); }
 function addMedia(m) { const list = mediaList(); list.unshift(Object.assign({ campaign_id: current ? current.campaign_id : '', at: Date.now() }, m)); store.set(key('media'), list); renderMedia(); }
 function updateMedia(id, patch) { const list = mediaList(); const m = list.find(x => x.id === id); if (m) Object.assign(m, patch); store.set(key('media'), list); renderMedia(); }
 function removeMedia(id) { store.set(key('media'), mediaList().filter(x => x.id !== id)); renderMedia(); }
+const STATE = { Ready: 'ready', Rendering: 'rendering', Failed: 'failed' };
 function renderMedia() {
   const local = mediaList().filter(m => !m.campaign_id || (current && m.campaign_id === current.campaign_id));
-  const serverGfx = ((current && current.media) || []).filter(m => m.type === 'Graphic' && m.file_url).map(m => ({ kind: 'graphic', label: m.concept || 'Flyer', url: m.file_url, id: m.media_id, server: true }));
-  const items = { video: local.filter(m => m.kind === 'video'), graphic: serverGfx.concat(local.filter(m => m.kind === 'graphic' && !serverGfx.some(s => s.id === m.id))) };
+  const media = (current && current.media) || [];
+  const serverGfx = media.filter(m => m.type === 'Graphic' && m.file_url).map(m => ({ kind: 'graphic', label: m.concept || 'Flyer', url: m.file_url, id: m.media_id, server: true, status: 'ready' }));
+  const localVid = local.filter(m => m.kind === 'video');
+  const serverVid = media.filter(m => m.type === 'Video' && !localVid.some(l => l.id === m.media_id)).map(m => ({ kind: 'video', label: m.concept || 'Video', url: m.file_url || '', id: m.media_id, server: true, status: STATE[m.status] || (m.file_url ? 'ready' : 'rendering') }));
+  localVid.forEach(l => { const s = media.find(m => m.media_id === l.id && m.type === 'Video' && m.file_url); if (s && !l.url) { l.url = s.file_url; l.status = 'ready'; } });
+  const items = { video: localVid.concat(serverVid), graphic: serverGfx.concat(local.filter(m => m.kind === 'graphic' && !serverGfx.some(s => s.id === m.id))) };
+  const tag = m => m.url ? '<span class="tag green">ready</span>' : m.status === 'failed' ? '<span class="tag red">failed</span>' : `<span class="tag amber">${esc(m.status || 'rendering')}</span>`;
   const draw = (kind, listId, emptyId) => {
     const list = items[kind]; $('#' + emptyId).classList.toggle('hidden', !!list.length);
     $('#' + listId).innerHTML = list.map(m => `<div class="gitem"><div class="thumb">${m.url ? (kind === 'video' ? `<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>` : `<a href="${esc(m.url)}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%"><img src="${esc(m.url)}" alt="" loading="lazy"></a>`) : `<svg class="i" style="width:28px;height:28px"><use href="#${kind === 'video' ? 'i-video' : 'i-image'}"/></svg>`}</div>
-      <div class="body"><b title="${esc(m.label)}">${esc(m.label)}</b><div class="ln"><span class="tag ${m.url ? 'green' : 'amber'}">${esc(m.url ? 'ready' : m.status)}</span>${m.server ? '' : `<button class="del" data-mdel="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button>`}</div>
-      <div class="acts">${m.url ? `<a class="btn ghost sm" href="${esc(m.url)}" target="_blank" rel="noopener" download>Download</a>` : `<button class="btn ghost sm" data-check="${esc(m.id)}"><span class="spin"></span>Check</button>`}</div></div></div>`).join('');
+      <div class="body"><b title="${esc(m.label)}">${esc(m.label)}</b>${!m.url && m.status === 'rendering' && m.progress ? `<span class="prog">${esc(m.progress)}</span>` : ''}${m.status === 'failed' && m.error ? `<span class="fail">${esc(m.error)}</span>` : ''}<div class="ln">${tag(m)}${m.server ? '' : `<button class="del" data-mdel="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button>`}</div>
+      <div class="acts">${m.url ? `<a class="btn ghost sm" href="${esc(m.url)}" target="_blank" rel="noopener" download>Download</a>` : (kind === 'video' && m.status !== 'failed' ? `<button class="btn ghost sm" data-check="${esc(m.id)}"><span class="spin"></span>Check</button>` : '')}</div></div></div>`).join('');
   };
   draw('video', 'vd_list', 'vd_empty'); draw('graphic', 'gr_list', 'gr_empty');
   $$('[data-mdel]').forEach(b => b.addEventListener('click', () => removeMedia(b.dataset.mdel)));
   $$('[data-check]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     const r = await call('videoStatus', { media_id: b.dataset.check });
-    updateMedia(b.dataset.check, { status: r.status || 'rendering', url: r.file_url || '' });
-    toast(r.file_url ? 'Your video is ready' : 'Still rendering. Check again in a minute.', r.file_url ? 'ok' : '');
+    const st = r.file_url ? 'ready' : (/fail/i.test(r.status || '') ? 'failed' : 'rendering');
+    if (mediaList().some(x => x.id === b.dataset.check)) updateMedia(b.dataset.check, { status: st, url: r.file_url || '' }); else syncQuietly();
+    toast(r.file_url ? 'Your video is ready' : st === 'failed' ? 'This video did not finish. Try again.' : 'Still rendering. Check again in a minute.', r.file_url ? 'ok' : '');
   })));
+  renderVoiceList();
+}
+
+
+/* ---------- AI voiceover (ElevenLabs) ---------- */
+let voices = store.get('adspadi.voices', null), voicesErr = '', voicesLoading = null, sampleAudio = null;
+function voiceLabel(v) { const bits = [v.gender, v.age, v.accent].filter(Boolean); return v.name + (bits.length ? ' (' + bits.join(', ') + ')' : ''); }
+function renderVoicePickers() {
+  const list = (voices && voices.voices) || [];
+  const ng = list.filter(v => v.source === 'library'), mine = list.filter(v => v.source !== 'library');
+  const opt = v => `<option value="${esc(v.voice_id)}" data-owner="${esc(v.owner_id || '')}" data-name="${esc(v.name)}">${esc(voiceLabel(v))}</option>`;
+  const pref = store.get(key('voice'), null);
+  $$('.voice-pick').forEach(sel => {
+    const keep = sel.dataset.chosen !== undefined ? sel.value : ((pref && pref.voice_id) || '');
+    const none = sel.dataset.none === '1';
+    if (!list.length) { sel.innerHTML = (none ? '<option value="">No voiceover, music only</option>' : '') + `<option value="" disabled ${none ? '' : 'selected'}>${esc(voicesErr ? 'Voices not available' : 'Loading voices...')}</option>`; return; }
+    sel.innerHTML = (none ? '<option value="">No voiceover, music only</option>' : '') + (ng.length ? `<optgroup label="Nigerian voices">${ng.map(opt).join('')}</optgroup>` : '') + (mine.length ? `<optgroup label="Your ElevenLabs voices">${mine.map(opt).join('')}</optgroup>` : '');
+    if (keep !== '' && Array.from(sel.options).some(o => o.value === keep)) sel.value = keep;
+    else if (sel.dataset.chosen === '' && none) sel.value = '';
+    else { const first = Array.from(sel.options).find(o => o.value); if (first) sel.value = first.value; }
+  });
+  const hint = $('#vo_voice_hint'); if (hint) hint.textContent = voicesErr ? voicesErr : (ng.length ? ng.length + ' Nigerian voices from the ElevenLabs library, then your own voices.' : '');
+}
+async function loadVoices(force) {
+  if (voicesLoading) return voicesLoading;
+  if (!force && voices && voices.voices && voices.voices.length && Date.now() - (voices.at || 0) < 6 * 3600000) { renderVoicePickers(); return; }
+  voicesLoading = (async () => {
+    try { const r = await call('voiceList', force ? { refresh: true } : {}); voices = { voices: r.voices || [], at: Date.now() }; voicesErr = ''; store.set('adspadi.voices', voices); }
+    catch (e) { if (!e.auth) voicesErr = e.message; }
+    renderVoicePickers();
+  })().finally(() => { voicesLoading = null; });
+  return voicesLoading;
+}
+function selectedVoice(selId) {
+  const sel = $('#' + selId); if (!sel || !sel.value) return null;
+  const o = sel.selectedOptions[0];
+  return { voice_id: sel.value, owner_id: (o && o.dataset.owner) || '', voice_name: (o && o.dataset.name) || '' };
+}
+document.addEventListener('change', e => { const sel = e.target; if (!sel.classList || !sel.classList.contains('voice-pick')) return; sel.dataset.chosen = sel.value; const v = selectedVoice(sel.id); if (v) store.set(key('voice'), v); });
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-play]'); if (!b) return;
+  const sel = $('#' + b.dataset.play); const v = ((voices && voices.voices) || []).find(x => x.voice_id === (sel && sel.value));
+  if (!v) return toast(sel && sel.dataset.none === '1' && !sel.value ? 'No voiceover picked.' : 'Pick a voice first.', '');
+  if (!v.preview_url) return toast('This voice has no sample.', '');
+  if (sampleAudio) sampleAudio.pause();
+  sampleAudio = new Audio(v.preview_url); sampleAudio.play().catch(() => toast('Could not play the sample.', 'err'));
+});
+// keep only the spoken words: lines after "Talking head:" or "Voiceover:", never visuals or on-screen text
+function spokenLines(text) {
+  const SPEAK = /(?:talking head|voice ?over|vo|creator|narrator)\s*(?:\([^)]*\))?\s*:\s*([\s\S]*?)(?=\b(?:visual|on[- ]?screen(?: text)?|end screen|talking head|voice ?over|vo|caption)\s*(?:\([^)]*\))?\s*:|$)/gi;
+  const SKIP = /^(visual|on[- ]?screen( text)?|text on screen|end screen|caption|sound|music|length|runtime|key moment|title|shot|scene|angle|hook options?)\b/i;
+  const lines = String(text || '').replace(/\r/g, '').split('\n').map(l => l.replace(/^[\s\-*•\d.)]+/, '').trim()).filter(Boolean);
+  const labelled = lines.some(l => /\b(talking head|voice ?over|vo|creator|narrator)\s*(\([^)]*\))?\s*:/i.test(l));
+  const out = [];
+  lines.forEach(l => {
+    if (labelled) { let m; SPEAK.lastIndex = 0; while ((m = SPEAK.exec(l)) !== null) { const t = m[1].trim(); if (t) out.push(t); if (m[0] === '') SPEAK.lastIndex++; } return; }
+    if (SKIP.test(l) || (/^[A-Z0-9 ,&'()\-]{3,40}$/.test(l) && !/[a-z]/.test(l))) return;
+    out.push(l);
+  });
+  const STAGE = /\[(laughs?|pause|beat|sighs?|smiles?|whispers?|music[^\]]*|sfx[^\]]*|giggles?|chuckles?|cut[^\]]*)\]/gi; // stage directions are not read out; real [blanks] stay so they get filled
+  return out.map(t => t.replace(STAGE, '').replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+}
+function scriptBody(t) { // the SCRIPT block of an ads script, without the hook options and runtime
+  const s = String(t || ''); const m = s.match(/(?:^|\n)SCRIPT\n([\s\S]*?)(?:\n[A-Z][A-Z0-9 ]{2,40}\n|$)/);
+  return m ? m[1] : s;
+}
+function voiceParts() {
+  const a = (current && current.assets) || {}; const parts = [];
+  if (a.script) parts.push({ id: 'script', label: 'Ads script', text: spokenLines(scriptBody(a.script)) });
+  const sf = a.sfv_scripts ? a.sfv_scripts.split(/\n-{5,}\n/).map(s => s.trim()).filter(Boolean) : [];
+  sf.forEach((p, i) => parts.push({ id: 'sfv' + i, label: 'Short form ' + (i + 1) + ': ' + p.split('\n')[0].replace(/^SCRIPT \d+:\s*/i, '').slice(0, 60), text: spokenLines(p) }));
+  return parts;
+}
+let voDraft = { label: '' };
+function renderVoiceSource(fill) {
+  const sel = $('#vo_part'); const parts = voiceParts(); const keep = sel.value;
+  sel.innerHTML = parts.length ? parts.map(p => `<option value="${esc(p.id)}">${esc(p.label)}</option>`).join('') : '<option value="">No script yet in this campaign</option>';
+  if (keep && parts.some(p => p.id === keep)) sel.value = keep;
+  if (fill && mode.vo === 'campaign') { const p = parts.find(x => x.id === sel.value); $('#vo_text').value = p ? p.text : ''; voDraft.label = p ? p.label : ''; countVoice(); }
+}
+function countVoice() { const t = $('#vo_text').value.trim(); const w = t ? t.split(/\s+/).length : 0; $('#vo_count').textContent = w ? w + ' words, about ' + Math.max(1, Math.round(w / 2.5)) + ' seconds' : '0 words'; }
+$('#vo_text').addEventListener('input', countVoice);
+$('#vo_part').addEventListener('change', () => renderVoiceSource(true));
+$$('.srcpanel[data-src="vo"] .srctabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.mode === 'campaign') renderVoiceSource(true); }));
+$('#vo_refresh').addEventListener('click', () => { voices = null; renderVoicePickers(); loadVoices(true); });
+function openVoiceover(text, lbl) { showScreen('voice'); mode.touched = true; setMode('vo', 'own'); $('#vo_text').value = spokenLines(text); voDraft.label = lbl || ''; countVoice(); $('#vo_text').focus(); }
+$('#vo_go').addEventListener('click', e => run(e.currentTarget, 'vo_working', async () => {
+  const text = $('#vo_text').value.trim(); if (!validate([['vo_text', text.length >= 3]])) return;
+  if (blanksIn(text).length) throw new Error('Fill these blanks first: ' + blanksIn(text).join(', ') + '.');
+  const v = selectedVoice('vo_voice'); if (!v) throw new Error(voicesErr || 'Pick a voice first.');
+  const inCampaign = mode.vo === 'campaign' && current;
+  const lbl = (voDraft.label ? voDraft.label + ', ' : '') + v.voice_name;
+  const r = await call('voiceGenerate', Object.assign({ text, voice_id: v.voice_id, owner_id: v.owner_id, voice_name: v.voice_name, label: lbl }, inCampaign ? { campaign_id: current.campaign_id } : {}));
+  addMedia({ kind: 'voiceover', id: r.media_id, label: r.label || lbl, url: r.file_url, duration: r.duration, words: r.words, text: r.text || text, status: 'ready', campaign_id: inCampaign ? current.campaign_id : '' });
+  if (inCampaign) syncQuietly();
+  toast('Voiceover ready', 'ok');
+}));
+function renderVoiceList() {
+  const box = $('#vo_list'); if (!box) return;
+  const local = mediaList().filter(m => m.kind === 'voiceover' && (!m.campaign_id || (current && m.campaign_id === current.campaign_id)));
+  const server = ((current && current.media) || []).filter(m => m.type === 'Voiceover' && m.file_url && !local.some(l => l.id === m.media_id)).map(m => ({ id: m.media_id, label: m.concept || 'Voiceover', url: m.file_url, server: true, at: Date.parse(m.created_at) || 0 }));
+  const list = local.concat(server);
+  $('#vo_empty').classList.toggle('hidden', !!list.length);
+  box.innerHTML = list.map(m => `<div class="vo"><div><b>${esc(m.label)}</b><div class="meta">${[m.duration ? Math.round(m.duration) + ' seconds' : '', m.at ? timeAgo(new Date(m.at).toISOString()) : ''].filter(Boolean).map(esc).join(', ')}</div></div>
+    <span class="chipline"><a class="btn ghost sm" href="${esc(m.url)}" target="_blank" rel="noopener" download>Download</a>${m.server ? '' : `<button class="del" data-vdel="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button>`}</span>
+    <audio controls preload="none" src="${esc(m.url)}"></audio>${m.text ? `<div class="txt">${esc(m.text)}</div>` : ''}</div>`).join('');
+  $$('#vo_list [data-vdel]').forEach(b => b.addEventListener('click', () => removeMedia(b.dataset.vdel)));
 }
 
 /* ---------- landing pages ---------- */
@@ -1458,7 +1684,7 @@ async function buildPage(btn, changes) {
     const cid = body.campaign_id || ''; const c0 = cid && campaigns.find(c => c.campaign_id === cid);
     const known = new Set(((c0 && c0.pages) || []).map(p => p.page_id)); const prevUpd = revise && page ? page.updated_at : '';
     let r;
-    try { r = await call('landingBuild', body); }
+    try { r = await runJob('landingBuild', body, { max: 600000 }); }
     catch (e) {
       if (!(e.timeout || e.network) || !cid) throw e;
       $('#lp_working_txt').textContent = 'Still building. This one is taking longer than usual, so we will show it the moment it is saved.';
@@ -1575,7 +1801,7 @@ function enterApp() {
   const first = (location.hash || '').slice(1).replace(/[^a-z]/g, '');
   showScreen(SCREENS.includes(first) ? first : (campaigns.length ? 'research' : 'campaign'));
   call('me', {}).then(me => { session = Object.assign({}, session, { name: me.name, email: me.email, is_admin: !!me.is_admin }); store.set('adspadi.session', session); refreshAll(); }).catch(() => {});
-  syncQuietly(); loadBrand(true);
+  syncQuietly(); loadBrand(true); resumeVideos(); renderVoicePickers();
 }
 if (session && session.token) { $('#auth').classList.add('hidden'); document.querySelector('.app').classList.remove('hidden'); enterApp(); }
 else showAuth('');
