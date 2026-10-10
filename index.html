@@ -382,6 +382,50 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
 }
 @media (max-width:520px){ .ads{grid-template-columns:1fr} }
 
+.upone{display:flex;align-items:center;gap:14px;border:1px solid var(--line-2);border-radius:var(--r);padding:10px;background:var(--surface)}
+.upone img{width:76px;height:76px;object-fit:cover;border-radius:var(--r-sm);background:var(--canvas);flex:none}
+.upone .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.upone .meta b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drop:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+select:disabled{opacity:.55;cursor:not-allowed}
+/* ---------- product photo trays (AI Graphics, AI Videos, Landing Pages) ---------- */
+.tray{display:grid;gap:10px}
+.tray-list{display:flex;gap:10px;flex-wrap:wrap}
+.tray-list:empty{display:none}
+.tph{position:relative;width:96px;height:96px;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:var(--canvas);flex:none}
+.tph img{width:100%;height:100%;object-fit:cover;display:block}
+.tph .n{position:absolute;left:6px;top:6px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:rgba(18,19,22,.78);color:#fff;font-size:11.5px;font-weight:800;display:grid;place-items:center}
+.tph .x{position:absolute;right:5px;top:5px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(18,19,22,.72);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.tph .x:hover,.tph .x:focus-visible{background:var(--red);outline:none}
+.tph .st{position:absolute;left:0;right:0;bottom:0;padding:10px 6px 4px;font-size:10.5px;font-weight:700;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tph.err{border-color:var(--red)}
+.field .tray label.drop{padding:16px 18px}
+.tray-pick{display:grid;gap:6px}
+.tray-assets{display:flex;gap:8px;flex-wrap:wrap}
+.tray-assets button{width:56px;height:56px;border-radius:10px;overflow:hidden;border:1.5px solid var(--line);padding:0;background:var(--canvas);cursor:pointer;flex:none}
+.tray-assets button:hover,.tray-assets button:focus-visible{border-color:var(--red);outline:none;box-shadow:0 0 0 3px var(--red-tint)}
+.tray-assets img{width:100%;height:100%;object-fit:cover;display:block}
+/* ---------- two-way choice ---------- */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg button{text-align:left;border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:inherit;color:inherit}
+.seg button b{font-size:14px}
+.seg button span{font-size:12.5px;color:var(--grey);line-height:1.4}
+.seg button[aria-pressed="true"]{border-color:var(--red);background:var(--red-tint)}
+.seg button:disabled{opacity:.5;cursor:not-allowed}
+/* ---------- change one thing ---------- */
+.chg{display:grid;gap:8px;margin-top:10px;padding:10px;border:1px solid var(--line-2);border-radius:12px;background:var(--canvas)}
+.chg textarea{width:100%;min-height:72px;padding:9px 11px;border:1px solid var(--line-2);border-radius:10px;font:inherit;font-size:13.5px;line-height:1.45;resize:vertical;background:#fff}
+.chg textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-tint)}
+.chg .chgnote{font-size:12px;color:var(--grey);line-height:1.4}
+.gitem .chg{margin-top:6px;padding:8px}
+.gitem .chg textarea{min-height:64px;font-size:13px}
+.gitem .thumb{position:relative}
+.gitem .veil{position:absolute;inset:0;background:rgba(255,255,255,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink);text-align:center;padding:10px}
+.ring{width:26px;height:26px;border-radius:50%;border:3px solid var(--line-2);border-top-color:var(--red);animation:spin .9s linear infinite}
+.result .chg,.sfv .chg,.out .chg{margin-top:12px}
+@media (max-width:620px){ .seg{grid-template-columns:1fr} .tph{width:84px;height:84px} }
+.concept .btn span[data-label]{font-size:inherit;color:inherit;flex:none}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -646,7 +690,7 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
 
 <!-- ================= AI VIDEOS ================= -->
 <section id="screen-videos" class="screen hidden">
-  <div class="head"><div><h1>AI Videos</h1><p>Pick a video type and the agent makes it: it plans the scenes from your script, a Nigerian voice reads it, and the video is built around your product photo. Use a campaign you have already written, or describe what you are selling right here.</p></div></div>
+  <div class="head"><div><h1>AI Videos</h1><p>Pick a video type and the agent makes it: it plans the scenes from your script, a Nigerian voice reads it, and the video is built around your product photos. Use a campaign you have already written, or describe what you are selling right here.</p></div></div>
   <div id="vd_body">
     <div class="srcpanel" data-src="vd">
       <div class="srctabs"><button aria-pressed="true" data-mode="campaign">Use a campaign</button><button aria-pressed="false" data-mode="own">Describe it here</button></div>
@@ -667,23 +711,32 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
       </div>
     </div>
     <div class="card" style="margin-top:14px">
-      <div class="row3 voicerow">
-        <div class="field"><label for="vd_photo">Product photo</label><select id="vd_photo" class="photo-pick"></select><div class="hint">The video is built around this photo. Add product photos in Brand Assets.</div></div>
+      <div class="field"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
+        <div class="tray" id="vd_tray" data-where="AI Videos"></div>
+        <div class="hint">The video is built around these photos. No photo? It uses your first product image in Brand Assets.</div></div>
+      <div class="row3 voicerow" style="margin-top:14px">
+        <div class="field"><label for="vd_count">How many videos</label><select id="vd_count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option><option value="4">4 videos</option><option value="5">5 videos</option></select></div>
         <div class="field"><label for="vd_voice">Voiceover</label><select id="vd_voice" class="voice-pick" data-none="1"></select><div class="hint">Reads the script. Pick No voiceover for music only.</div></div>
         <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="vd_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
       </div>
-      <p class="muted small" style="margin-top:10px">Each video is 10 to 30 seconds, rendered on Higgsfield (Seedance 2.5) and paid from your Higgsfield API balance.</p>
+      <div class="field" style="margin-top:14px"><label>How the photos are used</label>
+        <div class="seg" id="vd_layout">
+          <button type="button" data-layout="single" aria-pressed="true"><b>One product per video</b><span>Each video is built around one photo. With several videos, the photos take turns.</span></button>
+          <button type="button" data-layout="together" aria-pressed="false"><b>All products in one video</b><span>Up to 4 photos shown in the same video. Needs 2 photos or more.</span></button>
+        </div></div>
+      <div class="note" id="vd_plan" style="margin-top:14px"><svg class="i"><use href="#i-video"/></svg><div></div></div>
+      <p class="muted small" style="margin-top:10px">Each video is 10 to 30 seconds, rendered on Higgsfield (Seedance 2.5) and paid from your Higgsfield API balance, so 3 videos cost 3 times one video.</p>
     </div>
     <h2 style="margin:22px 0 12px">Choose a video type</h2>
     <div class="concepts" id="vd_concepts"></div>
     <div class="working hidden" id="vd_working" style="margin-top:14px"><div class="bar"><i></i></div><span>Starting your video.</span></div>
-    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos take about 3 to 8 minutes. You can leave this page; they keep rendering and appear here when ready.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a video type above and generate your first one.</div></div>
+    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos take about 3 to 8 minutes. You can leave this page; they keep rendering and appear here when ready. To fix one, press Change on it: a new video is made with your change and the first one stays.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a video type above and generate your first one.</div></div>
   </div>
 </section>
 
 <!-- ================= AI GRAPHICS ================= -->
 <section id="screen-graphics" class="screen hidden">
-  <div class="head"><div><h1>AI Graphics</h1><p>Generate a flyer from the copy in a campaign you have written, or type the flyer copy here. The design agent uses your logo, colours and product photo.</p></div></div>
+  <div class="head"><div><h1>AI Graphics</h1><p>Generate flyers from the copy in a campaign you have written, or type the flyer copy here. Add up to 5 product photos, pick how many flyers you want, and change any one of them after.</p></div></div>
   <div id="gr_body">
     <div class="card srcpanel" data-src="gr">
       <div class="srctabs"><button aria-pressed="true" data-mode="campaign">Use a campaign</button><button aria-pressed="false" data-mode="own">Write it here</button></div>
@@ -696,16 +749,24 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
         <div class="field"><label for="gr_o_copy">Flyer copy</label><textarea id="gr_o_copy" placeholder="Pay on delivery. Original Skincare Gift Set, N25,000. Order on WhatsApp."></textarea><div class="hint">A hook, the price or offer, and what to do next. Keep it under 15 words.</div></div>
         <div class="field"><label for="gr_o_brand">Brand name</label><input id="gr_o_brand" placeholder="Skin by Ferry"></div>
       </div>
-      <div class="row" style="margin-top:18px">
-        <div class="field"><label for="gr_photo">Product photo</label><select id="gr_photo" class="photo-pick"></select><div class="hint">Upload product photos in Brand Assets to choose them here.</div></div>
+      <div class="field" style="margin-top:18px"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
+        <div class="tray" id="gr_tray" data-where="AI Graphics"></div>
+        <div class="hint">No photo? The design agent uses your first product image in Brand Assets, or makes a product photo with AI.</div></div>
+      <div class="row" style="margin-top:14px">
+        <div class="field"><label for="gr_count">How many flyers</label><select id="gr_count"><option value="1">1 flyer</option><option value="2">2 flyers</option><option value="3">3 flyers</option><option value="4">4 flyers</option><option value="5">5 flyers</option></select></div>
         <div class="field"><label for="gr_size">Size</label><select id="gr_size"><option value="portrait">Portrait 4:5, feed and status</option><option value="square">Square 1:1, feed and WhatsApp</option></select></div>
       </div>
-      <div class="field hidden" id="gr_photo_link_f" style="margin-top:12px"><label for="gr_photo_link">Photo link</label><input id="gr_photo_link" placeholder="https://  a direct link to the product photo"><div class="err">Paste a full link starting with https://</div></div>
+      <div class="field" style="margin-top:14px"><label>How the photos are used</label>
+        <div class="seg" id="gr_layout">
+          <button type="button" data-layout="single" aria-pressed="true"><b>One product per flyer</b><span>Each flyer shows one photo. With several flyers, the photos take turns.</span></button>
+          <button type="button" data-layout="collection" aria-pressed="false"><b>All products in one flyer</b><span>A collection flyer with 2 to 4 photos in a grid. Needs 2 photos or more.</span></button>
+        </div></div>
+      <div class="note" id="gr_plan" style="margin-top:14px"><svg class="i"><use href="#i-image"/></svg><div></div></div>
       <div class="field" style="margin-top:12px"><label for="gr_contacts">Contact line on the flyer (optional)</label><input id="gr_contacts" placeholder="WhatsApp 0801 234 5678, @yourhandle, Lekki Phase 1"></div>
-      <div class="actions"><button class="btn" id="gr_go"><span class="spin"></span>Generate flyer</button></div>
-      <div class="working hidden" id="gr_working"><div class="bar"><i></i></div><span>Designing your flyer. About a minute.</span></div>
+      <div class="actions"><button class="btn" id="gr_go"><span class="spin"></span><span data-label>Generate flyer</span></button></div>
+      <div class="working hidden" id="gr_working"><div class="bar"><i></i></div><span>Designing your flyers. About a minute.</span></div>
     </div>
-    <div class="card"><div class="cap"><div><h2>Your flyers</h2></div></div><div class="gallery" id="gr_list"></div><div class="empty" id="gr_empty"><b>No flyers yet</b>Your first design appears here.</div></div>
+    <div class="card"><div class="cap"><div><h2>Your flyers</h2><p>Not quite right? Press Change on a flyer and say what to fix. Only that flyer is redone.</p></div></div><div class="gallery" id="gr_list"></div><div class="empty" id="gr_empty"><b>No flyers yet</b>Your first design appears here.</div></div>
   </div>
 </section>
 
@@ -736,6 +797,9 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
       </div>
       <div class="field"><label for="lp_o_offer">The offer</label><textarea id="lp_o_offer" placeholder="Pay on delivery in Lagos. Free face towel with every set this month."></textarea><div class="err">Add the offer.</div></div>
     </div>
+    <div class="field" style="margin-top:16px"><label>Product photos for the page <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
+      <div class="tray" id="lp_tray" data-where="Landing Pages"></div>
+      <div class="hint">These go in the hero and the product section first. Without photos, the page uses your product images in Brand Assets.</div></div>
     <div class="field" style="margin-top:16px"><label for="lp_whatsapp">WhatsApp number for orders</label><input id="lp_whatsapp" inputmode="numeric" placeholder="2348012345678"><div class="hint">Digits with the country code. Leads from the page go to this number.</div><div class="err">Use digits with the country code, for example 2348012345678.</div></div>
   </div>
 
@@ -833,16 +897,17 @@ const API = {
   generate:       { path: '/ads-padi/campaign/generate', live: true }, // {campaign_id, items:[script|flyer_copy|landing_page_copy|sfv_scripts], sfv_count?} -> {ok, grounded, assets, winners, failed}
   campaignStatus: { path: '/ads-padi/campaign/status',   live: true }, // {campaign_id, review_status?, performance?, performance_notes?} -> {ok, review_status, performance, performance_notes}
   reviewLink:     { path: '/ads-padi/review/create',     live: true }, // {campaign_id, rotate?, revoke?} -> {ok, review_url, revoked}
-  brandUpload:    { path: '/ads-padi/brand/upload',      live: true }, // {category, notes?, file_name, file_type, file_base64 | link} -> {ok, file_id, file_url, extracted_notes}
+  brandUpload:    { path: '/ads-padi/brand/upload',      live: true }, // {category, notes?, file_name, file_type, file_base64, content_hash? | link} -> {ok, file_id, file_url, extracted_notes}. The same content_hash updates the same item.
   brandList:      { path: '/ads-padi/brand/list',        live: true }, // {} -> {ok, files:[...], intelligence, updating}
   brandDelete:    { path: '/ads-padi/brand/delete',      live: true }, // {file_id} -> {ok}
-  graphicsDesign: { path: '/ads-padi/graphics/design',   live: true }, // {campaign_id | flyer_copy, brand?, product_photo_url?, size: portrait|square, contacts?} -> {ok, media_id, file_url, concept}
-  landingBuild:   { path: '/ads-padi/landing/build',     live: true }, // {campaign_id | brief, reviews:{text, photos:[url], videos:[url]}, whatsapp?, page_id? + changes?} -> {ok, page_id, html, blanks}
+  graphicsDesign: { path: '/ads-padi/graphics/design',   live: true }, // {campaign_id | flyer_copy, brand?, product_photo_urls?[], layout?: single|collection, variant?, variants?, size, contacts?} or {revise_media_id, changes} -> {ok, media_id, file_url, concept}
+  landingBuild:   { path: '/ads-padi/landing/build',     live: true }, // {campaign_id | brief, reviews:{text, photos:[url], videos:[url]}, product_photo_urls?[], whatsapp?, page_id? + changes?} -> {ok, page_id, html, blanks}
   landingPublish: { path: '/ads-padi/landing/publish',   live: true }, // {page_id} -> {ok, live_url}; code "blanks" if the page still has [blanks]
-  videoGenerate:  { path: '/ads-padi/video/generate',    live: true }, // {campaign_id | brief, concept, format, product_photo_url?, voice?{voice_id, owner_id, voice_name}, script_text?} -> {ok, job_id, media_id, status: rendering}
+  videoGenerate:  { path: '/ads-padi/video/generate',    live: true }, // {campaign_id | brief, concept, format, product_photo_urls?[], variant?, variants?, voice?{voice_id, owner_id, voice_name}, script_text?} or {revise_media_id, changes} -> {ok, job_id, media_id, status: rendering}
   videoStatus:    { path: '/ads-padi/video/status',      live: true }, // {media_id} -> {ok, status: Rendering|Ready|Failed, file_url}
   voiceList:      { path: '/ads-padi/voice/list',        live: true }, // {refresh?} -> {ok, voices:[{voice_id, owner_id, name, accent, gender, age, preview_url, source: library|mine}]}
   voiceGenerate:  { path: '/ads-padi/voice/generate',    live: true }, // {text, voice_id, owner_id?, voice_name?, campaign_id?, label?} -> {ok, media_id, file_url, duration, words}
+  copyRevise:     { path: '/ads-padi/copy/revise',       live: true }, // {campaign_id, item: script|creative_direction|flyer_copy|landing_page_copy|sfv_scripts, index?, changes} -> {ok, content, part}
   jobStatus:      { path: '/ads-padi/job/status',        live: true }  // {job_id} -> {ok, status: working|done|failed, progress, result, error, code}
 };
 const VIDEO_CONCEPTS = [
@@ -863,6 +928,9 @@ const PLATFORM_NAMES = { meta: 'Facebook and Instagram', tiktok: 'TikTok', linke
 const VIDEO_MAX_MIN = 45;
 
 /* ---------- helpers ---------- */
+// "Change" boxes (one per flyer, video, script or piece of copy): which are open, what is typed, which are working
+const chg = { open: new Set(), text: {}, busy: new Set() };
+const CHANGE_ACTIONS = {}; // prefix -> async (id, text) => message
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1100,11 +1168,11 @@ function showDetail(scroll) {
     + block('Business', `<pre>${esc([f.brand, f.industry, f.product, f.price ? 'Price ' + f.price : '', f.desired_outcome].filter(Boolean).join('\n'))}</pre>`)
     + block('Audience', txt([f.audience, f.age_range, f.location, c.awareness].filter(Boolean).join('\n')))
     + block('Offer', txt(c.chosen_offer), !!c.chosen_offer)
-    + block('Video script', txt(a.script), !!a.script)
-    + block('Creative direction', txt(a.creative_direction), !!a.creative_direction)
-    + block('Flyer copy', txt(a.flyer_copy), !!a.flyer_copy)
-    + block('Landing page copy', txt(a.landing_page_copy), !!a.landing_page_copy)
-    + block('Short form scripts', txt(a.sfv_scripts), !!a.sfv_scripts)
+    + block('Video script', txt(a.script) + (a.script ? changeBox('cs:' + c.campaign_id + ':script') : ''), !!a.script, a.script ? changeBtn('cs:' + c.campaign_id + ':script') : '')
+    + block('Creative direction', txt(a.creative_direction) + (a.creative_direction ? changeBox('cs:' + c.campaign_id + ':creative_direction') : ''), !!a.creative_direction, a.creative_direction ? changeBtn('cs:' + c.campaign_id + ':creative_direction') : '')
+    + block('Flyer copy', txt(a.flyer_copy) + (a.flyer_copy ? changeBox('cs:' + c.campaign_id + ':flyer_copy') : ''), !!a.flyer_copy, a.flyer_copy ? changeBtn('cs:' + c.campaign_id + ':flyer_copy') : '')
+    + block('Landing page copy', txt(a.landing_page_copy) + (a.landing_page_copy ? changeBox('cs:' + c.campaign_id + ':landing_page_copy') : ''), !!a.landing_page_copy, a.landing_page_copy ? changeBtn('cs:' + c.campaign_id + ':landing_page_copy') : '')
+    + block('Short form scripts', txt(a.sfv_scripts) + (a.sfv_scripts ? '<span class="muted small" style="display:block;margin-top:8px">To change one script, open Short Form Videos and press Change on it.</span>' : ''), !!a.sfv_scripts)
     + block('Flyers', graphics.length ? `<div class="thumbs">${graphics.map(m => `<a href="${esc(m.file_url)}" target="_blank" rel="noopener" title="${esc(m.concept)}"><img src="${esc(m.file_url)}" alt="${esc(m.concept || 'Flyer')}" loading="lazy"></a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Graphics.</span>')
     + block('Landing pages', (c.pages || []).length ? `<div class="pagelist">${c.pages.map(p => `<div class="pg"><span>${p.live_url ? `<a href="${esc(p.live_url)}" target="_blank" rel="noopener">${esc(p.live_url.replace(/^https?:\/\//, ''))}</a>` : 'Draft page'}${p.status === 'Draft' && p.live_url ? ' <span class="tag amber">Changes not published</span>' : ''}</span><span class="muted small">${esc(timeAgo(p.updated_at))}</span></div>`).join('')}</div>` : '<span class="muted small">Not built yet.</span>')
     + block('Videos', vids.length ? `<div class="media">${vids.map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><svg class="i" style="width:14px;height:14px"><use href="#i-video"/></svg>${esc(m.label)}</a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Videos or Short Form Videos.</span>')
@@ -1269,7 +1337,9 @@ function renderGenResults() {
     : (keys.length && current && current.grounded === false ? '<div class="note"><div>No active ads were found for this niche in the ad library, so this copy uses the proven default structures.</div></div>' : '');
   const bl = keys.filter(k => blanksIn(a[k]).length);
   const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again.</div></div>` : '';
-  box.innerHTML = winners + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></div><pre>${markBlanks(a[k])}</pre></div>`).join('');
+  const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
+  box.innerHTML = winners + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
+  chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
 }
 
@@ -1354,11 +1424,12 @@ $('#sp_use').addEventListener('click', e => run(e.currentTarget, null, async () 
 
 /* ---------- short form videos ---------- */
 function renderSfv() {
+  const keep = chgFocusSave();
   const t = current && current.assets && current.assets.sfv_scripts;
   const parts = t ? t.split(/\n-{5,}\n/).map(s => s.trim()).filter(Boolean) : [];
   $('#sf_empty').classList.toggle('hidden', !!parts.length);
   const titleOf = p => p.split('\n')[0].replace(/^SCRIPT \d+:\s*/i, '');
-  $('#sf_list').innerHTML = parts.map((p, i) => { const lines = p.split('\n'); return `<div class="sfv"><div class="top"><h3>${esc(titleOf(p))}</h3><button class="btn ghost sm" data-sfcopy="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></div><pre>${markBlanks(lines.slice(1).join('\n').trim())}</pre><div class="acts"><button class="btn soft sm" data-sfvideo="${i}"><span class="spin"></span>Make the video</button><button class="btn ghost sm" data-sfvoice="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-mic"/></svg>Voiceover</button></div></div>`; }).join('');
+  $('#sf_list').innerHTML = parts.map((p, i) => { const lines = p.split('\n'); return `<div class="sfv"><div class="top"><h3>${esc(titleOf(p))}</h3><button class="btn ghost sm" data-sfcopy="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></div><pre>${markBlanks(lines.slice(1).join('\n').trim())}</pre><div class="acts"><button class="btn soft sm" data-sfvideo="${i}"><span class="spin"></span>Make the video</button><button class="btn ghost sm" data-sfvoice="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-mic"/></svg>Voiceover</button>${changeBtn('sfv:' + current.campaign_id + ':' + i)}</div>${changeBox('sfv:' + current.campaign_id + ':' + i, 'Only this script is rewritten. The others stay as they are.')}</div>`; }).join('');
   $$('#sf_list [data-sfcopy]').forEach(b => b.addEventListener('click', () => copyText(parts[Number(b.dataset.sfcopy)])));
   $$('#sf_list [data-sfvideo]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     const p = parts[Number(b.dataset.sfvideo)];
@@ -1366,7 +1437,20 @@ function renderSfv() {
     await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', script_text: p, product_photo_url: '', voice: selectedVoice('sf_voice') }, 'Short form: ' + titleOf(p));
   })));
   $$('#sf_list [data-sfvoice]').forEach(b => b.addEventListener('click', () => { const i = Number(b.dataset.sfvoice); openVoiceover(parts[i], 'Short form: ' + titleOf(parts[i])); }));
+  chgFocusRestore(keep);
 }
+// Change one short form script, or one piece of campaign copy. The same saved copy is updated, so every screen shows the new version.
+async function reviseCopy(cid, item, index, text) {
+  const body = { campaign_id: cid, item, changes: text }; if (index >= 0) body.index = index;
+  const r = await runJob('copyRevise', body, { max: 300000 });
+  const c = campaigns.find(x => x.campaign_id === cid) || {};
+  upsert({ campaign_id: cid, assets: Object.assign({}, c.assets || {}, { [item]: r.content }) });
+  syncQuietly();
+  return r;
+}
+CHANGE_ACTIONS.sfv = async (rest, text) => { const [cid, i] = rest.split(':'); await reviseCopy(cid, 'sfv_scripts', Number(i), text); return 'Script changed'; };
+CHANGE_ACTIONS.copy = async (rest, text) => { const [cid, item] = rest.split(':'); await reviseCopy(cid, item, -1, text); fillForm(); renderSources(); return (ASSET_NAMES[item] || 'Copy') + ' changed'; };
+CHANGE_ACTIONS.cs = CHANGE_ACTIONS.copy;
 $('#sf_go').addEventListener('click', e => run(e.currentTarget, 'sf_working', async () => {
   if (!current) { toast('Pick or start a campaign first.', 'err'); return; }
   const r = await generateCopy(['sfv_scripts'], { sfv_count: Number($('#sf_count').value) || 3 }, 'sf_working');
@@ -1401,12 +1485,12 @@ function renderSources() {
 
 /* ---------- AI videos: Higgsfield (Seedance 2.5) with an ElevenLabs voiceover ---------- */
 const videoWatch = new Set();
-async function startVideo(body, lbl) {
+async function startVideo(body, lbl, quiet) {
   const r = await call('videoGenerate', body);
   if (!r.job_id) throw new Error('The video could not start. Please try again.');
   const m = { kind: 'video', id: r.media_id, job_id: r.job_id, label: lbl, url: '', status: 'rendering', progress: 'Planning the video', campaign_id: body.campaign_id || '', at: Date.now() };
   addMedia(m); trackVideo(m);
-  toast('Video started. It takes about 3 to 8 minutes and appears in AI Videos.', 'ok');
+  if (!quiet) toast('Video started. It takes about 3 to 8 minutes and appears in AI Videos.', 'ok');
   return r;
 }
 async function trackVideo(m) {
@@ -1425,52 +1509,285 @@ async function trackVideo(m) {
   } finally { videoWatch.delete(m.job_id); }
 }
 function resumeVideos() { mediaList().filter(m => m.kind === 'video' && m.status === 'rendering' && m.job_id && Date.now() - (m.at || 0) < VIDEO_MAX_MIN * 60000 * 2).forEach(trackVideo); }
+/* ---------- product photos: one tray each on AI Graphics, AI Videos and Landing Pages ----------
+   Up to 5 photos: paste, drop, choose files, or pick from Brand Assets. A photo added here is saved to
+   Brand Assets (Product Images) when you generate. The same photo always updates its one item there
+   (matched by the file's fingerprint), so pasting it again never makes a copy. */
+const TRAY_MAX = 5;
+const savedByHash = new Map(); // photo fingerprint -> its Brand Assets link, for this visit
+const trays = {};
+async function hashFile(f) {
+  try { if (!(window.crypto && crypto.subtle)) return ''; const d = await crypto.subtle.digest('SHA-256', await f.arrayBuffer()); return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, '0')).join(''); }
+  catch (e) { return ''; }
+}
+function readImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => resolve({ img, url }); img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('This file is not a photo we can read. Use a JPG, PNG or WEBP image.')); };
+    img.src = url;
+  });
+}
+async function preparePhoto(file) {
+  if (!file || !/^image\//.test(file.type || '')) throw new Error('Add a photo: JPG, PNG or WEBP.');
+  if (file.size > 25 * 1024 * 1024) throw new Error('This photo is over 25 MB. Use a smaller one.');
+  const { img, url } = await readImage(file);
+  // Shrink to a light copy (under about 900 KB) so the upload goes through quickly on any connection.
+  const LIMIT = 900000; let out = null;
+  const draw = (max, flat) => { const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight)); const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.naturalWidth * sc)); cv.height = Math.max(1, Math.round(img.naturalHeight * sc)); const cx = cv.getContext('2d'); if (flat) { cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); } cx.drawImage(img, 0, 0, cv.width, cv.height); return cv; };
+  let alpha = false;
+  if (/png|webp/.test(file.type)) { try { const cv = draw(400, false); const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; for (let i = 3; i < d.length; i += 4) { if (d[i] < 250) { alpha = true; break; } } } catch (e) { alpha = false; } }
+  if (alpha) { for (const max of [1600, 1280, 1024]) { const cv = draw(max, false); const data = cv.toDataURL('image/png'); if (data.length <= LIMIT) { out = { data, type: 'image/png', w: cv.width, h: cv.height }; break; } } }
+  if (!out) { for (const max of [1600, 1280, 1024, 800]) { let done = false; for (const q of [0.86, 0.76, 0.66]) { const cv = draw(max, true); const data = cv.toDataURL('image/jpeg', q); out = { data, type: 'image/jpeg', w: cv.width, h: cv.height }; if (data.length <= LIMIT) { done = true; break; } } if (done) break; } }
+  const b64 = (out.data.split(',')[1] || '');
+  if (b64.length < 1000) { URL.revokeObjectURL(url); throw new Error('This photo could not be read. Try another one.'); }
+  const base = String(file.name && file.name !== 'image.png' ? file.name : 'Product photo ' + new Date().toLocaleDateString('en-GB').replace(/\//g, '-')).replace(/\.[a-z0-9]{2,5}$/i, '').slice(0, 80);
+  return { b64, type: out.type, url, name: base + (out.type === 'image/png' ? '.png' : '.jpg'), info: out.w + ' x ' + out.h };
+}
+function productImages() { try { return (brandData.files || []).filter(a => a.category === 'Product Images' && /^image\//.test(a.file_type || '') && a.file_url); } catch (e) { return []; } }
+function makeTray(id) {
+  const root = $('#' + id); const t = { id, root, where: root.dataset.where || 'My Ads Padi', items: [], sent: '' };
+  root.innerHTML = `<div class="tray-list" data-list></div>
+    <label class="drop" tabindex="0" data-drop><input type="file" accept="image/jpeg,image/png,image/webp" multiple><b>Paste photos, drop them here, or click to choose</b><span data-droptxt>Up to 5. New photos are saved in Brand Assets, Product Images, so you can pick them again later.</span></label>
+    <div class="tray-pick hidden" data-pick><span class="small muted">Or pick from your product photos in Brand Assets:</span><div class="tray-assets" data-assets></div></div>`;
+  const input = root.querySelector('input[type=file]'); const drop = root.querySelector('[data-drop]');
+  input.addEventListener('change', () => { trayAddFiles(t, Array.from(input.files || [])); input.value = ''; });
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => trayAddFiles(t, Array.from((e.dataTransfer && e.dataTransfer.files) || [])));
+  root.addEventListener('click', e => {
+    const x = e.target.closest('[data-tx]'); if (x) { trayRemove(t, x.dataset.tx); return; }
+    const a = e.target.closest('[data-tpick]'); if (a) { const f = productImages().find(p => p.file_id === a.dataset.tpick); if (f) trayAddAsset(t, f); }
+  });
+  trays[id] = t; trayRender(t); return t;
+}
+function trayFull(t) { if (t.items.length >= TRAY_MAX) { toast('Up to ' + TRAY_MAX + ' photos. Remove one to add another.', 'err'); return true; } return false; }
+async function trayAddFiles(t, files) {
+  const imgs = files.filter(f => /^image\//.test(f.type || ''));
+  if (files.length && !imgs.length) return toast('Add photos: JPG, PNG or WEBP.', 'err');
+  for (const f of imgs) {
+    if (trayFull(t)) break;
+    try {
+      const hash = await hashFile(f);
+      if (hash && t.items.some(i => i.hash === hash)) { toast('That photo is already added.', ''); continue; }
+      const known = hash && savedByHash.get(hash);
+      if (known) { if (!t.items.some(i => i.url === known)) t.items.push({ key: 'k' + Date.now() + Math.random().toString(36).slice(2, 6), url: known, preview: known, name: f.name || 'Product photo', hash, saved: true }); continue; }
+      const p = await preparePhoto(f);
+      t.items.push({ key: 'k' + Date.now() + Math.random().toString(36).slice(2, 6), url: '', preview: p.url, objectUrl: p.url, name: p.name, info: p.info, b64: p.b64, type: p.type, hash, saved: false });
+    } catch (e) { toast(e.message, 'err'); }
+    trayRender(t);
+  }
+  trayRender(t);
+}
+function trayAddAsset(t, f) {
+  if (t.items.some(i => i.url === f.file_url)) return toast('That photo is already added.', '');
+  if (trayFull(t)) return;
+  t.items.push({ key: 'k' + Date.now() + Math.random().toString(36).slice(2, 6), url: f.file_url, preview: f.file_url, name: f.file_name || 'Product photo', saved: true, asset: true });
+  trayRender(t);
+}
+function trayRemove(t, k) { const it = t.items.find(i => i.key === k); if (it && it.objectUrl) URL.revokeObjectURL(it.objectUrl); t.items = t.items.filter(i => i.key !== k); trayRender(t); }
+function trayRender(t) {
+  const list = t.root.querySelector('[data-list]');
+  list.innerHTML = t.items.map((it, i) => `<div class="tph ${it.error ? 'err' : ''}" title="${esc(it.name)}"><img src="${esc(it.preview)}" alt="Product photo ${i + 1}"><span class="n">${i + 1}</span><button type="button" class="x" data-tx="${esc(it.key)}" aria-label="Remove photo ${i + 1}">&times;</button><span class="st">${esc(it.error ? 'Not saved' : it.saving ? 'Saving...' : it.saved ? (it.asset ? 'From Brand Assets' : 'In Brand Assets') : 'New')}</span></div>`).join('');
+  const full = t.items.length >= TRAY_MAX;
+  t.root.querySelector('[data-drop]').classList.toggle('hidden', full);
+  const used = new Set(t.items.map(i => i.url));
+  const avail = productImages().filter(f => !used.has(f.file_url)).slice(0, 12);
+  t.root.querySelector('[data-pick]').classList.toggle('hidden', full || !avail.length);
+  t.root.querySelector('[data-assets]').innerHTML = avail.map(f => `<button type="button" data-tpick="${esc(f.file_id)}" title="Add ${esc(f.file_name || 'this photo')}"><img src="${esc(f.file_url)}" alt="${esc(f.file_name || 'Product photo')}" loading="lazy"></button>`).join('');
+  t.root.dispatchEvent(new CustomEvent('traychange'));
+}
+function trayRenderAll() { Object.values(trays).forEach(trayRender); }
+// Saves the new photos to Brand Assets (3 at a time) and returns every photo's link, in order
+async function trayUrls(t, say) {
+  const todo = t.items.filter(i => !i.url);
+  if (todo.length) {
+    if (say) say('Saving ' + todo.length + (todo.length === 1 ? ' photo' : ' photos') + ' to Brand Assets.');
+    todo.forEach(i => { i.saving = true; i.error = ''; }); trayRender(t);
+    let next = 0; const errors = [];
+    const worker = async () => { while (next < todo.length) { const it = todo[next++]; try { const r = await call('brandUpload', { category: 'Product Images', notes: 'Product photo added on ' + t.where, file_name: it.name, file_type: it.type, file_base64: it.b64, content_hash: it.hash || '' }); it.url = r.file_url; it.saved = true; it.b64 = ''; if (it.hash) savedByHash.set(it.hash, r.file_url); } catch (e) { if (e.auth) throw e; it.error = e.message; errors.push(e.message); } finally { it.saving = false; trayRender(t); } } };
+    await Promise.all([worker(), worker(), worker()]);
+    loadBrand(true);
+    if (errors.length) throw new Error('A photo could not be saved: ' + errors[0] + ' Remove it or try again.');
+  }
+  return t.items.map(i => i.url).filter(Boolean);
+}
+document.addEventListener('paste', e => {
+  const scr = ['graphics', 'videos', 'landing'].find(n => { const el = $('#screen-' + n); return el && !el.classList.contains('hidden') && el.offsetParent !== null; });
+  if (!scr) return;
+  const tg = e.target; if (tg && (tg.tagName === 'TEXTAREA' || (tg.tagName === 'INPUT' && tg.type !== 'file'))) return;
+  const files = Array.from((e.clipboardData && e.clipboardData.items) || []).filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile()).filter(Boolean);
+  if (!files.length) return; e.preventDefault();
+  trayAddFiles(trays[{ graphics: 'gr_tray', videos: 'vd_tray', landing: 'lp_tray' }[scr]], files);
+});
+function segValue(id) { const b = $('#' + id + ' [aria-pressed="true"]'); return b ? b.dataset.layout : 'single'; }
+$$('.seg').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button[data-layout]'); if (!b || b.disabled) return; seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); seg.dispatchEvent(new CustomEvent('segchange')); }));
+
+/* ---------- change one thing: one small box per flyer, video, script or piece of copy ---------- */
+const CHANGE_HINTS = { gfx: 'Make the headline bigger. Use our red. Put the price on a sticker.', vid: 'Start on the product. Make it brighter. A woman speaks instead of a man.', sfv: 'Make the hook about school resumption. Shorter, under 20 seconds.', copy: 'Mention free delivery in Lagos. Make the hook shorter.', cs: 'Mention free delivery in Lagos. Make the hook shorter.' };
+function changeBtn(key) { return `<button type="button" class="btn ghost sm" data-chg-open="${esc(key)}" ${chg.busy.has(key) ? 'disabled' : ''}>${chg.busy.has(key) ? 'Changing...' : 'Change'}</button>`; }
+function changeBox(key, note) {
+  if (!chg.open.has(key) && !chg.busy.has(key)) return '';
+  const busy = chg.busy.has(key);
+  return `<div class="chg" data-chg="${esc(key)}"><textarea aria-label="What should change" placeholder="${esc(CHANGE_HINTS[key.split(':')[0]] || 'Say what to change.')}" ${busy ? 'disabled' : ''}>${esc(chg.text[key] || '')}</textarea>${note ? `<span class="chgnote">${esc(note)}</span>` : ''}<div class="chipline"><button type="button" class="btn sm ${busy ? 'busy' : ''}" data-chg-go="${esc(key)}" ${busy ? 'disabled' : ''}><span class="spin"></span>${busy ? 'Changing' : 'Apply change'}</button>${busy ? '' : `<button type="button" class="btn ghost sm" data-chg-x="${esc(key)}">Cancel</button>`}</div></div>`;
+}
+function chgFocusSave() { const a = document.activeElement; const box = a && a.closest && a.closest('[data-chg]'); return box && a.tagName === 'TEXTAREA' ? { key: box.dataset.chg, s: a.selectionStart, e: a.selectionEnd } : null; }
+function chgFocusRestore(f) { if (!f) return; const box = Array.from(document.querySelectorAll('[data-chg]')).find(b => b.dataset.chg === f.key && b.offsetParent !== null); const ta = box && box.querySelector('textarea'); if (ta && !ta.disabled) { ta.focus(); try { ta.setSelectionRange(f.s, f.e); } catch (e) {} } }
+function chgRefresh(key) { const f = chgFocusSave(); const k = key.split(':')[0]; if (k === 'gfx' || k === 'vid') renderMedia(); else if (k === 'sfv') renderSfv(); else if (k === 'copy') renderGenResults(); else if (k === 'cs') { detailDirty = false; showDetail(false); } chgFocusRestore(f); }
+document.addEventListener('input', e => { const box = e.target.closest && e.target.closest('[data-chg]'); if (box && e.target.tagName === 'TEXTAREA') { chg.text[box.dataset.chg] = e.target.value; if (box.dataset.chg.startsWith('cs:')) detailDirty = true; } });
+document.addEventListener('click', async e => {
+  const o = e.target.closest && e.target.closest('[data-chg-open]');
+  if (o) { const k = o.dataset.chgOpen; if (chg.open.has(k)) chg.open.delete(k); else chg.open.add(k); chgRefresh(k); const box = Array.from(document.querySelectorAll('[data-chg]')).find(b => b.dataset.chg === k); if (box) box.querySelector('textarea').focus(); return; }
+  const x = e.target.closest && e.target.closest('[data-chg-x]');
+  if (x) { const k = x.dataset.chgX; chg.open.delete(k); delete chg.text[k]; chgRefresh(k); return; }
+  const g = e.target.closest && e.target.closest('[data-chg-go]');
+  if (!g) return;
+  const k = g.dataset.chgGo; const text = String(chg.text[k] || '').trim();
+  if (text.length < 3) { toast('Say what to change first.', 'err'); const box = g.closest('[data-chg]'); if (box) box.querySelector('textarea').focus(); return; }
+  const [prefix, ...rest] = k.split(':'); const fn = CHANGE_ACTIONS[prefix]; if (!fn || chg.busy.has(k)) return;
+  chg.busy.add(k); chgRefresh(k);
+  try { const msg = await fn(rest.join(':'), text); chg.open.delete(k); delete chg.text[k]; toast(msg || 'Changed', 'ok'); }
+  catch (er) { if (!er.auth) toast(er.message, 'err'); }
+  finally { chg.busy.delete(k); chgRefresh(k); }
+});
+
+/* ---------- AI graphics ---------- */
+const gfxPending = []; // flyers being designed: { tmp, label, status, error, campaign_id }
+function grPlan() {
+  const n = Number($('#gr_count').value) || 1; const t = trays.gr_tray; const p = t ? t.items.length : 0;
+  const colBtn = $('#gr_layout [data-layout="collection"]'); colBtn.disabled = p < 2;
+  if (p < 2 && segValue('gr_layout') === 'collection') { $$('#gr_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'single')); }
+  const layout = segValue('gr_layout'); let txt;
+  const fl = n === 1 ? '1 flyer' : n + ' flyers';
+  if (layout === 'collection') txt = fl + ', each showing ' + (p > 4 ? 'the first 4 of your ' + p : p === 2 ? 'both' : 'all ' + p) + ' photos in one collection grid' + (n > 1 ? ', in a different look each time.' : '.');
+  else if (!p) txt = fl + (n > 1 ? ', each in a different design,' : '') + ' with your first product image in Brand Assets, or an AI product photo.';
+  else if (p === 1) txt = fl + ' of the same product' + (n > 1 ? ', each in a different design.' : '.');
+  else txt = fl + ': ' + Array.from({ length: n }, (x, i) => 'photo ' + ((i % p) + 1)).join(', ') + (n > 1 ? ', each in a different design.' : '.') + (n < p ? ' Photos ' + (n + 1) + (p - n > 1 ? ' to ' + p : '') + ' are not used. Pick ' + p + ' flyers to use them all.' : '');
+  $('#gr_plan div').textContent = txt;
+  $('#gr_go [data-label]').textContent = n === 1 ? 'Generate flyer' : 'Generate ' + n + ' flyers';
+}
+makeTray('gr_tray').root.addEventListener('traychange', grPlan);
+$('#gr_count').addEventListener('change', grPlan); $('#gr_layout').addEventListener('segchange', grPlan); grPlan();
+function addFlyerToCampaign(cid, r) {
+  if (cid) {
+    const c = campaigns.find(x => x.campaign_id === cid); const old = (c && c.media) || [];
+    const rec = { media_id: r.media_id, type: 'Graphic', concept: r.concept || 'Flyer', file_url: r.file_url, status: 'Ready', created_at: new Date().toISOString() };
+    const media = old.some(x => x.media_id === r.media_id) ? old.map(x => x.media_id === r.media_id ? Object.assign({}, x, rec, { created_at: x.created_at || rec.created_at }) : x) : [rec].concat(old); // a changed flyer keeps its place
+    upsert({ campaign_id: cid, media });
+  }
+  else if (mediaList().some(x => x.id === r.media_id)) updateMedia(r.media_id, { url: r.file_url || '', label: r.concept || 'Flyer', status: 'ready' });
+  else addMedia({ kind: 'graphic', label: r.concept || 'Flyer', url: r.file_url || '', status: 'ready', id: r.media_id, campaign_id: '' });
+}
+const claimedFlyers = new Set();
+async function designFlyer(body, tmp) {
+  const cid = body.campaign_id; const known = new Set(((campaigns.find(c => c.campaign_id === cid) || {}).media || []).map(m => m.media_id));
+  try {
+    let r;
+    try { r = await runJob('graphicsDesign', body, { max: 480000 }); }
+    catch (er) {
+      if (!(er.timeout || er.network) || !cid) throw er;
+      tmp.progress = 'Taking longer than usual'; renderMedia();
+      const m = await waitFor(async () => { await syncCampaigns(); const c = campaigns.find(x => x.campaign_id === cid); return c && (c.media || []).find(x => x.type === 'Graphic' && x.file_url && !known.has(x.media_id) && !claimedFlyers.has(x.media_id)); }, 12000, 180000);
+      if (!m) throw new Error('The flyer did not finish. Please try again.');
+      r = { media_id: m.media_id, file_url: m.file_url, concept: m.concept };
+    }
+    claimedFlyers.add(r.media_id);
+    gfxPending.splice(gfxPending.indexOf(tmp), 1);
+    addFlyerToCampaign(cid, r);
+    return r;
+  } catch (e) { tmp.status = 'failed'; tmp.error = e.message; renderMedia(); throw e; }
+}
+$('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', async () => {
+  const n = Number($('#gr_count').value) || 1; const layout = segValue('gr_layout');
+  const base = { size: $('#gr_size').value, contacts: $('#gr_contacts').value.trim() };
+  if (useCampaign('gr')) {
+    if (!(current.assets && current.assets.flyer_copy)) { toast('This campaign has no flyer copy yet. Generate it in New Campaign, step 4, or write it here.', 'err'); return; }
+    base.campaign_id = current.campaign_id;
+  } else {
+    const copy = $('#gr_o_copy').value.trim(); if (!copy) { mode.touched = true; setMode('gr', 'own'); validate([['gr_o_copy', false]]); return; }
+    base.flyer_copy = copy; base.brand = $('#gr_o_brand').value.trim();
+  }
+  store.set(key('contacts'), base.contacts);
+  const say = m => { $('#gr_working span').textContent = m; };
+  const urls = await trayUrls(trays.gr_tray, say);
+  if (layout === 'collection' && urls.length < 2) throw new Error('A collection flyer needs 2 photos or more. Add another photo, or pick One product per flyer.');
+  say(n === 1 ? 'Designing your flyer. About a minute.' : 'Designing your ' + n + ' flyers at the same time. About a minute or two.');
+  const cid = base.campaign_id || '';
+  const jobs = Array.from({ length: n }, (x, i) => {
+    const body = Object.assign({}, base, { variant: i + 1, variants: n, layout });
+    if (layout === 'collection') body.product_photo_urls = urls.slice(0, 4);
+    else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
+    const tmp = { tmp: 'tmp_' + Date.now().toString(36) + '_' + i, label: n === 1 ? 'Your flyer' : 'Flyer ' + (i + 1) + ' of ' + n, status: 'working', campaign_id: cid };
+    gfxPending.push(tmp);
+    return sleep(i * 1500).then(() => designFlyer(body, tmp));
+  });
+  renderMedia(); $('#gr_list').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const res = await Promise.allSettled(jobs);
+  const good = res.filter(r => r.status === 'fulfilled').length; const bad = res.filter(r => r.status === 'rejected');
+  renderMedia(); say('Designing your flyers. About a minute.');
+  if (bad.some(r => r.reason && r.reason.auth)) return;
+  if (!bad.length) toast(good === 1 ? 'Flyer ready' : good + ' flyers ready', 'ok');
+  else if (good) toast(good + ' of ' + n + ' flyers ready. ' + bad[0].reason.message, 'err');
+  else throw bad[0].reason;
+}));
+CHANGE_ACTIONS.gfx = async (id, text) => {
+  const r = await runJob('graphicsDesign', { revise_media_id: id, changes: text }, { max: 480000 });
+  const cid = (campaigns.find(c => (c.media || []).some(m => m.media_id === id)) || {}).campaign_id || '';
+  addFlyerToCampaign(cid, Object.assign({}, r, { media_id: r.media_id || id }));
+  return 'Flyer changed';
+};
+
+/* ---------- AI videos: several photos, how many videos, change one ---------- */
 const ICONS = ['i-video', 'i-rocket', 'i-star', 'i-image', 'i-layout', 'i-video', 'i-star', 'i-rocket'];
-$('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${esc(n)}</b><span>${esc(d)}</span><button class="btn sm" data-concept="${esc(n)}"><span class="spin"></span>Generate video</button></div></div>`).join('');
+$('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${esc(n)}</b><span>${esc(d)}</span><button class="btn sm" data-concept="${esc(n)}"><span class="spin"></span><span data-label>Generate video</span></button></div></div>`).join('');
+function vdPlan() {
+  const n = Number($('#vd_count').value) || 1; const t = trays.vd_tray; const p = t ? t.items.length : 0;
+  $('#vd_layout [data-layout="together"]').disabled = p < 2;
+  if (p < 2 && segValue('vd_layout') === 'together') $$('#vd_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'single'));
+  const layout = segValue('vd_layout'); const vv = n === 1 ? '1 video' : n + ' videos'; let txt;
+  if (layout === 'together') txt = vv + ', each showing ' + (p > 4 ? 'the first 4 of your ' + p : p === 2 ? 'both' : 'all ' + p) + ' products' + (n > 1 ? ', each opening a different way.' : '.');
+  else if (!p) txt = vv + (n > 1 ? ', each opening a different way,' : '') + ' built around your first product image in Brand Assets.';
+  else if (p === 1) txt = vv + ' of the same product' + (n > 1 ? ', each opening a different way.' : '.');
+  else txt = vv + ': ' + Array.from({ length: n }, (x, i) => 'photo ' + ((i % p) + 1)).join(', ') + (n > 1 ? ', each opening a different way.' : '.') + (n < p ? ' Photos ' + (n + 1) + (p - n > 1 ? ' to ' + p : '') + ' are not used.' : '');
+  $('#vd_plan div').textContent = txt;
+  $$('#vd_concepts [data-concept] [data-label]').forEach(s => { s.textContent = n === 1 ? 'Generate video' : 'Generate ' + n + ' videos'; });
+}
+makeTray('vd_tray').root.addEventListener('traychange', vdPlan);
+$('#vd_count').addEventListener('change', vdPlan); $('#vd_layout').addEventListener('segchange', vdPlan); vdPlan();
 $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () => run(b, 'vd_working', async () => {
-  let body, fmt;
-  const voice = selectedVoice('vd_voice');
+  let base, fmt;
+  const voice = selectedVoice('vd_voice'); const n = Number($('#vd_count').value) || 1; const layout = segValue('vd_layout');
   if (useCampaign('vd')) {
     if (!(current.assets && current.assets.script) && !current.chosen_offer) { toast('This campaign has no script or offer yet. Generate it in New Campaign, or describe the video here.', 'err'); return; }
     if (current.assets && blanksIn(current.assets.script).length) { toast('The script still has blanks: ' + blanksIn(current.assets.script).join(', ') + '. Pick an offer with the details filled in and generate the copy again.', 'err'); return; }
-    fmt = $('#vd_format').value; body = { campaign_id: current.campaign_id, concept: b.dataset.concept, format: fmt, product_photo_url: photoValue('vd_photo'), voice };
+    fmt = $('#vd_format').value; base = { campaign_id: current.campaign_id, concept: b.dataset.concept, format: fmt, voice };
   } else {
     const o = { product: $('#vd_o_product').value.trim(), audience: $('#vd_o_audience').value.trim(), offer: $('#vd_o_offer').value.trim() };
     if (!o.product || !o.offer) { mode.touched = true; setMode('vd', 'own'); if (!validate([['vd_o_product', !!o.product], ['vd_o_offer', !!o.offer]])) return; }
-    fmt = $('#vd_format2').value; body = { brief: o, concept: b.dataset.concept, format: fmt, product_photo_url: photoValue('vd_photo'), voice };
+    fmt = $('#vd_format2').value; base = { brief: o, concept: b.dataset.concept, format: fmt, voice };
   }
-  await startVideo(body, b.dataset.concept + ' ' + fmt + (voice ? '' : ', no voiceover'));
+  const say = m => { $('#vd_working span').textContent = m; };
+  const urls = await trayUrls(trays.vd_tray, say);
+  if (layout === 'together' && urls.length < 2) throw new Error('All products in one video needs 2 photos or more. Add another photo, or pick One product per video.');
+  say(n === 1 ? 'Starting your video.' : 'Starting your ' + n + ' videos.');
+  const lbl = b.dataset.concept + ' ' + fmt + (voice ? '' : ', no voiceover');
+  let started = 0, firstErr = null;
+  for (let i = 0; i < n; i++) {
+    const body = Object.assign({}, base, { variant: i + 1, variants: n });
+    if (layout === 'together') body.product_photo_urls = urls.slice(0, 4); else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
+    try { await startVideo(body, lbl + (n > 1 ? ' (' + (i + 1) + ' of ' + n + ')' : ''), true); started++; }
+    catch (e) { if (e.auth) throw e; firstErr = firstErr || e; }
+  }
+  say('Starting your video.');
+  if (!started && firstErr) throw firstErr;
+  toast((started === 1 ? 'Video started.' : started + ' videos started.') + ' Each takes about 3 to 8 minutes and appears below.' + (firstErr ? ' ' + (n - started) + ' did not start: ' + firstErr.message : ''), firstErr ? 'err' : 'ok');
 })));
-
-/* ---------- AI graphics ---------- */
-function photoValue(id) { const v = $('#' + id).value; if (v === '__link') return ($('#gr_photo_link').value || '').trim(); return v; }
-$('#gr_photo').addEventListener('change', () => $('#gr_photo_link_f').classList.toggle('hidden', $('#gr_photo').value !== '__link'));
-$('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', async () => {
-  let body;
-  const photo = photoValue('gr_photo');
-  if ($('#gr_photo').value === '__link' && !/^https?:\/\/\S+$/i.test(photo)) { validate([['gr_photo_link', false]]); return; }
-  const common = { product_photo_url: photo, size: $('#gr_size').value, contacts: $('#gr_contacts').value.trim() };
-  if (useCampaign('gr')) {
-    if (!(current.assets && current.assets.flyer_copy)) { toast('This campaign has no flyer copy yet. Generate it in New Campaign, step 4, or write it here.', 'err'); return; }
-    body = Object.assign({ campaign_id: current.campaign_id }, common);
-  } else {
-    const copy = $('#gr_o_copy').value.trim(); if (!copy) { mode.touched = true; setMode('gr', 'own'); validate([['gr_o_copy', false]]); return; }
-    body = Object.assign({ flyer_copy: copy, brand: $('#gr_o_brand').value.trim() }, common);
-  }
-  store.set(key('contacts'), common.contacts);
-  const cid = body.campaign_id; const known = new Set(((campaigns.find(c => c.campaign_id === cid) || {}).media || []).map(m => m.media_id));
-  let r;
-  try { r = await runJob('graphicsDesign', body, { max: 480000 }); }
-  catch (er) {
-    if (!(er.timeout || er.network) || !cid) throw er;
-    const m = await waitFor(async () => { await syncCampaigns(); const c = campaigns.find(x => x.campaign_id === cid); return c && (c.media || []).find(x => x.type === 'Graphic' && x.file_url && !known.has(x.media_id)); }, 12000, 180000);
-    if (!m) throw new Error('The flyer did not finish. Please try again.');
-    r = { media_id: m.media_id, file_url: m.file_url, concept: m.concept };
-  }
-  if (cid) { const c = campaigns.find(x => x.campaign_id === cid); const media = [{ media_id: r.media_id, type: 'Graphic', concept: r.concept || 'Flyer', file_url: r.file_url, status: 'Ready', created_at: new Date().toISOString() }].concat(((c && c.media) || []).filter(x => x.media_id !== r.media_id)); upsert({ campaign_id: cid, media }); }
-  else addMedia({ kind: 'graphic', label: r.concept || 'Flyer', url: r.file_url || '', status: 'ready', id: r.media_id, campaign_id: '' });
-  renderMedia(); toast('Flyer ready', 'ok');
-}));
+CHANGE_ACTIONS.vid = async (id, text) => {
+  const m = mediaList().find(x => x.id === id) || {}; const s = (campaigns.flatMap(c => c.media || []).find(x => x.media_id === id)) || {};
+  const cid = m.campaign_id || (campaigns.find(c => (c.media || []).some(x => x.media_id === id)) || {}).campaign_id || '';
+  await startVideo({ revise_media_id: id, changes: text, campaign_id: cid }, ((m.label || s.concept || 'Video') + '').replace(/ \(changed\)$/, '') + ' (changed)', true);
+  return 'Making the changed video. The first one stays. About 3 to 8 minutes.';
+};
 
 /* ---------- media gallery ---------- */
 function mediaList() { return store.get(key('media'), []); }
@@ -1479,29 +1796,40 @@ function updateMedia(id, patch) { const list = mediaList(); const m = list.find(
 function removeMedia(id) { store.set(key('media'), mediaList().filter(x => x.id !== id)); renderMedia(); }
 const STATE = { Ready: 'ready', Rendering: 'rendering', Failed: 'failed' };
 function renderMedia() {
+  const keep = chgFocusSave();
   const local = mediaList().filter(m => !m.campaign_id || (current && m.campaign_id === current.campaign_id));
   const media = (current && current.media) || [];
   const serverGfx = media.filter(m => m.type === 'Graphic' && m.file_url).map(m => ({ kind: 'graphic', label: m.concept || 'Flyer', url: m.file_url, id: m.media_id, server: true, status: 'ready' }));
   const localVid = local.filter(m => m.kind === 'video');
   const serverVid = media.filter(m => m.type === 'Video' && !localVid.some(l => l.id === m.media_id)).map(m => ({ kind: 'video', label: m.concept || 'Video', url: m.file_url || '', id: m.media_id, server: true, status: STATE[m.status] || (m.file_url ? 'ready' : 'rendering') }));
   localVid.forEach(l => { const s = media.find(m => m.media_id === l.id && m.type === 'Video' && m.file_url); if (s && !l.url) { l.url = s.file_url; l.status = 'ready'; } });
-  const items = { video: localVid.concat(serverVid), graphic: serverGfx.concat(local.filter(m => m.kind === 'graphic' && !serverGfx.some(s => s.id === m.id))) };
+  const pending = gfxPending.filter(p => !p.campaign_id || (current && p.campaign_id === current.campaign_id)).map(p => ({ kind: 'graphic', label: p.label, url: '', id: p.tmp, pending: true, status: p.status === 'failed' ? 'failed' : 'designing', progress: p.progress || 'Designing, about a minute', error: p.error }));
+  const items = { video: localVid.concat(serverVid), graphic: pending.concat(serverGfx, local.filter(m => m.kind === 'graphic' && !serverGfx.some(s => s.id === m.id))) };
   const tag = m => m.url ? '<span class="tag green">ready</span>' : m.status === 'failed' ? '<span class="tag red">failed</span>' : `<span class="tag amber">${esc(m.status || 'rendering')}</span>`;
   const draw = (kind, listId, emptyId) => {
     const list = items[kind]; $('#' + emptyId).classList.toggle('hidden', !!list.length);
-    $('#' + listId).innerHTML = list.map(m => `<div class="gitem"><div class="thumb">${m.url ? (kind === 'video' ? `<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>` : `<a href="${esc(m.url)}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%"><img src="${esc(m.url)}" alt="" loading="lazy"></a>`) : `<svg class="i" style="width:28px;height:28px"><use href="#${kind === 'video' ? 'i-video' : 'i-image'}"/></svg>`}</div>
-      <div class="body"><b title="${esc(m.label)}">${esc(m.label)}</b>${!m.url && m.status === 'rendering' && m.progress ? `<span class="prog">${esc(m.progress)}</span>` : ''}${m.status === 'failed' && m.error ? `<span class="fail">${esc(m.error)}</span>` : ''}<div class="ln">${tag(m)}${m.server ? '' : `<button class="del" data-mdel="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button>`}</div>
-      <div class="acts">${m.url ? `<a class="btn ghost sm" href="${esc(m.url)}" target="_blank" rel="noopener" download>Download</a>` : (kind === 'video' && m.status !== 'failed' ? `<button class="btn ghost sm" data-check="${esc(m.id)}"><span class="spin"></span>Check</button>` : '')}</div></div></div>`).join('');
+    $('#' + listId).innerHTML = list.map(m => {
+      const ck = (kind === 'video' ? 'vid:' : 'gfx:') + m.id; const busy = chg.busy.has(ck);
+      const canChange = !!m.url && (kind === 'graphic' ? /^gfx_/.test(m.id) : /^vid_/.test(m.id));
+      const veil = m.pending && m.status !== 'failed' ? `<div class="veil"><span class="ring"></span>${esc(m.progress)}</div>` : (busy && kind === 'graphic' ? '<div class="veil"><span class="ring"></span>Changing this flyer</div>' : '');
+      const thumb = m.url ? (kind === 'video' ? `<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>` : `<a href="${esc(m.url)}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%"><img src="${esc(m.url)}" alt="" loading="lazy"></a>`) : `<svg class="i" style="width:28px;height:28px"><use href="#${kind === 'video' ? 'i-video' : 'i-image'}"/></svg>`;
+      const del = m.pending ? (m.status === 'failed' ? `<button class="del" data-pdel="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button>` : '') : (m.server ? '' : `<button class="del" data-mdel="${esc(m.id)}" aria-label="Remove"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg></button>`);
+      return `<div class="gitem ${busy ? 'busy' : ''}"><div class="thumb">${thumb}${veil}</div>
+      <div class="body"><b title="${esc(m.label)}">${esc(m.label)}</b>${!m.url && m.status === 'rendering' && m.progress ? `<span class="prog">${esc(m.progress)}</span>` : ''}${m.status === 'failed' && m.error ? `<span class="fail">${esc(m.error)}</span>` : ''}<div class="ln">${tag(m)}${del}</div>
+      <div class="acts">${m.url ? `<a class="btn ghost sm" href="${esc(m.url)}" target="_blank" rel="noopener" download>Download</a>${canChange ? changeBtn(ck) : ''}` : (kind === 'video' && m.status !== 'failed' && !m.pending ? `<button class="btn ghost sm" data-check="${esc(m.id)}"><span class="spin"></span>Check</button>` : '')}</div>
+      ${canChange ? changeBox(ck, kind === 'video' ? 'A new video is made with this change. This one stays.' : 'Only this flyer is redone, with the same photos.') : ''}</div></div>`;
+    }).join('');
   };
   draw('video', 'vd_list', 'vd_empty'); draw('graphic', 'gr_list', 'gr_empty');
   $$('[data-mdel]').forEach(b => b.addEventListener('click', () => removeMedia(b.dataset.mdel)));
+  $$('[data-pdel]').forEach(b => b.addEventListener('click', () => { const i = gfxPending.findIndex(p => p.tmp === b.dataset.pdel); if (i >= 0) gfxPending.splice(i, 1); renderMedia(); }));
   $$('[data-check]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     const r = await call('videoStatus', { media_id: b.dataset.check });
     const st = r.file_url ? 'ready' : (/fail/i.test(r.status || '') ? 'failed' : 'rendering');
     if (mediaList().some(x => x.id === b.dataset.check)) updateMedia(b.dataset.check, { status: st, url: r.file_url || '' }); else syncQuietly();
     toast(r.file_url ? 'Your video is ready' : st === 'failed' ? 'This video did not finish. Try again.' : 'Still rendering. Check again in a minute.', r.file_url ? 'ok' : '');
   })));
-  renderVoiceList();
+  renderVoiceList(); chgFocusRestore(keep);
 }
 
 
@@ -1623,6 +1951,7 @@ function bindDrop(inputId, pvId, bucket) {
   drop.addEventListener('drop', e => add(e.dataTransfer.files));
   return render;
 }
+makeTray('lp_tray');
 const renderVideoPv = bindDrop('lp_video_reviews', 'lp_video_pv', 'video'); const renderPhotoPv = bindDrop('lp_photo_reviews', 'lp_photo_pv', 'photo'); const renderBrandPv = bindDrop('br_file', 'br_pv', 'brand');
 function activePage() { if (useCampaign('lp')) return current.page || null; return mode.lp === 'own' ? ownPage : null; }
 function renderLandingState() {
@@ -1652,7 +1981,7 @@ async function uploadReviewFiles() {
   let n = 0;
   for (const [k, f] of all) {
     n++; $('#lp_working_txt').textContent = 'Uploading review ' + n + ' of ' + all.length + '.';
-    const r = await call('brandUpload', { category: 'Customer Reviews', notes: 'Customer review added for a landing page', file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f) });
+    const r = await call('brandUpload', { category: 'Customer Reviews', notes: 'Customer review added for a landing page', file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), content_hash: await hashFile(f) });
     if (r.file_url) out[k].push(r.file_url);
   }
   return out;
@@ -1676,6 +2005,12 @@ async function buildPage(btn, changes) {
       body = { brief: o };
     }
     if (wa) body.whatsapp = wa;
+    // Product photos for the page: new ones are saved to Brand Assets first. A change sends them only when they changed.
+    const lpTray = trays.lp_tray;
+    if (lpTray && lpTray.items.length && (!revise || lpTray.items.map(i => i.key).join() !== lpTray.sent)) {
+      const urls = await trayUrls(lpTray, m => { $('#lp_working_txt').textContent = m; });
+      if (urls.length) { body.product_photo_urls = urls; lpTray.pendingSent = lpTray.items.map(i => i.key).join(); }
+    }
     if (!revise) {
       const files = (picked.photo.length || picked.video.length) ? await uploadReviewFiles() : { photos: [], videos: [] };
       body.reviews = { text: $('#lp_text_reviews').value.split('\n').map(s => s.trim()).filter(Boolean), photos: files.photos, videos: files.videos };
@@ -1694,6 +2029,7 @@ async function buildPage(btn, changes) {
       r = { page_id: pg.page_id, html: (full && full.html) || '', campaign_id: cid, status: pg.status };
     }
     if (!revise) { picked.photo = []; picked.video = []; renderPhotoPv(); renderVideoPv(); $('#lp_text_reviews').value = ''; }
+    if (lpTray && lpTray.pendingSent !== undefined) { lpTray.sent = lpTray.pendingSent; delete lpTray.pendingSent; }
     const prevLive = page && page.page_id === r.page_id ? page.live_url : '';
     const pg = { page_id: r.page_id, html: r.html || '', status: 'Draft', live_url: prevLive || '', campaign_id: cid, updated_at: new Date().toISOString(), blanks: r.blanks || [] };
     if (cid) { const c = campaigns.find(x => x.campaign_id === cid); const pages = [pg].concat(((c && c.pages) || []).filter(p => p.page_id !== pg.page_id)); upsert({ campaign_id: cid, page: pg, pages }); syncQuietly(); }
@@ -1705,7 +2041,11 @@ async function buildPage(btn, changes) {
   });
 }
 $('#lp_build').addEventListener('click', e => buildPage(e.currentTarget));
-$('#lp_revise').addEventListener('click', e => { const c = $('#lp_changes').value.trim(); if (!c) return validate([['lp_changes', false]]); buildPage(e.currentTarget, c); });
+$('#lp_revise').addEventListener('click', e => {
+  const c = $('#lp_changes').value.trim(); const t = trays.lp_tray; const newPhotos = t && t.items.length && t.items.map(i => i.key).join() !== t.sent;
+  if (!c && !newPhotos) return validate([['lp_changes', false]]);
+  buildPage(e.currentTarget, c || 'Use the product photos I added.');
+});
 $('#lp_publish').addEventListener('click', e => run(e.currentTarget, null, async () => {
   const page = activePage(); if (!page) throw new Error('Build the page first.');
   const bl = page.html ? blanksIn(pageText(page.html)) : [];
@@ -1742,7 +2082,7 @@ $('#br_go').addEventListener('click', e => run(e.currentTarget, 'br_working', as
   let n = 0; const total = picked.brand.length + (link ? 1 : 0); const failed = [];
   for (const f of picked.brand.slice()) {
     $('#br_working_txt').textContent = 'Uploading and reading ' + (n + 1) + ' of ' + total + ': ' + f.name;
-    try { await call('brandUpload', { category: cat, notes, file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f) }); n++; picked.brand = picked.brand.filter(x => x !== f); renderBrandPv(); }
+    try { await call('brandUpload', { category: cat, notes, file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), content_hash: await hashFile(f) }); n++; picked.brand = picked.brand.filter(x => x !== f); renderBrandPv(); }
     catch (er) { if (er.auth) throw er; failed.push(f.name + ': ' + er.message); }
   }
   if (link) { $('#br_working_txt').textContent = 'Reading the link.'; try { await call('brandUpload', { category: cat, notes, link }); n++; $('#br_link').value = ''; } catch (er) { if (er.auth) throw er; failed.push(link + ': ' + er.message); } }
@@ -1771,11 +2111,7 @@ function renderBrand() {
   const colours = Array.isArray(p.colours) && p.colours.length ? `<div class="box"><b>Brand colours</b><div class="swatches">${p.colours.map(c => { const hex = (String(c).match(/#[0-9a-f]{3,8}/i) || [''])[0]; return `<span>${hex ? `<i style="background:${esc(hex)}"></i>` : ''}${esc(c)}</span>`; }).join('')}</div></div>` : '';
   $('#br_intel').innerHTML = (p.summary ? `<div class="box wide"><b>Who you are</b><span style="font-size:14px">${esc(p.summary)}</span></div>` : '') + colours + (p.voice ? `<div class="box"><b>Brand voice</b><span style="font-size:14px">${esc(p.voice)}</span></div>` : '') + ul('Products', p.products) + ul('What customers say', p.customer_words) + ul('Results customers got', p.results) + ul('Doubts and what answers them', p.objections) + ul('Angles that worked before', p.winning_angles) + ul('Numbers from your reports', p.numbers) + ul('What did not work', p.avoid);
 }
-function renderPhotoOptions() {
-  const imgs = (brandData.files || []).filter(a => /^image\//.test(a.file_type || '') && a.file_url);
-  imgs.sort((x, y) => (y.category === 'Product Images') - (x.category === 'Product Images'));
-  $$('.photo-pick').forEach(sel => { const keep = sel.value; sel.innerHTML = '<option value="">Auto: your first product image, or an AI photo</option>' + imgs.map(a => `<option value="${esc(a.file_url)}">${esc(a.category)}: ${esc(a.file_name)}</option>`).join('') + (sel.id === 'gr_photo' ? '<option value="__link">Paste a photo link</option>' : ''); if (keep && Array.from(sel.options).some(o => o.value === keep)) sel.value = keep; });
-}
+function renderPhotoOptions() { trayRenderAll(); } // the photo trays list the product photos in Brand Assets
 
 /* ---------- account and settings ---------- */
 $('#settingsBtn').addEventListener('click', () => {
