@@ -953,8 +953,10 @@ const pageText = html => { try { const d = new DOMParser().parseFromString(Strin
 function toast(msg, kind) {
   const t = document.createElement('div'); t.className = 'toast ' + (kind || '');
   t.innerHTML = (kind === 'ok' ? '<svg class="i"><use href="#i-check"/></svg>' : kind === 'err' ? '<svg class="i"><use href="#i-info"/></svg>' : '') + '<span>' + esc(msg) + '</span>';
-  const box = $('#toasts'); box.appendChild(t); while (box.children.length > 3) box.firstChild.remove(); setTimeout(() => t.remove(), kind === 'err' ? 7000 : 3800);
+  const box = $('#toasts'); box.appendChild(t); while (box.children.length > 3) box.firstChild.remove(); setTimeout(() => t.remove(), kind === 'err' ? 7000 : String(msg).length > 90 ? 6500 : 3800);
 }
+// Brand Assets tells us when an upload was filed under the wrong category and moved it
+const noteMoved = r => { if (r && r.moved_to && r.message) toast(r.message, 'ok'); };
 async function call(name, body) {
   const ep = API[name];
   if (!ep.live) { await sleep(500); throw new Error('This feature is being connected. It will be switched on soon.'); }
@@ -1605,7 +1607,7 @@ async function trayUrls(t, say) {
     if (say) say('Saving ' + todo.length + (todo.length === 1 ? ' photo' : ' photos') + ' to Brand Assets.');
     todo.forEach(i => { i.saving = true; i.error = ''; }); trayRender(t);
     let next = 0; const errors = [];
-    const worker = async () => { while (next < todo.length) { const it = todo[next++]; try { const r = await call('brandUpload', { category: 'Product Images', notes: 'Product photo added on ' + t.where, file_name: it.name, file_type: it.type, file_base64: it.b64, content_hash: it.hash || '' }); it.url = r.file_url; it.saved = true; it.b64 = ''; if (it.hash) savedByHash.set(it.hash, r.file_url); } catch (e) { if (e.auth) throw e; it.error = e.message; errors.push(e.message); } finally { it.saving = false; trayRender(t); } } };
+    const worker = async () => { while (next < todo.length) { const it = todo[next++]; try { const r = await call('brandUpload', { category: 'Product Images', notes: 'Product photo added on ' + t.where, file_name: it.name, file_type: it.type, file_base64: it.b64, content_hash: it.hash || '' }); noteMoved(r); it.url = r.file_url; it.saved = true; it.b64 = ''; if (it.hash) savedByHash.set(it.hash, r.file_url); } catch (e) { if (e.auth) throw e; it.error = e.message; errors.push(e.message); } finally { it.saving = false; trayRender(t); } } };
     await Promise.all([worker(), worker(), worker()]);
     loadBrand(true);
     if (errors.length) throw new Error('A photo could not be saved: ' + errors[0] + ' Remove it or try again.');
@@ -1727,6 +1729,9 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   renderMedia(); say('Designing your flyers. About a minute.');
   if (bad.some(r => r.reason && r.reason.auth)) return;
   if (!bad.length) toast(good === 1 ? 'Flyer ready' : good + ' flyers ready', 'ok');
+  // the checker's tip when a photo itself held the flyer back (a watermark, blur)
+  const tips = Array.from(new Set(res.filter(r => r.status === 'fulfilled' && r.value && r.value.note).map(r => r.value.note)));
+  if (tips.length) toast(tips[0], '');
   else if (good) toast(good + ' of ' + n + ' flyers ready. ' + bad[0].reason.message, 'err');
   else throw bad[0].reason;
 }));
@@ -1734,6 +1739,7 @@ CHANGE_ACTIONS.gfx = async (id, text) => {
   const r = await runJob('graphicsDesign', { revise_media_id: id, changes: text }, { max: 480000 });
   const cid = (campaigns.find(c => (c.media || []).some(m => m.media_id === id)) || {}).campaign_id || '';
   addFlyerToCampaign(cid, Object.assign({}, r, { media_id: r.media_id || id }));
+  if (r.note) setTimeout(() => toast(r.note, ''), 600);
   return 'Flyer changed';
 };
 
@@ -1982,6 +1988,7 @@ async function uploadReviewFiles() {
   for (const [k, f] of all) {
     n++; $('#lp_working_txt').textContent = 'Uploading review ' + n + ' of ' + all.length + '.';
     const r = await call('brandUpload', { category: 'Customer Reviews', notes: 'Customer review added for a landing page', file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), content_hash: await hashFile(f) });
+    noteMoved(r);
     if (r.file_url) out[k].push(r.file_url);
   }
   return out;
@@ -2079,17 +2086,18 @@ $('#br_go').addEventListener('click', e => run(e.currentTarget, 'br_working', as
   if (link && !/^https?:\/\/\S{3,}$/i.test(link)) throw new Error('The link must start with https://');
   checkSize(picked.brand, 10);
   const cat = ($$('input[name="cat"]').find(r => r.checked) || {}).value; const notes = $('#br_notes').value.trim();
-  let n = 0; const total = picked.brand.length + (link ? 1 : 0); const failed = [];
+  let n = 0; const total = picked.brand.length + (link ? 1 : 0); const failed = [], moved = [];
   for (const f of picked.brand.slice()) {
     $('#br_working_txt').textContent = 'Uploading and reading ' + (n + 1) + ' of ' + total + ': ' + f.name;
-    try { await call('brandUpload', { category: cat, notes, file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), content_hash: await hashFile(f) }); n++; picked.brand = picked.brand.filter(x => x !== f); renderBrandPv(); }
+    try { const r = await call('brandUpload', { category: cat, notes, file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), content_hash: await hashFile(f) }); if (r && r.moved_to) moved.push(r.message); n++; picked.brand = picked.brand.filter(x => x !== f); renderBrandPv(); }
     catch (er) { if (er.auth) throw er; failed.push(f.name + ': ' + er.message); }
   }
-  if (link) { $('#br_working_txt').textContent = 'Reading the link.'; try { await call('brandUpload', { category: cat, notes, link }); n++; $('#br_link').value = ''; } catch (er) { if (er.auth) throw er; failed.push(link + ': ' + er.message); } }
+  if (link) { $('#br_working_txt').textContent = 'Reading the link.'; try { const r = await call('brandUpload', { category: cat, notes, link }); if (r && r.moved_to) moved.push(r.message); n++; $('#br_link').value = ''; } catch (er) { if (er.auth) throw er; failed.push(link + ': ' + er.message); } }
   $('#br_working_txt').textContent = 'Uploading and reading your files.';
   if (!failed.length) $('#br_notes').value = '';
   await loadBrand();
   if (n) toast(n + (n === 1 ? ' item added. ' : ' items added. ') + 'The agent is learning from it now.', 'ok');
+  if (moved.length) toast(moved.join(' '), 'ok');
   if (failed.length) toast(failed.join(' | '), 'err');
 }));
 function renderBrand() {
