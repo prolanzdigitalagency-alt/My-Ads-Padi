@@ -691,11 +691,14 @@ select:disabled{opacity:.55;cursor:not-allowed}
       <div class="field"><label for="sf_voice">Voice for videos and voiceovers</label><select id="sf_voice" class="voice-pick"></select></div>
       <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="sf_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
     </div>
+    <div class="field" style="margin-top:12px"><label>Product photos</label>
+      <div class="tray" id="sf_tray" data-where="Short Form Videos"></div>
+      <div class="hint">Every video you make below shows all the products you add here: up to 4 in a 15 second video, 3 in 30 and 60 second videos. No photo? It uses your first product image in Brand Assets.</div></div>
     <p class="muted small" style="margin-top:10px">No offer yet? That is fine. Short form scripts can be written from the business details alone.</p>
     <div class="actions"><button class="btn" id="sf_go"><span class="spin"></span>Write the scripts</button></div>
     <div class="working hidden" id="sf_working"><div class="bar"><i></i></div><span>Checking what is trending in your niche and writing your scripts. About 2 minutes.</span></div>
   </div>
-  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turn any script into a video or a voiceover.</b> Make the video renders it with the voice above and your product photo, in about 5 to 15 minutes; it appears in AI Videos. Voiceover gives you just the spoken lines as an MP3 for your own shoot.</div></div>
+  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turn any script into a video or a voiceover.</b> Make the video renders it with the voice above and your product photos, in about 5 to 15 minutes; it appears in AI Videos. Voiceover gives you just the spoken lines as an MP3 for your own shoot.</div></div>
   <div class="sfvs" id="sf_list" style="margin-top:18px"></div>
   <div class="empty" id="sf_empty" style="margin-top:18px"><b>No short form scripts yet</b>Pick a campaign and write them.</div>
 </section>
@@ -738,10 +741,10 @@ select:disabled{opacity:.55;cursor:not-allowed}
       <div class="field" style="margin-top:14px"><label>How the photos are used</label>
         <div class="seg" id="vd_layout">
           <button type="button" data-layout="single" aria-pressed="true"><b>One product per video</b><span>Each video is built around one photo. With several videos, the photos take turns.</span></button>
-          <button type="button" data-layout="together" aria-pressed="false"><b>All products in one video</b><span>Up to 4 photos shown in the same video. Needs 2 photos or more.</span></button>
+          <button type="button" data-layout="together" aria-pressed="false"><b>All products in one video</b><span>Up to 4 photos shown together in a 15 second video, 3 in 30 and 60 second videos. Add 2 photos or more above to use it.</span></button>
         </div></div>
       <div class="note" id="vd_plan" style="margin-top:14px"><svg class="i"><use href="#i-video"/></svg><div></div></div>
-      <p class="muted small" style="margin-top:10px">Videos are rendered on Higgsfield (Seedance 2.5) at 480p and paid from your Higgsfield API balance by the second: a 60 second video costs 4 times a 15 second one, and 3 videos cost 3 times one video.</p>
+      <p class="muted small" style="margin-top:10px">Videos are rendered on Higgsfield with Kling 3.0 in 1080p, made to look like real phone footage, and paid from your Higgsfield API balance by the second: a 60 second video costs 4 times a 15 second one, and 3 videos cost 3 times one video.</p>
     </div>
     <h2 style="margin:22px 0 12px">Choose a video type</h2>
     <div class="concepts" id="vd_concepts"></div>
@@ -1720,7 +1723,8 @@ function renderSfv() {
     const p = parts[Number(b.dataset.sfvideo)];
     if (blanksIn(p).length) throw new Error('Fill the blanks in this script first: ' + blanksIn(p).join(', ') + '.');
     const secs = Number($('#sf_len').value) || 30;
-    await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', seconds: secs, script_text: p, product_photo_url: '', voice: selectedVoice('sf_voice') }, 'Short form ' + secs + 's: ' + titleOf(p));
+    const urls = await trayUrls(trays.sf_tray);
+    await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', seconds: secs, script_text: p, product_photo_urls: urls.slice(0, 4), voice: selectedVoice('sf_voice') }, 'Short form ' + secs + 's: ' + titleOf(p) + (urls.length > 1 ? ' (' + Math.min(4, urls.length) + ' products)' : ''));
   })));
   $$('#sf_list [data-sfvoice]').forEach(b => b.addEventListener('click', () => { const i = Number(b.dataset.sfvoice); openVoiceover(parts[i], 'Short form: ' + titleOf(parts[i])); }));
   chgFocusRestore(keep);
@@ -1769,7 +1773,7 @@ function renderSources() {
   $$('[data-fix]').forEach(b => b.onclick = () => { const f = String(b.dataset.fix); if (f.startsWith('own:')) { mode.touched = true; setMode(f.slice(4), 'own'); } else if (f === 'brand') showScreen('brand'); else { showScreen('campaign'); showStep(Number(f)); } });
 }
 
-/* ---------- AI videos: Higgsfield (Seedance 2.5) with an ElevenLabs voiceover ---------- */
+/* ---------- AI videos: Higgsfield (Kling 3.0) with an ElevenLabs voiceover or the video's own voice ---------- */
 const videoWatch = new Set();
 async function startVideo(body, lbl, quiet) {
   const r = await call('videoGenerate', body);
@@ -1899,12 +1903,12 @@ async function trayUrls(t, say) {
   return t.items.map(i => i.url).filter(Boolean);
 }
 document.addEventListener('paste', e => {
-  const scr = ['graphics', 'videos', 'landing'].find(n => { const el = $('#screen-' + n); return el && !el.classList.contains('hidden') && el.offsetParent !== null; });
+  const scr = ['graphics', 'videos', 'landing', 'sfv'].find(n => { const el = $('#screen-' + n); return el && !el.classList.contains('hidden') && el.offsetParent !== null; });
   if (!scr) return;
   const tg = e.target; if (tg && (tg.tagName === 'TEXTAREA' || (tg.tagName === 'INPUT' && tg.type !== 'file'))) return;
   const files = Array.from((e.clipboardData && e.clipboardData.items) || []).filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile()).filter(Boolean);
   if (!files.length) return; e.preventDefault();
-  trayAddFiles(trays[{ graphics: 'gr_tray', videos: 'vd_tray', landing: 'lp_tray' }[scr]], files);
+  trayAddFiles(trays[{ graphics: 'gr_tray', videos: 'vd_tray', landing: 'lp_tray', sfv: 'sf_tray' }[scr]], files);
 });
 function segValue(id) { const b = $('#' + id + ' [aria-pressed="true"]'); return b ? b.dataset.layout : 'single'; }
 $$('.seg').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button[data-layout]'); if (!b || b.disabled) return; seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); seg.dispatchEvent(new CustomEvent('segchange')); }));
@@ -2030,12 +2034,15 @@ CHANGE_ACTIONS.gfx = async (id, text) => {
 /* ---------- AI videos: several photos, how many videos, change one ---------- */
 const ICONS = ['i-video', 'i-rocket', 'i-star', 'i-image', 'i-layout', 'i-video', 'i-star', 'i-rocket'];
 $('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${esc(n)}</b><span>${esc(d)}</span><button class="btn sm" data-concept="${esc(n)}"><span class="spin"></span><span data-label>Generate video</span></button></div></div>`).join('');
+let vdLayoutTouched = false; // once the user picks a layout we keep it; until then 2 or more photos means all products in one video
 function vdPlan() {
   const n = Number($('#vd_count').value) || 1; const t = trays.vd_tray; const p = t ? t.items.length : 0;
   $('#vd_layout [data-layout="together"]').disabled = p < 2;
+  if (p >= 2 && !vdLayoutTouched) $$('#vd_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'together'));
   if (p < 2 && segValue('vd_layout') === 'together') $$('#vd_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'single'));
   const layout = segValue('vd_layout'); const vv = n === 1 ? '1 video' : n + ' videos'; let txt;
-  if (layout === 'together') txt = vv + ', each showing ' + (p > 4 ? 'the first 4 of your ' + p : p === 2 ? 'both' : 'all ' + p) + ' products' + (n > 1 ? ', each opening a different way.' : '.');
+  const maxP = Number($('#vd_len').value) > 15 ? 3 : 4; // longer videos also carry a photo of the person on camera
+  if (layout === 'together') txt = vv + ', each showing ' + (p > maxP ? 'the first ' + maxP + ' of your ' + p : p === 2 ? 'both' : 'all ' + p) + ' products' + (n > 1 ? ', each opening a different way.' : '.');
   else if (!p) txt = vv + (n > 1 ? ', each opening a different way,' : '') + ' built around your first product image in Brand Assets.';
   else if (p === 1) txt = vv + ' of the same product' + (n > 1 ? ', each opening a different way.' : '.');
   else txt = vv + ': ' + Array.from({ length: n }, (x, i) => 'photo ' + ((i % p) + 1)).join(', ') + (n > 1 ? ', each opening a different way.' : '.') + (n < p ? ' Photos ' + (n + 1) + (p - n > 1 ? ' to ' + p : '') + ' are not used.' : '');
@@ -2043,7 +2050,8 @@ function vdPlan() {
   $$('#vd_concepts [data-concept] [data-label]').forEach(s => { s.textContent = n === 1 ? 'Generate video' : 'Generate ' + n + ' videos'; });
 }
 makeTray('vd_tray').root.addEventListener('traychange', vdPlan);
-$('#vd_count').addEventListener('change', vdPlan); $('#vd_layout').addEventListener('segchange', vdPlan); vdPlan();
+makeTray('sf_tray');
+$('#vd_count').addEventListener('change', vdPlan); $('#vd_len').addEventListener('change', vdPlan); $('#vd_layout').addEventListener('segchange', () => { vdLayoutTouched = true; vdPlan(); }); vdPlan();
 $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () => run(b, 'vd_working', async () => {
   let base, fmt;
   const voice = selectedVoice('vd_voice'); const n = Number($('#vd_count').value) || 1; const layout = segValue('vd_layout'); const secs = Number($('#vd_len').value) || 60;
