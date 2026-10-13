@@ -302,6 +302,7 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 /* ---------- small grids ---------- */
 .row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
 .row3.voicerow{grid-template-columns:1fr 1fr auto}
+.row.voicerow{grid-template-columns:1fr auto}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .chipline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tag.red{background:var(--red-tint);color:var(--red-deep);border-color:var(--red-line)}
@@ -376,6 +377,8 @@ mark.blank{background:var(--yellow-soft);color:var(--ink);padding:0 3px;border-r
 .out audio{width:100%;height:38px;margin-top:6px}
 @media (max-width:900px){
   .row3,.split,.insight,.status,.intel{grid-template-columns:1fr}
+  .row3.voicerow{grid-template-columns:1fr 1fr}
+  .row3.voicerow .field:last-child,.row.voicerow .field:last-child{align-self:end}
   .fills label{grid-template-columns:1fr}
   .pickbar select{min-width:0;flex:1}
   .ads{grid-template-columns:1fr 1fr}
@@ -426,6 +429,12 @@ select:disabled{opacity:.55;cursor:not-allowed}
 @media (max-width:620px){ .seg{grid-template-columns:1fr} .tph{width:84px;height:84px} }
 .concept .btn span[data-label]{font-size:inherit;color:inherit;flex:none}
 
+/* client PDF bar in Generate */
+.note.pdfbar{align-items:center;background:#fff;border-color:var(--line-2)}
+.note.pdfbar>div{flex:1;min-width:0}
+.note.pdfbar .btn{flex:none}
+@media (max-width:640px){.note.pdfbar{flex-wrap:wrap}.note.pdfbar .btn{width:100%;justify-content:center}}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -458,6 +467,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12M6 10l6 6 6-6"/><path d="M4 20h16"/></symbol>
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
@@ -589,6 +599,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
           <div class="field"><label for="c_market">Market</label><input id="c_market" placeholder="Lagos, Nigeria"></div>
         </div>
         <div class="field"><label for="c_outcome">What does a win look like?</label><textarea id="c_outcome" placeholder="Thirty new WhatsApp orders a week from people ready to buy"></textarea></div>
+        <div class="field"><label for="c_details">Additional details</label><textarea id="c_details" placeholder="We now deliver to Abuja. Try an angle for mothers buying gifts. Never call it cheap."></textarea><div class="hint">Not required. Anything else the agent should use or explore: new stock, a promo, delivery terms, ideas you want tried.</div></div>
       </div>
       <div class="actions"><button class="btn" id="c_save1"><span class="spin"></span>Save and continue</button></div>
     </div>
@@ -675,7 +686,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
       <div class="field"><label>Campaign</label><select class="pick-campaign" id="sf_campaign"></select></div>
       <div class="field"><label for="sf_count">How many scripts</label><select id="sf_count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
     </div>
-    <div class="row" style="margin-top:12px">
+    <div class="row3 voicerow" style="margin-top:12px">
+      <div class="field"><label for="sf_len">Video length</label><select id="sf_len"><option value="15">15 seconds</option><option value="30" selected>30 seconds</option><option value="60">60 seconds</option></select></div>
       <div class="field"><label for="sf_voice">Voice for videos and voiceovers</label><select id="sf_voice" class="voice-pick"></select></div>
       <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="sf_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
     </div>
@@ -683,7 +695,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
     <div class="actions"><button class="btn" id="sf_go"><span class="spin"></span>Write the scripts</button></div>
     <div class="working hidden" id="sf_working"><div class="bar"><i></i></div><span>Checking what is trending in your niche and writing your scripts. About 2 minutes.</span></div>
   </div>
-  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turn any script into a video or a voiceover.</b> Make the video renders it with the voice above and your product photo, in about 3 to 8 minutes; it appears in AI Videos. Voiceover gives you just the spoken lines as an MP3 for your own shoot.</div></div>
+  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turn any script into a video or a voiceover.</b> Make the video renders it with the voice above and your product photo, in about 5 to 15 minutes; it appears in AI Videos. Voiceover gives you just the spoken lines as an MP3 for your own shoot.</div></div>
   <div class="sfvs" id="sf_list" style="margin-top:18px"></div>
   <div class="empty" id="sf_empty" style="margin-top:18px"><b>No short form scripts yet</b>Pick a campaign and write them.</div>
 </section>
@@ -714,9 +726,13 @@ select:disabled{opacity:.55;cursor:not-allowed}
       <div class="field"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
         <div class="tray" id="vd_tray" data-where="AI Videos"></div>
         <div class="hint">The video is built around these photos. No photo? It uses your first product image in Brand Assets.</div></div>
-      <div class="row3 voicerow" style="margin-top:14px">
+      <div class="row" style="margin-top:14px">
+        <div class="field"><label for="vd_len">Video length</label><select id="vd_len"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option></select></div>
         <div class="field"><label for="vd_count">How many videos</label><select id="vd_count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option><option value="4">4 videos</option><option value="5">5 videos</option></select></div>
-        <div class="field"><label for="vd_voice">Voiceover</label><select id="vd_voice" class="voice-pick" data-none="1"></select><div class="hint">Reads the script. Pick No voiceover for music only.</div></div>
+      </div>
+      <div class="row voicerow" style="margin-top:14px">
+
+        <div class="field"><label for="vd_voice">Voiceover</label><select id="vd_voice" class="voice-pick" data-none="1"></select><div class="hint">Reads the script with an ElevenLabs voice. Pick Video voice and the video speaks the lines itself.</div></div>
         <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="vd_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
       </div>
       <div class="field" style="margin-top:14px"><label>How the photos are used</label>
@@ -725,12 +741,12 @@ select:disabled{opacity:.55;cursor:not-allowed}
           <button type="button" data-layout="together" aria-pressed="false"><b>All products in one video</b><span>Up to 4 photos shown in the same video. Needs 2 photos or more.</span></button>
         </div></div>
       <div class="note" id="vd_plan" style="margin-top:14px"><svg class="i"><use href="#i-video"/></svg><div></div></div>
-      <p class="muted small" style="margin-top:10px">Each video is 10 to 30 seconds, rendered on Higgsfield (Seedance 2.5) and paid from your Higgsfield API balance, so 3 videos cost 3 times one video.</p>
+      <p class="muted small" style="margin-top:10px">Videos are rendered on Higgsfield (Seedance 2.5) at 480p and paid from your Higgsfield API balance by the second: a 60 second video costs 4 times a 15 second one, and 3 videos cost 3 times one video.</p>
     </div>
     <h2 style="margin:22px 0 12px">Choose a video type</h2>
     <div class="concepts" id="vd_concepts"></div>
     <div class="working hidden" id="vd_working" style="margin-top:14px"><div class="bar"><i></i></div><span>Starting your video.</span></div>
-    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos take about 3 to 8 minutes. You can leave this page; they keep rendering and appear here when ready. To fix one, press Change on it: a new video is made with your change and the first one stays.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a video type above and generate your first one.</div></div>
+    <div class="card" style="margin-top:18px"><div class="cap"><div><h2>Your videos</h2><p>Videos take about 5 to 15 minutes. You can leave this page; they keep rendering and appear here when ready. To fix one, press Change on it: a new video is made with your change and the first one stays.</p></div></div><div class="gallery" id="vd_list"></div><div class="empty" id="vd_empty"><b>No videos yet</b>Pick a video type above and generate your first one.</div></div>
   </div>
 </section>
 
@@ -1207,7 +1223,7 @@ $$('[data-new-campaign]').forEach(b => b.addEventListener('click', newCampaign))
 function fillForm() {
   const f = (current && current.fields) || {};
   $('#c_brand').value = f.brand || ''; $('#c_industry').value = f.industry || ''; $('#c_product').value = f.product || ''; $('#c_price').value = f.price || '';
-  $('#c_goal').value = f.goal || ''; $('#c_market').value = f.market || ''; $('#c_outcome').value = f.desired_outcome || '';
+  $('#c_goal').value = f.goal || ''; $('#c_market').value = f.market || ''; $('#c_outcome').value = f.desired_outcome || ''; $('#c_details').value = f.additional_details || '';
   $('#c_audience').value = f.audience || ''; $('#c_age').value = f.age_range || ''; $('#c_location').value = f.location || '';
   $$('input[name="aw"]').forEach(r => { r.checked = r.value === (f.awareness || (current && current.awareness)); });
   renderOffers(); renderGenResults();
@@ -1242,7 +1258,7 @@ $$('.pick-campaign').forEach(sel => sel.addEventListener('change', e => { if (e.
 
 /* ---------- steps 1 and 2 ---------- */
 $('#c_save1').addEventListener('click', e => run(e.currentTarget, null, async () => {
-  const f = { brand: $('#c_brand').value.trim(), industry: $('#c_industry').value.trim(), product: $('#c_product').value.trim(), price: $('#c_price').value.trim(), goal: $('#c_goal').value, market: $('#c_market').value.trim(), desired_outcome: $('#c_outcome').value.trim() };
+  const f = { brand: $('#c_brand').value.trim(), industry: $('#c_industry').value.trim(), product: $('#c_product').value.trim(), price: $('#c_price').value.trim(), goal: $('#c_goal').value, market: $('#c_market').value.trim(), desired_outcome: $('#c_outcome').value.trim(), additional_details: $('#c_details').value.trim() };
   if (!validate([['c_brand', !!f.brand], ['c_product', !!f.product], ['c_goal', !!f.goal]])) return;
   const body = Object.assign({}, f); if (current && current.campaign_id) body.campaign_id = current.campaign_id;
   const r = await call('campaignSave', body);
@@ -1336,11 +1352,280 @@ function renderGenResults() {
   const a = (current && current.assets) || {}; const keys = ['script', 'creative_direction', 'flyer_copy', 'landing_page_copy'].filter(k => a[k]); const box = $('#c_gen_results');
   box.classList.toggle('hidden', !keys.length);
   const bl = keys.filter(k => blanksIn(a[k]).length);
-  const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again.</div></div>` : '';
+  const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again. The PDF lists them on its last page so the client can send them.</div></div>` : '';
+  const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One PDF with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send.</div><button class="btn sm" id="c_pdf"><span class="spin"></span>Download PDF</button></div>`;
   const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
-  box.innerHTML = blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
+  box.innerHTML = pdfBar + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
   chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
+  const pb = $('#c_pdf'); if (pb) pb.addEventListener('click', e => run(e.currentTarget, null, async () => { const r = await buildClientPdf(current); toast('PDF downloaded: ' + r.name, 'ok'); }));
+}
+
+/* ---------- PDF for the client ----------
+   One document the team sends to the client for approval (approval happens outside the app).
+   Built in the browser with jsPDF, loaded only when someone downloads. */
+const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+let jspdfLoad = null;
+function loadPdfMaker() {
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if (!jspdfLoad) jspdfLoad = new Promise((resolve, reject) => {
+    const s = document.createElement('script'); s.src = JSPDF_URL; s.async = true;
+    const fail = () => { jspdfLoad = null; s.remove(); reject(new Error('The PDF maker did not load. Check your internet connection and try again.')); };
+    s.onload = () => (window.jspdf && window.jspdf.jsPDF) ? resolve(window.jspdf.jsPDF) : fail();
+    s.onerror = fail;
+    document.head.appendChild(s);
+  });
+  return jspdfLoad;
+}
+// Clean text for the PDF: no dashes or hyphens between words, no emoji or markdown, only characters the PDF font prints
+function pdfText(s) {
+  let t = String(s == null ? '' : s).replace(/\r/g, '');
+  t = t.replace(/[\u2010\u2011]/g, '-').replace(/(\d)\s?[\u2012\u2013]\s?(\d)/g, '$1 to $2').replace(/\u20A6\s?/g, 'N')
+    .replace(/[\u2018\u2019\u201A\u2032\u00B4`]/g, "'").replace(/[\u201C\u201D\u201E\u2033]/g, '"').replace(/\u2026/g, '...')
+    .replace(/\*\*|__/g, '').replace(/\s*-+>\s*/g, ' to ')
+    .replace(/(\d[\d,.]*k?)\s?-\s?(?=N?\d)/gi, (m, a, i, str) => (/\d-$/.test(str.slice(0, i)) || /^N?\d[\d,.]*-\d/.test(str.slice(i + m.length))) ? m : a + (/^0\d{2}/.test(a) ? ' ' : ' to '))
+    .replace(/\d+(?:-\d+){2,}/g, m => m.replace(/-/g, ' '))
+    .replace(/\s*[\u2012-\u2015\u2212]\s*/g, ', ')
+    .replace(/\s+-{1,3}\s+/g, ', ')
+    .replace(/\s*[\u2022\u00B7\u25CF\u25AA\u25E6]\s*/g, ', ')
+    .replace(/([A-Za-z\u00C0-\u00FF0-9'])-(?=[A-Za-z\u00C0-\u00FF])/g, '$1 ')
+    .replace(/([A-Za-z\u00C0-\u00FF])-(?=\d)/g, '$1 ')
+    .replace(/(^|\s)-+(?=\S)/g, '$1').replace(/(\S)-+(?=\s|$)/g, '$1');
+  t = t.replace(/([A-Za-z0-9])[ ]*(?:\p{Extended_Pictographic}[\uFE0F\u200D]*)+[ ]+(?=[A-Z])/gu, '$1. ');
+  t = Array.from(t).filter(ch => { const c = ch.codePointAt(0); return c === 10 || (c >= 32 && c < 127) || (c >= 160 && c < 256 && c !== 173); }).join('');
+  return t.replace(/[ \t\u00A0]{2,}/g, ' ').replace(/\s+(['"])(?=[\s.,!?;:)]|$)/g, '$1').replace(/ +([,.!?;:])/g, '$1').replace(/,(\s*,)+/g, ',').replace(/([.!?]),/g, '$1').replace(/^[\s,]+/, '').replace(/[\s,]+$/, '').trim();
+}
+const PDF_HEADS = { 'HERO': 'Hero section', 'FAQ': 'Frequently asked questions', 'FINAL CTA': 'Final call to action', 'CTA': 'Call to action', 'ORDER FORM': 'Order form', 'SHOOT BLUEPRINT': 'Shoot plan', 'BODY': 'Body text', '3 HOOK OPTIONS': 'Hook options', 'HOOK OPTIONS': 'Hook options', 'CREATIVE DIRECTION': '', 'BUTTON LABEL': 'Button' };
+const PDF_SCENE = ['Talking head', 'Voiceover', 'Voice over', 'Visual', 'On-screen text', 'On screen text', 'Onscreen text', 'Text on screen', 'End screen', 'Sound', 'Music', 'B-roll', 'Action'];
+const PDF_SCENE_SPLIT = new RegExp('\\s+(?=(?:' + PDF_SCENE.map(x => x.replace(/[-]/g, '\\-')).join('|') + ')\\s*:)', 'i');
+const PDF_SPOKEN = /^(talking head|voiceover|voice over|narrator|presenter|creator|customer|mum|mummy)$/i;
+const PDF_DIRECTION = /^(visual|on screen text|onscreen text|text on screen|end screen|b roll|action|sound|music)$/i;
+// Turns one piece of copy into blocks: headings, paragraphs, bullets, labelled lines, scenes, questions and answers
+function pdfBlocks(raw, caseFix) {
+  const out = []; let scene = 0; let lastHead = '';
+  const isUpper = s => /[A-Z]{2}/.test(s) && !/[a-z]/.test(s.replace(/\[[^\]]*\]/g, ''));
+  const head = s => { const k = s.replace(/\*\*|__/g, '').replace(/:$/, '').trim(); return Object.prototype.hasOwnProperty.call(PDF_HEADS, k) ? PDF_HEADS[k] : caseFix(k); };
+  const splitItems = text => {
+    let parts = null;
+    if (/(^|\s)1\)\s/.test(text) && /\s2\)\s/.test(text)) parts = text.split(/\s*\b\d{1,2}\)\s+/);
+    else if (/^1\s+[A-Za-z]/.test(text) && /[.;]\s+2\s+[A-Za-z]/.test(text)) {
+      parts = ['']; let next = 2; let rest = text.replace(/^1\s+/, '');
+      for (;;) { const m = rest.match(new RegExp('[.;][ ]+' + next + '[ ]+(?=[A-Za-z])')); if (!m) break; parts.push(rest.slice(0, m.index + 1)); rest = rest.slice(m.index + m[0].length); next++; }
+      parts.push(rest);
+    }
+    if (!parts) return { text, items: [] };
+    return { text: parts.shift().replace(/[:,\s]+$/, ''), items: parts.map(x => x.replace(/[,;\s]+$/, '')).filter(Boolean) };
+  };
+  const lab = (label, text) => Object.assign({ t: 'lab', label: pdfText(label), raw: label }, splitItems(text));
+  for (const line of String(raw || '').replace(/\r/g, '').split('\n')) {
+    let L = line.replace(/\*\*|__/g, '').trim();
+    if (!L) { if (out.length && out[out.length - 1].t !== 'gap') out.push({ t: 'gap' }); continue; }
+    if (/^[-=_*~]{3,}$/.test(L)) { out.push({ t: 'rule' }); scene = 0; continue; }
+    const md = L.match(/^#{1,6}\s+(.*)$/); if (md) { lastHead = head(md[1].toUpperCase()); out.push({ t: 'h', text: lastHead }); continue; }
+    const bm = L.match(/^(?:([-*\u2022\u25CF])|(\d{1,2})[.)])\s+(.*)$/);
+    const body = bm ? bm[3].trim() : L;
+    const qa = body.match(/^Q\s*[:.]\s*(.+?)\s+A\s*[:.]\s+(.+)$/);
+    if (qa) { out.push({ t: 'qa', q: qa[1], a: qa[2] }); continue; }
+    const q = body.match(/^Q\s*[:.]\s+(.+)$/); if (q) { out.push({ t: 'q', text: q[1] }); continue; }
+    const a = body.match(/^A\s*[:.]\s+(.+)$/); if (a) { out.push({ t: 'a', text: a[1] }); continue; }
+    if (!bm && isUpper(body) && body.length <= 70 && !/:\s*\S/.test(body)) { const h = head(body); lastHead = h || body; if (h) out.push({ t: 'h', text: h }); continue; }
+    const ul = body.match(/^([A-Z][A-Z0-9 &'\/-]{1,30}):\s*(.+)$/);
+    if (ul && isUpper(ul[1])) {
+      if (/^SCRIPT\s+\d+$/.test(ul[1])) { scene = 0; lastHead = ''; out.push({ t: 'title', text: caseFix(ul[1]) + ': ' + ul[2] }); continue; }
+      out.push(lab(head(ul[1]) || caseFix(ul[1]), ul[2])); continue;
+    }
+    const ml = body.match(/^([A-Za-z][A-Za-z0-9 '\/&()-]{0,44}?)\s*:\s+(\S.*)$/);
+    if (ml && ml[1].split(/\s+/).length <= 7) {
+      const parts = body.split(PDF_SCENE_SPLIT);
+      if (parts.length >= 2 && PDF_SCENE.some(x => x.toLowerCase() === ml[1].toLowerCase())) {
+        const rows = parts.map(p => { const m = p.match(/^([^:]{1,30}):\s*(.*)$/); return m ? lab(m[1], m[2]) : { t: 'lab', label: '', text: p, items: [] }; });
+        // a shoot plan reads scene by scene; elsewhere each label simply gets its own line
+        if (/shoot|blueprint|scene|shot|storyboard|beat/i.test(lastHead)) out.push({ t: 'scene', n: ++scene, rows }); else rows.forEach(r => out.push(r));
+        continue;
+      }
+      out.push(lab(ml[1], ml[2])); continue;
+    }
+    if (bm) out.push({ t: 'li', n: bm[2] || '', text: body }); else out.push({ t: 'p', text: body });
+  }
+  while (out.length && out[out.length - 1].t === 'gap') out.pop();
+  while (out.length && out[0].t === 'gap') out.shift();
+  return out;
+}
+const PDF_STAGES = { 'Unaware': 'They do not yet know they have the problem the product solves.', 'Problem-aware': 'They feel the problem but do not know a solution exists.', 'Solution-aware': 'They know solutions exist but have not seen this one.', 'Product-aware': 'They know the product and its competitors, but have not chosen.', 'Most-aware': 'They know and trust the brand. They are waiting for the right offer.' };
+async function buildClientPdf(c) {
+  const JsPDF = await loadPdfMaker();
+  const f = c.fields || {}; const a = c.assets || {};
+  const brand = pdfText(f.brand || c.brand || 'Campaign');
+  const keepWords = ['WhatsApp', 'TikTok', 'Instagram', 'Facebook', 'YouTube', 'Nigeria', 'Lagos', 'Abuja', 'Ghana', 'Accra', 'AI', 'CTA', 'FAQ', 'UGC', 'POV', 'I']
+    .concat([f.brand, c.brand, f.location, f.market].filter(Boolean).join(',').split(/[,;/]+/).map(x => pdfText(x)).filter(x => x.length > 1));
+  const fixWords = t => { keepWords.forEach(w => { t = t.replace(new RegExp('(^|[^A-Za-z])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z])', 'gi'), (m, p) => p + w); }); return t; };
+  const caseFix = s => fixWords(pdfText(s).toLowerCase().replace(/^[a-z]/, x => x.toUpperCase()).replace(/\bn(\d)/g, 'N$1'));
+  const proper = s => fixWords(pdfText(s).replace(/^[a-z]/, x => x.toUpperCase()));
+  const doc = new JsPDF({ unit: 'mm', format: 'a4', compress: true });
+  doc.setProperties({ title: brand + ' campaign copy', subject: 'Campaign copy for approval', author: 'Prolanz Digitals', creator: 'My Ads Padi' });
+  const W = 210, H = 297, M = 20, CW = W - 2 * M, TOP = 24, BOTTOM = H - 22, PT = 0.3528, LABW = 34;
+  const C = { red: '#e10d1c', deep: '#b50b18', ink: '#121316', ink2: '#2a2c33', grey: '#6b7080', soft: '#9aa0ad', line: '#e6e7eb', tint: '#fffbe0', yellow: '#fde900', redTint: '#fdeaec' };
+  let y = TOP;
+  const font = (size, style, color) => { doc.setFont('helvetica', style || 'normal'); doc.setFontSize(size); doc.setTextColor(color || C.ink2); };
+  const lh = size => size * PT * 1.48;
+  const newPage = () => { doc.addPage(); y = TOP; };
+  const room = h => { if (y + h > BOTTOM) newPage(); };
+  const split = (text, width, size, style) => { font(size, style); return doc.splitTextToSize(text, width); };
+  const write = (text, x, width, size, style, color) => { const t = pdfText(text); if (!t) return; const h = lh(size); split(t, width, size, style).forEach(l => { room(h); font(size, style, color); doc.text(l, x, y, { baseline: 'top' }); y += h; }); };
+  const hr = (color, gapBefore, gapAfter) => { y += gapBefore || 0; doc.setDrawColor(color || C.line); doc.setLineWidth(0.25); doc.line(M, y, M + CW, y); y += gapAfter || 0; };
+  const labRow = (b, x0) => {
+    const x = x0 || M; const label = pdfText(b.label); const text = pdfText(b.text);
+    const spoken = PDF_SPOKEN.test(label); const direction = PDF_DIRECTION.test(label);
+    const size = 10.3; const style = direction ? 'italic' : 'normal'; const color = spoken ? C.ink : C.ink2;
+    room(lh(size) + (b.items && b.items.length ? lh(size) : 0));
+    const y0 = y; const pg = doc.getNumberOfPages(); let labelEnd = y;
+    if (label) { const ll = split(label, LABW - 3, 8.8, 'bold'); font(8.8, 'bold', spoken ? C.deep : C.grey); ll.forEach((l, i) => doc.text(l, x, y0 + 0.5 + i * lh(8.8), { baseline: 'top' })); labelEnd = y0 + ll.length * lh(8.8) + 0.5; }
+    const tx = label ? x + LABW : x; const tw = M + CW - tx;
+    if (text) write(text, tx, tw, size, style, color);
+    (b.items || []).forEach((it, i) => { room(lh(size)); const yy = y; font(size, 'bold', C.red); doc.text((i + 1) + '.', tx, yy, { baseline: 'top' }); write(it, tx + 6, tw - 6, size, style, color); y += 0.6; });
+    y = (doc.getNumberOfPages() === pg ? Math.max(y, labelEnd) : y) + 1.6;
+  };
+  const renderBlocks = blocks => blocks.forEach(b => {
+    if (b.t === 'gap') { y += 2; return; }
+    if (b.t === 'rule') { room(14); hr(C.line, 4, 6); return; }
+    if (b.t === 'h') { room(lh(11.5) + 14); y += 3; write(b.text, M, CW, 11.5, 'bold', C.ink); y += 1.6; return; }
+    if (b.t === 'title') { room(lh(13.5) + 20); y += 3; doc.setFillColor(C.red); doc.rect(M, y, 10, 1.1, 'F'); y += 3.5; write(b.text, M, CW, 13.5, 'bold', C.ink); y += 2.5; return; }
+    if (b.t === 'p') { write(b.text, M, CW, 10.5, 'normal', C.ink2); y += 1.4; return; }
+    if (b.t === 'li') {
+      const t = pdfText(b.text); if (!t) return; room(lh(10.5));
+      if (b.n) { font(10.5, 'bold', C.red); doc.text(b.n + '.', M, y, { baseline: 'top' }); } else { doc.setFillColor(C.red); doc.circle(M + 1.6, y + 1.95, 0.75, 'F'); }
+      write(t, M + 6, CW - 6, 10.5, 'normal', C.ink2); y += 1.3; return;
+    }
+    if (b.t === 'lab') { labRow(b); return; }
+    if (b.t === 'scene') {
+      room(lh(9.5) + lh(10.3) * 2 + 4); y += 1;
+      write('Scene ' + b.n, M, CW, 9.5, 'bold', C.deep); y += 1.2;
+      b.rows.forEach(r => labRow(r));
+      hr(C.line, 0.5, 3.5); return;
+    }
+    if (b.t === 'qa' || b.t === 'q') { room(lh(10.5) * 2 + 2); write(b.t === 'qa' ? b.q : b.text, M, CW, 10.5, 'bold', C.ink); y += 0.8; if (b.t === 'qa') { write(b.a, M, CW, 10.5, 'normal', C.ink2); y += 3.2; } return; }
+    if (b.t === 'a') { write(b.text, M, CW, 10.5, 'normal', C.ink2); y += 3.2; return; }
+  });
+  const marks = [];
+  const section = (n, title) => {
+    if (y > TOP + 1) { if (y + 75 > BOTTOM) newPage(); else y += 10; }
+    marks.push({ n, title, page: doc.getNumberOfPages() });
+    font(18, 'bold', C.red); doc.text(String(n), M, y, { baseline: 'top' });
+    font(18, 'bold', C.ink); doc.text(title, M + 9, y, { baseline: 'top' }); y += lh(18) + 1.5;
+    doc.setFillColor(C.red); doc.rect(M, y, 14, 1.1, 'F'); y += 7;
+  };
+
+  // What goes in, in order
+  const offer = (c.offers || []).find(o => o.selected || (c.chosen_offer_id && o.offer_id === c.chosen_offer_id));
+  const chosen = String(c.chosen_offer || '').split('\n');
+  const offerTitle = offer ? offer.title : (chosen.length > 1 ? chosen[0] : '');
+  const offerText = offer ? offer.offer : (chosen.length > 1 ? chosen.slice(1).join('\n') : chosen[0]);
+  const PARTS = [
+    { key: 'offer', title: 'The offer', has: !!pdfText(offerText) },
+    { key: 'script', title: 'Video ad script', has: !!a.script },
+    { key: 'creative_direction', title: 'Creative direction for the video', has: !!a.creative_direction },
+    { key: 'flyer_copy', title: 'Flyer copy', has: !!a.flyer_copy },
+    { key: 'landing_page_copy', title: 'Landing page copy', has: !!a.landing_page_copy },
+    { key: 'sfv_scripts', title: 'Short form video scripts', has: !!a.sfv_scripts }
+  ].filter(p => p.has);
+  const blankList = [['The offer', offerText]].concat(PARTS.filter(p => p.key !== 'offer').map(p => [p.title, a[p.key]]))
+    .map(([title, text]) => [title, blanksIn(text).map(x => pdfText(x.slice(1, -1))).filter(Boolean)]).filter(x => x[1].length);
+  const toc = [{ title: 'Campaign summary' }].concat(PARTS).concat(blankList.length ? [{ title: 'Details we need from you' }] : []).concat([{ title: 'Next steps' }]);
+
+  // Cover
+  doc.setFillColor(C.red); doc.rect(0, 0, W, 7, 'F'); doc.setFillColor(C.yellow); doc.rect(0, 7, W, 1.4, 'F');
+  y = 22; write('Prolanz Digitals', M, CW, 10.5, 'bold', C.red); y += 7;
+  write(brand, M, CW, 28, 'bold', C.ink); y += 0.5;
+  write('Campaign copy for your approval', M, CW, 14, 'normal', C.grey); y += 5;
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  [['Prepared', today], ['Product or service', proper(f.product || c.product)]].filter(r => pdfText(r[1])).forEach(r => labRow({ label: r[0], text: r[1], items: [] }));
+  y += 3;
+  write('This document holds the copy we wrote for your campaign: the offer, the video ad script, the flyer copy and the landing page copy. Please read each part and tell us what you would like changed, or confirm that it is approved. Once you approve it, we produce the video, the flyer, the landing page and the voiceover from this copy.', M, CW, 10.5, 'normal', C.ink2);
+  y += 6;
+  const tocY = y; const tocH = 12 + toc.length * 7.2;
+  doc.setFillColor('#f7f7f5'); doc.rect(M, tocY, CW, tocH, 'F'); doc.setFillColor(C.red); doc.rect(M, tocY, 1.2, tocH, 'F');
+  y = tocY + tocH + 4;
+
+  // 1. Campaign summary
+  let n = 1;
+  section(n++, 'Campaign summary');
+  const stage = f.awareness || c.awareness || '';
+  const rows = [['Brand', f.brand || c.brand], ['Industry', f.industry], ['Product or service', f.product || c.product], ['Price', f.price], ['Campaign goal', f.goal || c.goal], ['What a win looks like', f.desired_outcome], ['Market', f.market], ['Who we are targeting', f.audience], ['Age range', f.age_range], ['Location', f.location], ['Buyer stage', stage ? stage + '. ' + (PDF_STAGES[stage] || '') : '']].filter(r => pdfText(r[1]));
+  rows.forEach((r, i) => {
+    const t = proper(r[1]); const ls = split(t, CW - 50, 10.5, 'normal'); const h = ls.length * lh(10.5) + 4.2;
+    const pg = doc.getNumberOfPages(); room(h); if (i === 0 || doc.getNumberOfPages() !== pg) hr(C.line);
+    font(9, 'bold', C.grey); doc.text(r[0], M, y + 2.3, { baseline: 'top' });
+    ls.forEach((l, k) => { font(10.5, 'normal', C.ink2); doc.text(l, M + 50, y + 2 + k * lh(10.5), { baseline: 'top' }); });
+    y += h; hr(C.line);
+  });
+
+  // The rest, in order
+  PARTS.forEach(p => {
+    section(n++, p.title);
+    if (p.key === 'offer') {
+      const tl = offerTitle ? split(pdfText(offerTitle), CW - 16, 14, 'bold') : [];
+      const ol = split(pdfText(offerText), CW - 16, 11.5, 'normal');
+      const boxH = 12 + tl.length * lh(14) + (tl.length ? 2 : 0) + ol.length * lh(11.5);
+      room(boxH + 4);
+      doc.setFillColor(C.tint); doc.rect(M, y, CW, boxH, 'F'); doc.setFillColor(C.red); doc.rect(M, y, 1.4, boxH, 'F');
+      let yy = y + 6;
+      tl.forEach(l => { font(14, 'bold', C.ink); doc.text(l, M + 8, yy, { baseline: 'top' }); yy += lh(14); }); if (tl.length) yy += 2;
+      ol.forEach(l => { font(11.5, 'normal', C.ink2); doc.text(l, M + 8, yy, { baseline: 'top' }); yy += lh(11.5); });
+      y += boxH + 6;
+      if (offer && pdfText(offer.why_it_works)) { renderBlocks([{ t: 'h', text: 'Why this offer works' }, { t: 'p', text: offer.why_it_works }]); }
+      return;
+    }
+    let blocks = pdfBlocks(a[p.key], caseFix);
+    if (p.key === 'flyer_copy') {
+      // Show the flyer words the way they will sit on the flyer
+      const parts = []; let angle = '';
+      blocks.forEach((b, i) => { if (b.t === 'lab' && /^angle$/i.test(b.label)) angle = b.text; if (b.t === 'h' && blocks[i + 1] && blocks[i + 1].t === 'p') parts.push([b.text, blocks[i + 1].text]); });
+      if (parts.length >= 2) {
+        const style = k => /headline/i.test(k) ? [19, 'bold', C.ink] : /offer/i.test(k) ? [14, 'bold', C.deep] : /call to action|cta/i.test(k) ? [12.5, 'bold', C.ink] : [12, 'normal', C.ink2];
+        const lay = parts.map(([k, v]) => { const st = style(k); return { k, st, ls: split(pdfText(v), CW - 20, st[0], st[1]) }; });
+        const boxH = 10 + lay.reduce((s, l) => s + lh(8.5) + 1 + l.ls.length * lh(l.st[0]) + 5, 0);
+        room(boxH + 6 + (angle ? lh(10.3) * 2 + 2 : 0));
+        if (angle) labRow({ label: 'Angle', text: angle, items: [] });
+        y += 2;
+        doc.setDrawColor(C.line); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, boxH, 3, 3, 'S');
+        let yy = y + 8;
+        lay.forEach(l => { font(8.5, 'bold', C.grey); doc.text(l.k, M + 10, yy, { baseline: 'top' }); yy += lh(8.5) + 1; l.ls.forEach(t => { font(l.st[0], l.st[1], l.st[2]); doc.text(t, M + 10, yy, { baseline: 'top' }); yy += lh(l.st[0]); }); yy += 5; });
+        y += boxH + 6;
+        const rest = blocks.filter((b, i) => !(b.t === 'lab' && /^angle$/i.test(b.label)) && !(b.t === 'h' && blocks[i + 1] && blocks[i + 1].t === 'p') && !(b.t === 'p' && blocks[i - 1] && blocks[i - 1].t === 'h'));
+        if (rest.some(b => b.t !== 'gap')) renderBlocks(rest);
+        return;
+      }
+    }
+    renderBlocks(blocks);
+  });
+
+  // Blanks the client must fill
+  if (blankList.length) {
+    section(n++, 'Details we need from you');
+    write('We left these details blank because we do not have them yet. Please send them with your approval and we will fill them in everywhere they appear.', M, CW, 10.5, 'normal', C.ink2); y += 4;
+    blankList.forEach(([title, items]) => labRow({ label: title, text: '', items: items.map(x => x.replace(/^[a-z]/, m => m.toUpperCase())) }));
+  }
+  section(n++, 'Next steps');
+  renderBlocks([
+    { t: 'li', n: '1', text: 'Read each part of this document.' },
+    { t: 'li', n: '2', text: 'Tell us anything you want changed, or reply that it is approved.' + (blankList.length ? ' Include the details we asked for above.' : '') },
+    { t: 'li', n: '3', text: 'Once you approve it, we produce the video, the flyer, the landing page and the voiceover from this copy.' }
+  ]);
+
+  // Contents with page numbers, then the header and footer on every page
+  const pages = doc.getNumberOfPages();
+  doc.setPage(1);
+  let ty = tocY + 5; font(10.5, 'bold', C.ink); doc.text('What is inside', M + 7, ty, { baseline: 'top' }); ty += 7.5;
+  toc.forEach((t, i) => { const mk = marks.find(m => m.title === t.title); font(10, 'normal', C.ink2); doc.text((i + 1) + '   ' + t.title, M + 7, ty, { baseline: 'top' }); font(10, 'normal', C.grey); doc.text(mk ? 'Page ' + mk.page : '', M + CW - 6, ty, { baseline: 'top', align: 'right' }); ty += 7.2; });
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    if (i > 1) { font(8.5, 'bold', C.red); doc.text('Prolanz Digitals', M, 11, { baseline: 'top' }); font(8.5, 'normal', C.grey); doc.text(brand + ', campaign copy for approval', M + CW, 11, { baseline: 'top', align: 'right' }); doc.setDrawColor(C.line); doc.setLineWidth(0.25); doc.line(M, 16, M + CW, 16); }
+    doc.setDrawColor(C.line); doc.setLineWidth(0.25); doc.line(M, H - 15, M + CW, H - 15);
+    font(8.5, 'normal', C.grey); doc.text('Prepared by Prolanz Digitals for ' + brand, M, H - 12, { baseline: 'top' }); doc.text('Page ' + i + ' of ' + pages, M + CW, H - 12, { baseline: 'top', align: 'right' });
+  }
+  const name = (brand + ' campaign copy').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
+  doc.save(name);
+  return { name, pages };
 }
 
 /* ---------- spy on competitors ---------- */
@@ -1434,7 +1719,8 @@ function renderSfv() {
   $$('#sf_list [data-sfvideo]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     const p = parts[Number(b.dataset.sfvideo)];
     if (blanksIn(p).length) throw new Error('Fill the blanks in this script first: ' + blanksIn(p).join(', ') + '.');
-    await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', script_text: p, product_photo_url: '', voice: selectedVoice('sf_voice') }, 'Short form: ' + titleOf(p));
+    const secs = Number($('#sf_len').value) || 30;
+    await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', seconds: secs, script_text: p, product_photo_url: '', voice: selectedVoice('sf_voice') }, 'Short form ' + secs + 's: ' + titleOf(p));
   })));
   $$('#sf_list [data-sfvoice]').forEach(b => b.addEventListener('click', () => { const i = Number(b.dataset.sfvoice); openVoiceover(parts[i], 'Short form: ' + titleOf(parts[i])); }));
   chgFocusRestore(keep);
@@ -1490,7 +1776,7 @@ async function startVideo(body, lbl, quiet) {
   if (!r.job_id) throw new Error('The video could not start. Please try again.');
   const m = { kind: 'video', id: r.media_id, job_id: r.job_id, label: lbl, url: '', status: 'rendering', progress: 'Planning the video', campaign_id: body.campaign_id || '', at: Date.now() };
   addMedia(m); trackVideo(m);
-  if (!quiet) toast('Video started. It takes about 3 to 8 minutes and appears in AI Videos.', 'ok');
+  if (!quiet) toast('Video started. It takes about 5 to 15 minutes and appears in AI Videos.', 'ok');
   return r;
 }
 async function trackVideo(m) {
@@ -1760,21 +2046,21 @@ makeTray('vd_tray').root.addEventListener('traychange', vdPlan);
 $('#vd_count').addEventListener('change', vdPlan); $('#vd_layout').addEventListener('segchange', vdPlan); vdPlan();
 $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () => run(b, 'vd_working', async () => {
   let base, fmt;
-  const voice = selectedVoice('vd_voice'); const n = Number($('#vd_count').value) || 1; const layout = segValue('vd_layout');
+  const voice = selectedVoice('vd_voice'); const n = Number($('#vd_count').value) || 1; const layout = segValue('vd_layout'); const secs = Number($('#vd_len').value) || 60;
   if (useCampaign('vd')) {
     if (!(current.assets && current.assets.script) && !current.chosen_offer) { toast('This campaign has no script or offer yet. Generate it in New Campaign, or describe the video here.', 'err'); return; }
     if (current.assets && blanksIn(current.assets.script).length) { toast('The script still has blanks: ' + blanksIn(current.assets.script).join(', ') + '. Pick an offer with the details filled in and generate the copy again.', 'err'); return; }
-    fmt = $('#vd_format').value; base = { campaign_id: current.campaign_id, concept: b.dataset.concept, format: fmt, voice };
+    fmt = $('#vd_format').value; base = { campaign_id: current.campaign_id, concept: b.dataset.concept, format: fmt, seconds: secs, voice };
   } else {
     const o = { product: $('#vd_o_product').value.trim(), audience: $('#vd_o_audience').value.trim(), offer: $('#vd_o_offer').value.trim() };
     if (!o.product || !o.offer) { mode.touched = true; setMode('vd', 'own'); if (!validate([['vd_o_product', !!o.product], ['vd_o_offer', !!o.offer]])) return; }
-    fmt = $('#vd_format2').value; base = { brief: o, concept: b.dataset.concept, format: fmt, voice };
+    fmt = $('#vd_format2').value; base = { brief: o, concept: b.dataset.concept, format: fmt, seconds: secs, voice };
   }
   const say = m => { $('#vd_working span').textContent = m; };
   const urls = await trayUrls(trays.vd_tray, say);
   if (layout === 'together' && urls.length < 2) throw new Error('All products in one video needs 2 photos or more. Add another photo, or pick One product per video.');
   say(n === 1 ? 'Starting your video.' : 'Starting your ' + n + ' videos.');
-  const lbl = b.dataset.concept + ' ' + fmt + (voice ? '' : ', no voiceover');
+  const lbl = b.dataset.concept + ' ' + secs + 's ' + fmt + (voice ? '' : ', video voice');
   let started = 0, firstErr = null;
   for (let i = 0; i < n; i++) {
     const body = Object.assign({}, base, { variant: i + 1, variants: n });
@@ -1784,13 +2070,13 @@ $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () =>
   }
   say('Starting your video.');
   if (!started && firstErr) throw firstErr;
-  toast((started === 1 ? 'Video started.' : started + ' videos started.') + ' Each takes about 3 to 8 minutes and appears below.' + (firstErr ? ' ' + (n - started) + ' did not start: ' + firstErr.message : ''), firstErr ? 'err' : 'ok');
+  toast((started === 1 ? 'Video started.' : started + ' videos started.') + ' Each takes about 5 to 15 minutes and appears below.' + (firstErr ? ' ' + (n - started) + ' did not start: ' + firstErr.message : ''), firstErr ? 'err' : 'ok');
 })));
 CHANGE_ACTIONS.vid = async (id, text) => {
   const m = mediaList().find(x => x.id === id) || {}; const s = (campaigns.flatMap(c => c.media || []).find(x => x.media_id === id)) || {};
   const cid = m.campaign_id || (campaigns.find(c => (c.media || []).some(x => x.media_id === id)) || {}).campaign_id || '';
   await startVideo({ revise_media_id: id, changes: text, campaign_id: cid }, ((m.label || s.concept || 'Video') + '').replace(/ \(changed\)$/, '') + ' (changed)', true);
-  return 'Making the changed video. The first one stays. About 3 to 8 minutes.';
+  return 'Making the changed video. The first one stays. About 5 to 15 minutes.';
 };
 
 /* ---------- media gallery ---------- */
@@ -1848,8 +2134,8 @@ function renderVoicePickers() {
   $$('.voice-pick').forEach(sel => {
     const keep = sel.dataset.chosen !== undefined ? sel.value : ((pref && pref.voice_id) || '');
     const none = sel.dataset.none === '1';
-    if (!list.length) { sel.innerHTML = (none ? '<option value="">No voiceover, music only</option>' : '') + `<option value="" disabled ${none ? '' : 'selected'}>${esc(voicesErr ? 'Voices not available' : 'Loading voices...')}</option>`; return; }
-    sel.innerHTML = (none ? '<option value="">No voiceover, music only</option>' : '') + (ng.length ? `<optgroup label="Nigerian voices">${ng.map(opt).join('')}</optgroup>` : '') + (mine.length ? `<optgroup label="Your ElevenLabs voices">${mine.map(opt).join('')}</optgroup>` : '');
+    if (!list.length) { sel.innerHTML = (none ? '<option value="">Video voice (no ElevenLabs)</option>' : '') + `<option value="" disabled ${none ? '' : 'selected'}>${esc(voicesErr ? 'Voices not available' : 'Loading voices...')}</option>`; return; }
+    sel.innerHTML = (none ? '<option value="">Video voice (no ElevenLabs)</option>' : '') + (ng.length ? `<optgroup label="Nigerian voices">${ng.map(opt).join('')}</optgroup>` : '') + (mine.length ? `<optgroup label="Your ElevenLabs voices">${mine.map(opt).join('')}</optgroup>` : '');
     if (keep !== '' && Array.from(sel.options).some(o => o.value === keep)) sel.value = keep;
     else if (sel.dataset.chosen === '' && none) sel.value = '';
     else { const first = Array.from(sel.options).find(o => o.value); if (first) sel.value = first.value; }
@@ -1875,7 +2161,7 @@ document.addEventListener('change', e => { const sel = e.target; if (!sel.classL
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('[data-play]'); if (!b) return;
   const sel = $('#' + b.dataset.play); const v = ((voices && voices.voices) || []).find(x => x.voice_id === (sel && sel.value));
-  if (!v) return toast(sel && sel.dataset.none === '1' && !sel.value ? 'No voiceover picked.' : 'Pick a voice first.', '');
+  if (!v) return toast(sel && sel.dataset.none === '1' && !sel.value ? 'Video voice picked: the video speaks the lines itself.' : 'Pick a voice first.', '');
   if (!v.preview_url) return toast('This voice has no sample.', '');
   if (sampleAudio) sampleAudio.pause();
   sampleAudio = new Audio(v.preview_url); sampleAudio.play().catch(() => toast('Could not play the sample.', 'err'));
