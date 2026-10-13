@@ -618,8 +618,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 
     <div class="card step hidden" data-step="3">
       <div class="cap"><div><h2>Your offer</h2><p>Four offers shaped by your goal and the buyer's stage. Pick the one you can actually deliver. Where the agent does not know a detail, it leaves a blank for you to fill.</p></div><button class="btn soft sm hidden" id="c_offers_again"><span class="spin"></span>Write 4 new offers</button></div>
-      <div class="empty" id="c_offers_empty"><b>No offers yet</b>The agent writes four options for this campaign in about 20 seconds.<br><button class="btn" id="c_offers_go"><span class="spin"></span>Write 4 offers</button></div>
-      <div class="working hidden" id="c_offers_working"><div class="bar"><i></i></div><span>Writing four offers for your buyer.</span></div>
+      <div class="empty" id="c_offers_empty"><b>No offers yet</b>The agent writes four options for this campaign. The first time can take up to 8 minutes.<br><button class="btn" id="c_offers_go"><span class="spin"></span>Write 4 offers</button></div>
+      <div class="working hidden" id="c_offers_working"><div class="bar"><i></i></div><span>Writing four offers for your buyer. The first time can take up to 8 minutes.</span></div>
       <div class="offers hidden" id="c_offers"></div>
       <div class="note green hidden" id="c_chosen" style="margin-top:18px"></div>
       <div class="actions"><button class="btn ghost" data-goto="2">Back</button><button class="btn hidden" id="c_step3_next" data-goto="4">Continue to generate</button></div>
@@ -635,7 +635,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
       </div>
       <p class="muted small" style="margin:10px 0 0">The video script comes with creative direction: the creative type to shoot, who is on camera, the shot list and notes for the AI video. Short form scripts have their own screen.</p>
       <div class="actions"><button class="btn ghost" data-goto="3">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
-      <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Studying winning ads in your niche and writing your copy. About 2 minutes.</span></div>
+      <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Writing and checking your copy. About 3 minutes.</span></div>
       <div class="stack hidden" id="c_gen_results" style="margin-top:20px"></div>
     </div>
   </div>
@@ -1257,6 +1257,7 @@ $('#c_save2').addEventListener('click', e => run(e.currentTarget, null, async ()
   const r = await call('campaignSave', Object.assign({ campaign_id: current.campaign_id }, f));
   upsert({ campaign_id: r.campaign_id, awareness: aw, fields: Object.assign({}, current.fields || {}, f) });
   toast('Saved', 'ok'); showStep(3);
+  if (!((current && current.offers) || []).length) writeOffers($('#c_offers_go')); // the offers start as soon as the buyer is set
 }));
 
 /* ---------- step 3: offers ---------- */
@@ -1265,7 +1266,7 @@ async function writeOffers(btn) {
   if (!(current.awareness || (current.fields || {}).awareness)) { toast('Set the audience first. The offers depend on the buyer stage.', 'err'); return showStep(2); }
   $('#c_offers_empty').classList.add('hidden');
   await run(btn, 'c_offers_working', async () => {
-    const r = await call('offersGenerate', { campaign_id: current.campaign_id });
+    const r = await runJob('offersGenerate', { campaign_id: current.campaign_id }, { max: 600000 });
     upsert({ campaign_id: current.campaign_id, offers: r.offers, chosen_offer_id: '', chosen_offer: '' });
     toast('Four offers written for a ' + (r.awareness || '').toLowerCase() + ' buyer', 'ok');
   });
@@ -1329,18 +1330,15 @@ $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_workin
   const r = await generateCopy(items, {}, 'c_gen_working');
   fillForm(); renderSources();
   if (r.failed && r.failed.length) toast('Ready, but ' + r.failed.map(k => (ASSET_NAMES[k] || k).toLowerCase()).join(', ') + ' did not come through. Generate again for those.', 'err');
-  else toast(r.grounded ? 'Your copy is ready, modeled on what is winning in your niche' : 'Your copy is ready', 'ok');
+  else toast('Your copy is ready', 'ok');
 }));
 function renderGenResults() {
   const a = (current && current.assets) || {}; const keys = ['script', 'creative_direction', 'flyer_copy', 'landing_page_copy'].filter(k => a[k]); const box = $('#c_gen_results');
   box.classList.toggle('hidden', !keys.length);
-  const w = current && current.winners; const winners = w && w.brands && w.brands.length
-    ? `<div class="note green"><svg class="i"><use href="#i-star"/></svg><div><b>Modeled on what is winning in your niche right now.</b> ${esc(w.brands.slice(0, 4).map(b => b.brand + (b.creative && b.creative !== 'unclear' ? ' (' + b.creative + ')' : '')).join(', '))}${w.offers && w.offers.length ? '. Offers working: ' + esc(w.offers.slice(0, 3).join('; ')) : ''}</div></div>`
-    : (keys.length && current && current.grounded === false ? '<div class="note"><div>No active ads were found for this niche in the ad library, so this copy uses the proven default structures.</div></div>' : '');
   const bl = keys.filter(k => blanksIn(a[k]).length);
   const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again.</div></div>` : '';
   const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
-  box.innerHTML = winners + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
+  box.innerHTML = blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
   chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
 }
