@@ -331,7 +331,7 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .insight .wide{grid-column:1/-1}
 .pickbar{position:sticky;bottom:14px;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;margin-top:18px;box-shadow:var(--shadow-lg)}
 .pickbar b{font-size:14px}
-.pickbar select{padding:8px 32px 8px 12px;border-radius:10px;border:0;font-weight:600;min-width:220px;max-width:100%}
+.pickbar select{padding:8px 32px 8px 12px;border-radius:10px;border:0;background:#fff;color:#121316;font-weight:600;min-width:220px;max-width:100%}
 /* ---------- offers with blanks ---------- */
 .fills{display:grid;gap:8px;background:var(--amber-tint);border:1px solid #f3dba6;border-radius:12px;padding:12px 14px}
 .fills .lead{font-size:13px;font-weight:700;color:var(--amber)}
@@ -481,6 +481,9 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .pkgtot span{font-weight:700;font-size:13px;padding:5px 10px;border-radius:999px;background:#f3f3f3}
 .pkgtot .ok{background:#e6f6ea;color:#176b2c}.pkgtot .off{background:#fdecea;color:#b42318}
 @media(max-width:760px){.pkgs{grid-template-columns:1fr 1fr}.pkgprod{grid-template-columns:1fr 1fr}}
+.pickbar select option{color:#121316;background:#fff}
+#sp_bar select#sp_campaign{color-scheme:light;background-color:#fff;color:#121316;-webkit-text-fill-color:#121316;opacity:1;text-overflow:ellipsis}
+#sp_bar select#sp_campaign option{color:#121316;background-color:#fff;-webkit-text-fill-color:#121316}
 
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
@@ -899,7 +902,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
     <div class="frame" id="lp_frame"><iframe id="lp_preview" title="Landing page preview" sandbox="allow-scripts"></iframe></div>
     <div class="field" style="margin-top:18px"><label for="lp_changes">What should change?</label><textarea id="lp_changes" placeholder="Make the headline mention free delivery. The guarantee is 14 days."></textarea><div class="err">Tell the agent what to change.</div></div>
     <div class="actions"><button class="btn ghost" id="lp_revise"><span class="spin"></span>Apply changes</button><button class="btn" id="lp_publish"><span class="spin"></span>Publish</button></div>
-    <div class="note green hidden" id="lp_live" style="margin-top:18px"><svg class="i"><use href="#i-link"/></svg><div style="flex:1"><b id="lp_live_title">Your page is live.</b> Put this link in your ads.<div class="live" style="margin-top:8px"><input id="lp_url" readonly><button class="btn sm" id="lp_url_copy">Copy link</button><a class="btn ghost sm" id="lp_open" target="_blank" rel="noopener">Open</a></div></div></div>
+    <div class="note green hidden" id="lp_live" style="margin-top:18px"><svg class="i"><use href="#i-link"/></svg><div style="flex:1"><b id="lp_live_title">Your page is live.</b> Put this link in your ads.<div class="live" style="margin-top:8px"><input id="lp_url" readonly><button class="btn sm" id="lp_url_copy">Copy link</button><a class="btn ghost sm" id="lp_open" target="_blank" rel="noopener">Open</a><button class="btn ghost sm" id="lp_unpublish"><span class="spin"></span>Take down</button></div></div></div>
   </div>
   </div>
 </section>
@@ -991,6 +994,7 @@ const API = {
   users:          { path: '/ads-padi/auth/users',        live: true }, // super admin: {token, action: list|add|remove|password, ...} -> {ok, users}
   spySearch:      { path: '/ads-padi/spy/search',        live: true }, // {mode: niche|brand, query, platform: meta|tiktok|linkedin, country, refresh?} -> {ok, cached, searched_at, ads:[...], insight:{summary, hooks, offers, angles, formats, model_this}, note}
   spyUse:         { path: '/ads-padi/spy/use',           live: true }, // {campaign_id, picks:[ad], clear?} -> {ok, campaign_id, picks_saved}
+  landingUnpublish: { path: '/ads-padi/landing/unpublish', live: true }, // {page_id} -> {ok}; deletes the project on Vercel and clears the live link
   campaignDelete: { path: '/ads-padi/campaign/delete',   live: true }, // {campaign_ids:[...]} -> {ok, deleted}
   campaignList:   { path: '/ads-padi/campaign/list',     live: true }, // {html_for?:[page_id]} -> {ok, campaigns:[{campaign_id, brand, product, goal, awareness, fields, chosen_offer, offers, assets, media, pages, research, spy_picks, review_status, performance, performance_notes, review_url, blanks}]}
   campaignSave:   { path: '/ads-padi/campaign/save',     live: true }, // {campaign_id?, ...fields} -> {ok, campaign_id, is_new, status}
@@ -1214,7 +1218,7 @@ function folders() {
 function folderName(k) { const f = folders().find(x => x.brand_key === k); return f ? f.brand : k; }
 function refreshAll() {
   if (!session) return;
-  const opts = campaigns.length ? campaigns.map(c => `<option value="${esc(c.campaign_id)}">${esc(label(c))}</option>`).join('') : '<option value="">No campaign yet</option>';
+  const opts = campaigns.length ? campaigns.map(c => `<option value="${esc(c.campaign_id)}" style="color:#121316;background:#fff">${esc(label(c) || c.campaign_id)}</option>`).join('') : '<option value="">No campaign yet</option>';
   $$('.pick-campaign').forEach(sel => { sel.innerHTML = opts; if (current) sel.value = current.campaign_id; });
   if (!mode.touched) ['vd', 'gr', 'lp', 'vo'].forEach(k => setMode(k, campaigns.length ? 'campaign' : 'own'));
   const byFolder = {}; campaigns.forEach(c => { const k = c.brand_key || brandKeyOf(c.brand) || 'other'; (byFolder[k] = byFolder[k] || []).push(c); });
@@ -2557,6 +2561,14 @@ $('#lp_publish').addEventListener('click', e => run(e.currentTarget, null, async
   else { ownPage = pg; store.set(key('page'), pg); }
   renderLandingState(); toast(r.ready === false ? 'Published. The link goes live in a few seconds.' : 'Published', 'ok');
 }));
+$('#lp_unpublish').addEventListener('click', e => { if (!confirm('Take this page down? The live link stops working and the page is deleted on Vercel. You can still publish it again later.')) return; run(e.currentTarget, null, async () => {
+  const page = activePage(); if (!page) return;
+  await call('landingUnpublish', { page_id: page.page_id });
+  const pg = Object.assign({}, page, { live_url: '', status: 'Draft' });
+  if (page.campaign_id) { const c = campaigns.find(x => x.campaign_id === page.campaign_id); const pages = [pg].concat(((c && c.pages) || []).filter(p => p.page_id !== pg.page_id)); upsert({ campaign_id: page.campaign_id, page: pg, pages }); }
+  else { ownPage = pg; store.set(key('page'), pg); }
+  renderLandingState(); toast('Page taken down', 'ok');
+}); });
 $('#lp_url_copy').addEventListener('click', () => copyText($('#lp_url').value));
 $$('.devices button').forEach(b => b.addEventListener('click', () => { $$('.devices button').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#lp_frame').classList.toggle('phone', b.dataset.dev === 'phone'); }));
 $$('.srcpanel[data-src="lp"] .srctabs button').forEach(b => b.addEventListener('click', () => { renderLandingState(); ensurePageHtml(); }));
@@ -2652,7 +2664,7 @@ let users = [];
 const ROLE_NAMES = { super_admin: 'Super admin', copywriter: 'Copywriter' };
 function renderUsers() {
   $('#ad_users_empty').classList.toggle('hidden', !!users.length);
-  $('#ad_users').innerHTML = users.map(u => { const me = u.client_id === session.client_id; return `<div class="user"><div class="who"><b>${esc(u.name || u.email)}${me ? ' <span class="muted small">(you)</span>' : ''}</b><span>${esc(u.email)}</span></div><span class="pill ${u.role === 'super_admin' ? 'red' : ''}">${esc(ROLE_NAMES[u.role] || u.role)}</span><span class="chipline"><button class="btn ghost sm" data-upass="${esc(u.client_id)}">New password</button>${me ? '' : `<button class="btn ghost sm danger" data-uremove="${esc(u.client_id)}"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg>Remove</button>`}</span></div>`; }).join('');
+  $('#ad_users').innerHTML = users.map(u => { const me = u.client_id === session.client_id; const owner = String(u.email || '').toLowerCase() === 'olayodeaboyade49@gmail.com'; return `<div class="user"><div class="who"><b>${esc(u.name || u.email)}${me ? ' <span class="muted small">(you)</span>' : ''}</b><span>${esc(u.email)}</span></div><span class="pill ${u.role === 'super_admin' ? 'red' : ''}">${esc(ROLE_NAMES[u.role] || u.role)}</span><span class="chipline">${(owner && !me) ? '' : `<button class="btn ghost sm" data-upass="${esc(u.client_id)}">New password</button>`}${(me || owner) ? '' : `<button class="btn ghost sm danger" data-uremove="${esc(u.client_id)}"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg>Remove</button>`}</span></div>`; }).join('');
   $$('#ad_users [data-upass]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     const u = users.find(x => x.client_id === b.dataset.upass); if (!u) return;
     const password = prompt('New password for ' + (u.name || u.email) + ' (at least 8 characters):'); if (password == null) return;
