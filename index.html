@@ -453,16 +453,34 @@ select:disabled{opacity:.55;cursor:not-allowed}
 #cs_detail.ro #cs_open,#cs_detail.ro .out button,#cs_detail.ro .chg,#cs_detail.ro [data-chg],#cs_detail.ro #st_save,#cs_detail.ro #rv_make,#cs_detail.ro #rv_rotate,#cs_detail.ro #rv_revoke,#cs_detail.ro #sp_clear_campaign{display:none}
 #br_brand{min-width:220px}
 
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
-.stat{border:1px solid var(--line,#e5e5e5);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px}
-.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:20px}.stat em{font-size:12px;font-style:normal;color:var(--muted)}.stat.bad b{color:#c0392b}
-#ad_numbers h3{margin:22px 0 8px;font-size:15px}
-.hrow,.frow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#eee)}
-.hrow b{min-width:180px}
-.prow{border-bottom:1px solid var(--line,#eee);padding:8px 0}.prow summary{display:flex;flex-wrap:wrap;align-items:center;gap:10px;cursor:pointer}
-.ptab{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}.ptab th,.ptab td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#eee)}
-@media(max-width:600px){.hrow b{min-width:0;width:100%}}
+#ad_numbers h3{margin:24px 0 8px;font-size:15px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line,#e5e5e5);border-radius:10px}
+.dtab{width:100%;border-collapse:collapse;font-size:14px}
+.dtab th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);background:rgba(0,0,0,.03);padding:9px 12px;border-bottom:1px solid var(--line,#e5e5e5);white-space:nowrap}
+.dtab td{padding:10px 12px;border-bottom:1px solid var(--line,#eee);vertical-align:middle}
+.dtab tr:last-child td{border-bottom:0}
+.dtab .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dtab .act{text-align:right;white-space:nowrap}
 .tag.amber{background:#fff4e0;color:#8a5a00;border-color:#f0d9a8}
+
+.cmp{position:relative}
+.cmp .pick{position:absolute;top:10px;right:10px;width:20px;height:20px;border:2px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
+.cmp .pick:focus-visible{outline:2px solid var(--ink,#111);outline-offset:2px}
+.cmp.picked .pick{background:#111;border-color:#111;box-shadow:inset 0 0 0 3px #fff}
+.cmp.picked{outline:2px solid #111}
+.selbar{display:flex;gap:10px;align-items:center;margin:0 0 12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.selbar.hidden{display:none}
+.btn.danger{color:#b42318;border-color:#f0b4ae}
+
+.pkgs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pkg{display:flex;flex-direction:column;gap:6px;text-align:left;border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff;cursor:pointer;font:inherit}
+.pkg b{font-size:16px}.pkg span{font-size:13px;color:var(--grey-2,#555);line-height:1.4}
+.pkg.on{border-color:#111;box-shadow:inset 0 0 0 1px #111}
+.pkgprod{display:grid;grid-template-columns:2fr 1.2fr repeat(3,.8fr);gap:10px;align-items:end;margin-bottom:10px}
+.pkgtot{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.pkgtot span{font-weight:700;font-size:13px;padding:5px 10px;border-radius:999px;background:#f3f3f3}
+.pkgtot .ok{background:#e6f6ea;color:#176b2c}.pkgtot .off{background:#fdecea;color:#b42318}
+@media(max-width:760px){.pkgs{grid-template-columns:1fr 1fr}.pkgprod{grid-template-columns:1fr 1fr}}
 
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
@@ -583,6 +601,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
   <div class="searchbar"><svg class="i"><use href="#i-search"/></svg><input id="cs_q" placeholder="Search campaigns by brand, product, goal or status" autocomplete="off"></div>
   <label class="admin-only hidden small" id="cs_all_wrap" style="display:flex;gap:8px;align-items:center;margin:-6px 0 14px;font-weight:700"><input type="checkbox" id="cs_all">Show every copywriter's campaigns</label>
   <div class="working hidden" id="cs_loading"><div class="bar"><i></i></div><span>Loading your campaigns.</span></div>
+  <div class="selbar hidden" id="cs_bar"><b id="cs_bar_n"></b><button class="btn ghost sm danger" id="cs_bar_del"><span class="spin"></span>Delete selected</button><button class="btn ghost sm" id="cs_bar_clear">Clear</button></div>
   <div class="cgrid" id="cmp_grid"></div>
   <div class="empty hidden" id="cs_empty"><b>No campaigns yet</b>Start one under New Campaign and it shows up here with everything it produces.</div>
   <div class="empty hidden" id="cs_nomatch"><b>No match</b>Try another word.</div>
@@ -603,8 +622,9 @@ select:disabled{opacity:.55;cursor:not-allowed}
     <div class="rail" role="list">
       <button data-step="1" aria-current="step"><span class="n">1</span><span>Business<span class="s">What you sell</span></span></button>
       <button data-step="2"><span class="n">2</span><span>Audience<span class="s">Who buys it</span></span></button>
-      <button data-step="3"><span class="n">3</span><span>Offer<span class="s">Pick one of four</span></span></button>
-      <button data-step="4"><span class="n">4</span><span>Generate<span class="s">Script, flyer, page</span></span></button>
+      <button data-step="3"><span class="n">3</span><span>Package<span class="s">What they bought</span></span></button>
+      <button data-step="4"><span class="n">4</span><span>Offer<span class="s">Pick one of four</span></span></button>
+      <button data-step="5"><span class="n">5</span><span>Generate<span class="s">Script, flyer, page</span></span></button>
     </div>
 
     <div class="card step" data-step="1">
@@ -653,15 +673,23 @@ select:disabled{opacity:.55;cursor:not-allowed}
     </div>
 
     <div class="card step hidden" data-step="3">
+      <div class="cap"><div><h2>Package</h2><p>Pick what this client bought. It sets how many video scripts, flyers and landing pages you get. Acceleration and Authority cover more than one product, so you list each product and choose how the scripts, flyers and pages are shared between them.</p></div></div>
+      <div class="pkgs" id="c_pkgs" role="radiogroup" aria-label="Package"></div>
+      <div id="c_pkg_products"></div>
+      <div class="actions"><button class="btn ghost" data-goto="2">Back</button><button class="btn" id="c_save_pkg"><span class="spin"></span>Save and continue</button></div>
+    </div>
+
+    <div class="card step hidden" data-step="4">
       <div class="cap"><div><h2>Your offer</h2><p>Four offers shaped by your goal and the buyer's stage. Pick the one you can actually deliver. Where the agent does not know a detail, it leaves a blank for you to fill.</p></div><button class="btn soft sm hidden" id="c_offers_again"><span class="spin"></span>Write 4 new offers</button></div>
       <div class="empty" id="c_offers_empty"><b>No offers yet</b>The agent writes four options for this campaign. The first time can take up to 8 minutes.<br><button class="btn" id="c_offers_go"><span class="spin"></span>Write 4 offers</button></div>
       <div class="working hidden" id="c_offers_working"><div class="bar"><i></i></div><span>Writing four offers for your buyer. The first time can take up to 8 minutes.</span></div>
       <div class="offers hidden" id="c_offers"></div>
       <div class="note green hidden" id="c_chosen" style="margin-top:18px"></div>
-      <div class="actions"><button class="btn ghost" data-goto="2">Back</button><button class="btn hidden" id="c_step3_next" data-goto="4">Continue to generate</button></div>
+      <div class="hidden" id="c_prod_offers" style="margin-top:18px"></div>
+      <div class="actions"><button class="btn ghost" data-goto="3">Back</button><button class="btn hidden" id="c_step3_next" data-goto="5">Continue to generate</button></div>
     </div>
 
-    <div class="card step hidden" data-step="4">
+    <div class="card step hidden" data-step="5">
       <div class="cap"><div><h2>Generate</h2><p>Tick what you need. The copy follows what is winning in your niche, built on the offer you chose and any competitor ads you picked in Spy on Competitors.</p></div></div>
       <div class="note hidden" id="c_gen_offer" style="margin-bottom:16px"><svg class="i"><use href="#i-star"/></svg><div></div></div>
       <div class="ticks">
@@ -670,7 +698,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
         <label><input type="checkbox" name="gen" value="landing_page_copy" checked><div>Landing page copy<span>Hero to FAQ</span></div></label>
       </div>
       <p class="muted small" style="margin:10px 0 0">The video script comes with creative direction: the creative type to shoot, who is on camera, the shot list and notes for the AI video. Short form scripts have their own screen.</p>
-      <div class="actions"><button class="btn ghost" data-goto="3">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
+      <div class="actions"><button class="btn ghost" data-goto="4">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
       <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Writing and checking your copy. About 3 minutes.</span></div>
       <div class="stack hidden" id="c_gen_results" style="margin-top:20px"></div>
     </div>
@@ -903,12 +931,12 @@ select:disabled{opacity:.55;cursor:not-allowed}
 <section id="screen-admin" class="screen hidden">
   <div class="head"><div><h1>Admin</h1><p>Only super admins see this page. Add the copywriters here and give each one their login. Everyone sees only their own brands and campaigns; super admins see everything.</p></div></div>
   <div class="card" id="ad_numbers">
-    <div class="cap"><div><h2>Numbers</h2><p>Every call by every copywriter. Refreshes by itself. <span id="nm_updated"></span></p></div>
-      <div class="chipline"><label class="muted small" for="nm_rate">Naira per dollar</label><input id="nm_rate" type="number" min="100" style="width:90px"><button class="btn ghost sm" type="button" id="nm_rate_go"><span class="spin"></span>Save rate</button></div></div>
-    <div class="stats" id="nm_totals"></div>
-    <h3>Workflow health</h3><div id="nm_health"></div>
+    <div class="cap"><div><h2>Numbers</h2><p>Every call by every copywriter. Refreshes by itself. <span id="nm_updated"></span></p></div></div>
+    <h3>Spend</h3><div id="nm_totals"></div>
     <h3>Copywriters</h3><div id="nm_people"></div>
-    <h3>By tool, this month</h3><table class="ptab"><thead><tr><th>Tool</th><th>Today</th><th>Week</th><th>Month</th><th>Cost</th></tr></thead><tbody id="nm_tools"></tbody></table>
+    <h3>Daily limits in use</h3><div id="nm_limits"></div>
+    <h3>By tool</h3><div id="nm_tools"></div>
+    <h3>Workflow health</h3><div id="nm_health"></div>
     <h3>Latest actions</h3><div id="nm_feed"></div>
   </div>
   <div class="card" id="ad_accounts">
@@ -963,6 +991,7 @@ const API = {
   users:          { path: '/ads-padi/auth/users',        live: true }, // super admin: {token, action: list|add|remove|password, ...} -> {ok, users}
   spySearch:      { path: '/ads-padi/spy/search',        live: true }, // {mode: niche|brand, query, platform: meta|tiktok|linkedin, country, refresh?} -> {ok, cached, searched_at, ads:[...], insight:{summary, hooks, offers, angles, formats, model_this}, note}
   spyUse:         { path: '/ads-padi/spy/use',           live: true }, // {campaign_id, picks:[ad], clear?} -> {ok, campaign_id, picks_saved}
+  campaignDelete: { path: '/ads-padi/campaign/delete',   live: true }, // {campaign_ids:[...]} -> {ok, deleted}
   campaignList:   { path: '/ads-padi/campaign/list',     live: true }, // {html_for?:[page_id]} -> {ok, campaigns:[{campaign_id, brand, product, goal, awareness, fields, chosen_offer, offers, assets, media, pages, research, spy_picks, review_status, performance, performance_notes, review_url, blanks}]}
   campaignSave:   { path: '/ads-padi/campaign/save',     live: true }, // {campaign_id?, ...fields} -> {ok, campaign_id, is_new, status}
   offersGenerate: { path: '/ads-padi/offers/generate',   live: true }, // {campaign_id} -> {ok, campaign_id, awareness, offers:[{offer_id, number, title, offer, why_it_works}]}
@@ -1135,7 +1164,7 @@ async function logout() { try { await call('logout', {}); } catch (e) {} endSess
 $('#logoutBtn').addEventListener('click', logout); $('#logoutBtn2').addEventListener('click', logout);
 
 /* ---------- campaigns (the backend is the source; this browser keeps a copy) ---------- */
-let campaigns = [], current = null;
+let campaigns = [], current = null; const sel = new Set();
 const mode = { vd: 'campaign', gr: 'campaign', lp: 'campaign', vo: 'campaign', touched: false };
 function setMode(k, m) { mode[k] = m; const p = document.querySelector(`.srcpanel[data-src="${k}"]`); p.querySelectorAll('.srctabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m)); p.querySelectorAll('.srcbody').forEach(b => b.classList.toggle('hidden', b.dataset.mode !== m)); }
 function loadLocal() {
@@ -1170,7 +1199,7 @@ async function syncCampaigns(extra) {
 }
 function syncQuietly() { if (!syncing) syncing = syncCampaigns().catch(e => { if (!e.auth) console.warn(e.message); }).finally(() => { syncing = null; $('#cs_loading').classList.add('hidden'); }); return syncing; }
 function setCurrent(id) { current = campaigns.find(c => c.campaign_id === id) || null; store.set(key('current'), current ? current.campaign_id : ''); refreshAll(); ensureCampaignBrand(); }
-function progress(c) { if (c.assets && Object.keys(c.assets).some(k => c.assets[k])) return [4, 'Copy ready']; if (c.chosen_offer) return [3, 'Offer chosen']; if (c.awareness || (c.fields || {}).awareness) return [2, 'Audience set']; return [1, 'Business saved']; }
+function progress(c) { if (c.assets && Object.keys(c.assets).some(k => c.assets[k])) return [5, 'Copy ready']; if (c.chosen_offer) return [4, 'Offer chosen']; if (getPkg(c.campaign_id)) return [3, 'Package set']; if (c.awareness || (c.fields || {}).awareness) return [2, 'Audience set']; return [1, 'Business saved']; }
 function label(c) { return (c.brand || 'Untitled') + (c.product ? ': ' + c.product : ''); }
 // the brand folder key: lowercase, punctuation removed, the same rule the backend uses
 function brandKeyOf(v) { return String(v == null ? '' : v).trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
@@ -1205,6 +1234,19 @@ function perfTag(c) { const p = c.performance || 'Not running yet'; if (p === 'N
 let allCampaigns = [], viewing = null; // a super admin can look at every copywriter's campaigns, read only
 async function loadAllCampaigns() { try { const r = await call('campaignList', { scope: 'all' }); allCampaigns = (r.campaigns || []).map(s => fromServer(s, {})); } catch (e) { if (!e.auth) toast(e.message, 'err'); } renderLibrary(); }
 $('#cs_all').addEventListener('change', () => { if ($('#cs_all').checked) loadAllCampaigns(); else renderLibrary(); });
+async function deleteCampaigns(ids, btn) {
+  ids = ids.filter(Boolean); if (!ids.length) return;
+  if (!confirm(ids.length === 1 ? 'Delete this campaign? Its offers, copy, flyers, pages, videos and leads are removed for good.' : 'Delete ' + ids.length + ' campaigns? Their offers, copy, flyers, pages, videos and leads are removed for good.')) return;
+  await run(btn, null, async () => {
+    const r = await call('campaignDelete', { campaign_ids: ids });
+    const gone = new Set(ids); campaigns = campaigns.filter(c => !gone.has(c.campaign_id)); allCampaigns = allCampaigns.filter(c => !gone.has(c.campaign_id));
+    ids.forEach(i => sel.delete(i));
+    if (current && gone.has(current.campaign_id)) { current = null; store.set(key('current'), ''); }
+    if (viewing && gone.has(viewing.campaign_id)) viewing = null;
+    $('#cs_detail').classList.add('hidden'); saveCampaigns(); refreshAll();
+    toast((r.deleted != null ? r.deleted : ids.length) + (ids.length === 1 ? ' campaign deleted' : ' campaigns deleted'), 'ok');
+  });
+}
 function renderLibrary() {
   const q = ($('#cs_q').value || '').trim().toLowerCase();
   const hit = c => !q || [c.brand, c.product, c.goal, c.awareness, c.review_status, c.performance, c.owner_name, (c.fields || {}).industry, (c.fields || {}).market, c.chosen_offer].filter(Boolean).join(' ').toLowerCase().includes(q);
@@ -1217,12 +1259,14 @@ function renderLibrary() {
   list.forEach(c => { const k = (everyone ? (c.owner || '') + '|' : '') + (c.brand_key || brandKeyOf(c.brand) || 'other'); if (idx[k] === undefined) { idx[k] = groups.length; groups.push({ key: k, brand: c.brand || 'Untitled', owner: everyone ? (c.owner_name || 'Unknown copywriter') : '', items: [] }); } groups[idx[k]].items.push(c); });
   groups.sort((p, q2) => (p.owner.localeCompare(q2.owner)) || p.brand.localeCompare(q2.brand));
   $('#cmp_grid').innerHTML = groups.map(g => `<div class="cgroup"><svg class="i" style="width:16px;height:16px"><use href="#i-folder"/></svg>${esc(g.brand)}${g.owner ? `<span>${esc(g.owner)}</span>` : ''}<span>${g.items.length} campaign${g.items.length === 1 ? '' : 's'}</span></div>` + g.items.map(c => { const [p, t] = progress(c); const a = c.assets || {}; const live = (c.pages || []).some(x => x.live_url); const gfx = (c.media || []).filter(m => m.type === 'Graphic' && m.file_url).length; return `
-    <button class="cmp ${current && current.campaign_id === c.campaign_id ? 'active' : ''}" data-open="${esc(c.campaign_id)}">
+    <button class="cmp ${current && current.campaign_id === c.campaign_id ? 'active' : ''} ${sel.has(c.campaign_id) ? 'picked' : ''}" data-open="${esc(c.campaign_id)}"><span class="pick" role="checkbox" aria-checked="${sel.has(c.campaign_id)}" aria-label="Select campaign" tabindex="0" data-pick="${esc(c.campaign_id)}"></span>
       <b>${esc(c.product || 'Untitled')}</b><span class="goal">${esc(c.goal || 'No goal yet')}${c.awareness ? ', ' + esc(c.awareness) : ''}</span>
-      <div class="prog"><i style="width:${p * 25}%"></i></div>
+      <div class="prog"><i style="width:${p * 20}%"></i></div>
       <div class="tags">${statusTag(c)}${perfTag(c)}${c.chosen_offer ? '<span class="tag green">Offer</span>' : ''}${a.script ? '<span class="tag green">Script</span>' : ''}${a.flyer_copy ? '<span class="tag green">Flyer copy</span>' : ''}${a.landing_page_copy ? '<span class="tag green">Page copy</span>' : ''}${a.sfv_scripts ? '<span class="tag green">Short form</span>' : ''}${gfx ? `<span class="tag green">${gfx} flyer${gfx === 1 ? '' : 's'}</span>` : ''}${live ? '<span class="tag yellow">Live page</span>' : ''}${(c.blanks || []).length ? '<span class="tag amber">Blanks to fill</span>' : ''}</div>
       <div class="meta"><span>${esc(dateLabel(c.created))}${c.created ? ', ' : ''}${t}</span></div>
     </button>`; }).join('')).join('');
+  $$('#cmp_grid [data-pick]').forEach(p => { const tg = e => { e.stopPropagation(); e.preventDefault(); const id = p.dataset.pick; if (sel.has(id)) sel.delete(id); else sel.add(id); renderLibrary(); }; p.addEventListener('click', tg); p.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') tg(e); }); });
+  const bar = $('#cs_bar'); if (bar) { bar.classList.toggle('hidden', !sel.size); $('#cs_bar_n').textContent = sel.size + ' selected'; }
   $$('#cmp_grid [data-open]').forEach(b => b.addEventListener('click', () => {
     const mine = campaigns.find(c => c.campaign_id === b.dataset.open);
     if (mine) { viewing = null; setCurrent(b.dataset.open); showDetail(true); }
@@ -1250,7 +1294,7 @@ function showDetail(scroll) {
         <div class="field"><label for="st_perf">How it is performing</label><select id="st_perf">${PERF_STATES.map(s => `<option ${s === (c.performance || 'Not running yet') ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
       </div>
       <div class="field" style="margin-top:12px"><label for="st_notes">What is working and what is not</label><textarea id="st_notes" placeholder="Hook 2 got the cheapest WhatsApp chats. The flyer with the price did better than the one without.">${esc(c.performance_notes || '')}</textarea></div>
-      <div class="actions" style="margin-top:12px"><button class="btn sm" id="st_save"><span class="spin"></span>Save status</button></div>
+      <div class="actions" style="margin-top:12px"><button class="btn sm" id="st_save"><span class="spin"></span>Save status</button><button class="btn ghost sm danger" id="st_delete"><span class="spin"></span>Delete campaign</button></div>
       <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px">
         <b style="display:block;margin-bottom:4px">Review link</b>
         <p class="muted small" style="margin-bottom:10px">A clean, read-only page with the brief, offer, copy, flyers and landing page. Send it to your boss or the client yourself. Nobody can change anything through it.</p>
@@ -1283,6 +1327,7 @@ function showDetail(scroll) {
     const r = await call('campaignStatus', { campaign_id: cid, review_status: $('#st_review').value, performance: $('#st_perf').value, performance_notes: $('#st_notes').value.trim() });
     detailDirty = false; upsert({ campaign_id: cid, review_status: r.review_status, performance: r.performance, performance_notes: r.performance_notes }); toast('Status saved', 'ok');
   }));
+  $('#st_delete').addEventListener('click', e => deleteCampaigns([cid], e.currentTarget));
   const link = (btn, body, msg) => run(btn, null, async () => { const r = await call('reviewLink', Object.assign({ campaign_id: cid }, body)); upsert({ campaign_id: cid, review_url: r.review_url || '' }); toast(msg, 'ok'); });
   if ($('#rv_make')) $('#rv_make').addEventListener('click', e => link(e.currentTarget, {}, 'Review link ready. Copy it and send it.'));
   if ($('#rv_copy')) $('#rv_copy').addEventListener('click', () => copyText($('#rv_url').value));
@@ -1292,11 +1337,13 @@ function showDetail(scroll) {
   $('#cs_detail').classList.remove('hidden'); if (scroll) $('#cs_detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 $('#cs_q').addEventListener('input', renderLibrary);
+$('#cs_bar_del').addEventListener('click', e => deleteCampaigns([...sel], e.currentTarget));
+$('#cs_bar_clear').addEventListener('click', () => { sel.clear(); renderLibrary(); });
 $('#cs_close').addEventListener('click', () => { detailDirty = false; viewing = null; $('#cs_detail').classList.add('hidden'); });
-$('#cs_open').addEventListener('click', () => { showScreen('campaign'); showStep(Math.min(progress(current)[0] + 1, 4), false); });
+$('#cs_open').addEventListener('click', () => { showScreen('campaign'); showStep(Math.min(progress(current)[0] + 1, 5), false); });
 function newCampaign() { current = null; store.set(key('current'), ''); refreshAll(); showStep(1, false); }
 $('#cmp_new').addEventListener('click', () => { newCampaign(); $('#c_brand').focus(); });
-$('#cmp_pick').addEventListener('change', e => { if (!e.target.value) newCampaign(); else { setCurrent(e.target.value); showStep(Math.min(progress(current)[0] + 1, 4), false); } });
+$('#cmp_pick').addEventListener('change', e => { if (!e.target.value) newCampaign(); else { setCurrent(e.target.value); showStep(Math.min(progress(current)[0] + 1, 5), false); } });
 $$('[data-new-campaign]').forEach(b => b.addEventListener('click', newCampaign));
 function fillForm() {
   const f = (current && current.fields) || {};
@@ -1329,7 +1376,8 @@ if (store.get('adspadi.folded', false)) document.querySelector('.app').classList
 function showStep(n, scroll) {
   $$('.step').forEach(s => s.classList.toggle('hidden', s.dataset.step !== String(n)));
   $$('.rail button').forEach(b => { const k = Number(b.dataset.step); if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < n); b.disabled = k > 1 && !(current && current.campaign_id); });
-  if (n === 4) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]); }
+  if (n === 3) renderPackage();
+  if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } }
   if (scroll !== false) $('#cmp_flow').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 $$('.rail button').forEach(b => b.addEventListener('click', () => showStep(Number(b.dataset.step))));
@@ -1353,10 +1401,57 @@ $('#c_save2').addEventListener('click', e => run(e.currentTarget, null, async ()
   const r = await call('campaignSave', Object.assign({ campaign_id: current.campaign_id }, f));
   upsert({ campaign_id: r.campaign_id, awareness: aw, fields: Object.assign({}, current.fields || {}, f) });
   toast('Saved', 'ok'); showStep(3);
-  if (!((current && current.offers) || []).length) writeOffers($('#c_offers_go')); // the offers start as soon as the buyer is set
 }));
 
-/* ---------- step 3: offers ---------- */
+
+/* ---------- step 3: package ---------- */
+const PKGS = [
+  { id: 'basic', name: 'Basic', products: 1, scripts: 2, flyers: 0, pages: 1 },
+  { id: 'ignition', name: 'Ignition', products: 1, scripts: 3, flyers: 3, pages: 1 },
+  { id: 'acceleration', name: 'Acceleration', products: 2, scripts: 5, flyers: 5, pages: 2 },
+  { id: 'authority', name: 'Authority', products: 3, scripts: 10, flyers: 5, pages: 3 }
+];
+const pkgById = id => PKGS.find(p => p.id === id) || null;
+function getPkg(cid) { const v = store.get(key('pkg.' + cid), null); return v && pkgById(v.tier) && Array.isArray(v.products) ? v : null; }
+function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
+const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
+const splitEven = (total, n) => Array.from({ length: n }, (_, i) => Math.floor(total / n) + (i < total % n ? 1 : 0));
+let pkgDraft = null;
+function newPkgDraft(tier, old) {
+  const p = pkgById(tier); const s = splitEven(p.scripts, p.products), f = splitEven(p.flyers, p.products), g = splitEven(p.pages, p.products);
+  const main = (current && (current.product || (current.fields || {}).product)) || '';
+  return { tier, products: Array.from({ length: p.products }, (_, i) => Object.assign({ name: i === 0 ? main : '', price: '', scripts: s[i], flyers: f[i], pages: g[i], offer_id: '' }, old && old.tier === tier && old.products[i] ? old.products[i] : {})) };
+}
+function renderPackage() {
+  if (!current) return;
+  if (!pkgDraft || pkgDraft.cid !== current.campaign_id) { const old = getPkg(current.campaign_id); pkgDraft = old ? Object.assign({ cid: current.campaign_id }, old) : { cid: current.campaign_id, tier: '', products: [] }; }
+  const d = pkgDraft;
+  $('#c_pkgs').innerHTML = PKGS.map(p => `<button type="button" class="pkg ${d.tier === p.id ? 'on' : ''}" role="radio" aria-checked="${d.tier === p.id}" data-pkg="${p.id}"><b>${p.name}</b><span>${esc(pkgLine(p))}</span></button>`).join('');
+  $$('#c_pkgs [data-pkg]').forEach(b => b.addEventListener('click', () => { const old = d.tier ? { tier: d.tier, products: d.products } : null; const nd = newPkgDraft(b.dataset.pkg, old); d.tier = nd.tier; d.products = nd.products; renderPackage(); }));
+  const box = $('#c_pkg_products'); const p = pkgById(d.tier);
+  if (!p) { box.innerHTML = ''; return; }
+  const multi = p.products > 1;
+  const tot = k => d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0);
+  const totals = () => `<div class="pkgtot">${[['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']].filter(([k]) => p[k]).map(([k, n]) => `<span class="${tot(k) === p[k] ? 'ok' : 'off'}">${tot(k)} of ${p[k]} ${n}</span>`).join('')}</div>`;
+  box.innerHTML = (multi ? `<p class="muted small" style="margin:16px 0 8px">Type each product and share the package between them. The totals must match what the client bought.</p>` : `<p class="muted small" style="margin:16px 0 8px">One product: <b>${esc(d.products[0].name || 'the product from step 1')}</b>. You get ${esc(pkgLine(p).replace(/^1 product, /, ''))}.</p>`)
+    + (multi ? d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="field"><label for="pp_n${i}">Product ${i + 1}</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div>${[['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']].filter(([k]) => p[k]).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${p[k]}" value="${x[k]}"></div>`).join('')}</div>`).join('') + '<div id="pkg_tot">' + totals() + '</div>' : '');
+  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; x[f] = (f === 'name' || f === 'price') ? inp.value : Math.max(0, parseInt(inp.value, 10) || 0); if (f !== 'name' && f !== 'price') $('#pkg_tot').innerHTML = totals(); })));
+}
+$('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
+  if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
+  const d = pkgDraft; const p = d && pkgById(d.tier);
+  if (!p) throw new Error('Pick the package the client bought.');
+  d.products.forEach(x => { x.name = String(x.name || '').trim(); });
+  if (p.products > 1) {
+    if (d.products.some(x => !x.name)) throw new Error('Type the name of every product.');
+    for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (p[k] && t !== p[k]) throw new Error('Share exactly ' + p[k] + ' ' + n + ' between the products. You have ' + t + '.'); }
+  }
+  setPkg(current.campaign_id, { tier: d.tier, products: d.products });
+  toast(p.name + ' package saved', 'ok'); showStep(4);
+  if (!((current && current.offers) || []).length) writeOffers($('#c_offers_go')); // the offers start as soon as the package is set
+}));
+
+/* ---------- step 4: offers ---------- */
 async function writeOffers(btn) {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
   if (!(current.awareness || (current.fields || {}).awareness)) { toast('Set the audience first. The offers depend on the buyer stage.', 'err'); return showStep(2); }
@@ -1394,9 +1489,24 @@ function renderOffers() {
     const offs = offers.map(x => x.offer_id === o.offer_id ? Object.assign({}, x, { offer: text, selected: true }) : Object.assign({}, x, { selected: false }));
     upsert({ campaign_id: current.campaign_id, offers: offs, chosen_offer_id: r.chosen_offer_id, chosen_offer: r.chosen_offer }); toast('Offer saved', 'ok');
   })));
-  $('#c_chosen').classList.toggle('hidden', !has); $('#c_step3_next').classList.toggle('hidden', !has);
+  $('#c_chosen').classList.toggle('hidden', !has); $('#c_step3_next').classList.toggle('hidden', !has); renderProdOffers();
   if (has) $('#c_chosen').innerHTML = `<div class="chosen-box"><div class="tick"><svg class="i"><use href="#i-check"/></svg></div><div><b>Your offer</b><br>${esc(current.chosen_offer).replace(/\n/g, '<br>')}</div></div>`;
 }
+
+function renderProdOffers() {
+  const box = $('#c_prod_offers'); if (!box) return;
+  const pk = current && getPkg(current.campaign_id); const offers = (current && current.offers) || [];
+  if (!pk || pk.products.length < 2 || !current.chosen_offer) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  box.classList.remove('hidden');
+  box.innerHTML = '<b>Offer for each product</b><p class="muted small" style="margin:4px 0 10px">The offer you chose above goes with ' + esc(pk.products[0].name) + '. Pick the offer for each of the other products.</p>' + pk.products.slice(1).map((x, i) => `<div class="field"><label for="po_${i + 1}">${esc(x.name)}</label><select id="po_${i + 1}" data-pi="${i + 1}"><option value="">Same as ${esc(pk.products[0].name)}</option>${offers.map(o => `<option value="${esc(o.offer_id)}" ${x.offer_id === o.offer_id ? 'selected' : ''}>Offer ${esc(o.number)}: ${esc(o.title)}</option>`).join('')}</select></div>`).join('');
+  $$('#c_prod_offers select').forEach(s => s.addEventListener('change', () => { const q = getPkg(current.campaign_id); if (!q) return; q.products[Number(s.dataset.pi)].offer_id = s.value; setPkg(current.campaign_id, q); }));
+}
+function buildPlan() {
+  const pk = current && getPkg(current.campaign_id); if (!pk) return null; const offers = current.offers || [];
+  return pk.products.map((x, i) => { let offer = current.chosen_offer; if (i > 0 && x.offer_id) { const o = offers.find(q => q.offer_id === x.offer_id); if (o) offer = o.offer; } return { product: x.name, price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages }; });
+}
+// several scripts, flyers or pages live in one text, each under a "==== SCRIPT 2 of 5 | Product ====" line
+const splitPieces = t => { const s = String(t || ''); if (!/^==== .+ ====$/m.test(s)) return s.trim() ? [{ title: '', text: s.trim() }] : []; const out = []; let cur = null; s.split('\n').forEach(l => { const m = l.match(/^==== (.+) ====$/); if (m) { cur = { title: m[1], text: '' }; out.push(cur); } else if (cur) cur.text += l + '\n'; }); return out.map(x => ({ title: x.title, text: x.text.trim() })); };
 
 /* ---------- copy generation (also used by Short Form Videos) ---------- */
 async function generateCopy(items, extra, workingId) {
@@ -1421,11 +1531,15 @@ async function generateCopy(items, extra, workingId) {
   }
 }
 $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_working', async () => {
-  if (!current || !current.chosen_offer) { toast('Choose an offer first.', 'err'); return showStep(3); }
+  if (!current || !current.chosen_offer) { toast('Choose an offer first.', 'err'); return showStep(4); }
   const items = $$('input[name="gen"]:checked').map(c => c.value); if (!items.length) throw new Error('Tick at least one thing to generate.');
-  const r = await generateCopy(items, {}, 'c_gen_working');
+  const plan = buildPlan(); const failed = [];
+  if (plan) {
+    const cnt = { script: plan.reduce((s, u) => s + u.scripts, 0), flyer_copy: plan.reduce((s, u) => s + u.flyers, 0), landing_page_copy: plan.reduce((s, u) => s + u.pages, 0) };
+    for (const it of items.filter(k => cnt[k] > 0)) { const r = await generateCopy([it], { plan }, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); fillForm(); renderGenResults(); }
+  } else { const r = await generateCopy(items, {}, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); }
   fillForm(); renderSources();
-  if (r.failed && r.failed.length) toast('Ready, but ' + r.failed.map(k => (ASSET_NAMES[k] || k).toLowerCase()).join(', ') + ' did not come through. Generate again for those.', 'err');
+  if (failed.length) toast('Ready, but ' + failed.map(k => (ASSET_NAMES[k] || k).toLowerCase()).join(', ') + ' did not come through. Generate again for those.', 'err');
   else toast('Your copy is ready', 'ok');
 }));
 function renderGenResults() {
@@ -1551,18 +1665,18 @@ async function buildClientPdf(c) {
   const newPage = () => { doc.addPage(); y = TOP; };
   const room = h => { if (y + h > BOTTOM) newPage(); };
   const split = (text, width, size, style) => { font(size, style); return doc.splitTextToSize(text, width); };
-  const write = (text, x, width, size, style, color) => { const t = pdfText(text); if (!t) return; const h = lh(size); split(t, width, size, style).forEach(l => { room(h); font(size, style, color); doc.text(l, x, y, { baseline: 'top' }); y += h; }); };
+  const write = (text, x, width, size, style, color, hl) => { const t = pdfText(text); if (!t) return; const h = lh(size); split(t, width, size, style).forEach(l => { room(h); font(size, style, color); if (hl) { const w = doc.getTextWidth(l); doc.setFillColor(C.yellow); doc.rect(x - 0.7, y - 0.5, w + 1.4, h, 'F'); } doc.text(l, x, y, { baseline: 'top' }); y += h; }); };
   const hr = (color, gapBefore, gapAfter) => { y += gapBefore || 0; doc.setDrawColor(color || C.line); doc.setLineWidth(0.25); doc.line(M, y, M + CW, y); y += gapAfter || 0; };
   const labRow = (b, x0) => {
     const x = x0 || M; const label = pdfText(b.label); const text = pdfText(b.text);
     const spoken = PDF_SPOKEN.test(label); const direction = PDF_DIRECTION.test(label);
-    const size = 10.3; const style = direction ? 'italic' : 'normal'; const color = spoken ? C.ink : C.ink2;
+    const size = 10.3; const style = direction ? 'italic' : spoken ? 'bold' : 'normal'; const color = spoken ? '#000000' : C.ink2;
     room(lh(size) + (b.items && b.items.length ? lh(size) : 0));
     const y0 = y; const pg = doc.getNumberOfPages(); let labelEnd = y;
     if (label) { const ll = split(label, LABW - 3, 8.8, 'bold'); font(8.8, 'bold', spoken ? C.deep : C.grey); ll.forEach((l, i) => doc.text(l, x, y0 + 0.5 + i * lh(8.8), { baseline: 'top' })); labelEnd = y0 + ll.length * lh(8.8) + 0.5; }
     const tx = label ? x + LABW : x; const tw = M + CW - tx;
-    if (text) write(text, tx, tw, size, style, color);
-    (b.items || []).forEach((it, i) => { room(lh(size)); const yy = y; font(size, 'bold', C.red); doc.text((i + 1) + '.', tx, yy, { baseline: 'top' }); write(it, tx + 6, tw - 6, size, style, color); y += 0.6; });
+    if (text) write(text, tx, tw, size, style, color, spoken);
+    (b.items || []).forEach((it, i) => { room(lh(size)); const yy = y; font(size, 'bold', C.red); doc.text((i + 1) + '.', tx, yy, { baseline: 'top' }); write(it, tx + 6, tw - 6, size, style, color, spoken); y += 0.6; });
     y = (doc.getNumberOfPages() === pg ? Math.max(y, labelEnd) : y) + 1.6;
   };
   const renderBlocks = blocks => blocks.forEach(b => {
@@ -1655,7 +1769,8 @@ async function buildClientPdf(c) {
       if (offer && pdfText(offer.why_it_works)) { renderBlocks([{ t: 'h', text: 'Why this offer works' }, { t: 'p', text: offer.why_it_works }]); }
       return;
     }
-    let blocks = pdfBlocks(a[p.key], caseFix);
+    const doPiece = text => {
+    let blocks = pdfBlocks(text, caseFix);
     if (p.key === 'flyer_copy') {
       // Show the flyer words the way they will sit on the flyer
       const parts = []; let angle = '';
@@ -1677,6 +1792,9 @@ async function buildClientPdf(c) {
       }
     }
     renderBlocks(blocks);
+    };
+    const pcs = splitPieces(a[p.key]);
+    pcs.forEach(pc => { if (pcs.length > 1) { room(30); y += 4; const pr = pc.title.split(' | '); renderBlocks([{ t: 'title', text: pr[0].charAt(0) + pr[0].slice(1).toLowerCase() + (pr[1] ? ' (' + pr[1] + ')' : '') }]); } doPiece(pc.text); });
   });
 
   // Blanks the client must fill
@@ -1842,10 +1960,10 @@ function renderSources() {
     $('#lp_source').innerHTML = '';
   } else {
     const brandOk = campaignBrand().files.length > 0;
-    $('#vd_source').innerHTML = '<span>Made from:</span>' + srcTag(!!c.chosen_offer, 'Offer', 3) + srcTag(!!a.script, 'Script', 4) + srcTag(brandOk, 'Brand assets', 'brand');
-    copyBlock($('#gr_copy'), a.flyer_copy, 'No flyer copy yet. Generate it in New Campaign, step 4, and it appears here.', 4, 'Generate the flyer copy');
-    copyBlock($('#lp_copy'), a.landing_page_copy, 'No landing page copy yet. Generate it in New Campaign, step 4, and it appears here.', 4, 'Generate the landing page copy');
-    $('#lp_source').innerHTML = '<span>Also on the page:</span>' + srcTag(!!c.chosen_offer, 'Offer', 3) + srcTag(brandOk, 'Brand assets', 'brand') + (((c.media || []).some(m => m.type === 'Graphic' && m.file_url)) ? '<span class="tag green">Flyer</span>' : '');
+    $('#vd_source').innerHTML = '<span>Made from:</span>' + srcTag(!!c.chosen_offer, 'Offer', 4) + srcTag(!!a.script, 'Script', 5) + srcTag(brandOk, 'Brand assets', 'brand');
+    copyBlock($('#gr_copy'), a.flyer_copy, 'No flyer copy yet. Generate it in New Campaign, step 5, and it appears here.', 5, 'Generate the flyer copy');
+    copyBlock($('#lp_copy'), a.landing_page_copy, 'No landing page copy yet. Generate it in New Campaign, step 5, and it appears here.', 5, 'Generate the landing page copy');
+    $('#lp_source').innerHTML = '<span>Also on the page:</span>' + srcTag(!!c.chosen_offer, 'Offer', 4) + srcTag(brandOk, 'Brand assets', 'brand') + (((c.media || []).some(m => m.type === 'Graphic' && m.file_url)) ? '<span class="tag green">Flyer</span>' : '');
   }
   $$('[data-fix]').forEach(b => b.onclick = () => { const f = String(b.dataset.fix); if (f.startsWith('own:')) { mode.touched = true; setMode(f.slice(4), 'own'); } else if (f === 'brand') showScreen('brand'); else { showScreen('campaign'); showStep(Number(f)); } });
 }
@@ -2068,7 +2186,7 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   const n = Number($('#gr_count').value) || 1; const layout = segValue('gr_layout');
   const base = { size: $('#gr_size').value, contacts: $('#gr_contacts').value.trim() };
   if (useCampaign('gr')) {
-    if (!(current.assets && current.assets.flyer_copy)) { toast('This campaign has no flyer copy yet. Generate it in New Campaign, step 4, or write it here.', 'err'); return; }
+    if (!(current.assets && current.assets.flyer_copy)) { toast('This campaign has no flyer copy yet. Generate it in New Campaign, step 5, or write it here.', 'err'); return; }
     base.campaign_id = current.campaign_id;
   } else {
     const copy = $('#gr_o_copy').value.trim(); if (!copy) { mode.touched = true; setMode('gr', 'own'); validate([['gr_o_copy', false]]); return; }
@@ -2081,7 +2199,8 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   say(n === 1 ? 'Designing your flyer. About a minute.' : 'Designing your ' + n + ' flyers at the same time. About a minute or two.');
   const cid = base.campaign_id || '';
   const jobs = Array.from({ length: n }, (x, i) => {
-    const body = Object.assign({}, base, { variant: i + 1, variants: n, layout });
+    const body = Object.assign({}, base, { variant: i + 1, variants: n, layout, style_seed: Math.floor(Math.random() * 1000) });
+    if (base.campaign_id) { const pcs = splitPieces((current.assets || {}).flyer_copy); if (pcs.length > 1) body.flyer_copy = pcs[i % pcs.length].text; } // each flyer gets its own copy from the package
     if (layout === 'collection') body.product_photo_urls = urls.slice(0, 4);
     else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
     const tmp = { tmp: 'tmp_' + Date.now().toString(36) + '_' + i, label: n === 1 ? 'Your flyer' : 'Flyer ' + (i + 1) + ' of ' + n, status: 'working', campaign_id: cid };
@@ -2379,7 +2498,7 @@ async function buildPage(btn, changes) {
       if (!page) throw new Error('Build the page first.');
       body = { page_id: page.page_id, changes, campaign_id: page.campaign_id || undefined };
     } else if (useCampaign('lp')) {
-      if (!(current.assets && current.assets.landing_page_copy)) { toast('This campaign has no landing page copy yet. Generate it in New Campaign, step 4, or describe the business here.', 'err'); return; }
+      if (!(current.assets && current.assets.landing_page_copy)) { toast('This campaign has no landing page copy yet. Generate it in New Campaign, step 5, or describe the business here.', 'err'); return; }
       body = { campaign_id: current.campaign_id };
     } else {
       const o = { brand: $('#lp_o_brand').value.trim(), product: $('#lp_o_product').value.trim(), price: $('#lp_o_price').value.trim(), audience: $('#lp_o_audience').value.trim(), goal: $('#lp_o_goal').value, offer: $('#lp_o_offer').value.trim(), business_type: $('#lp_o_type').value };
@@ -2569,23 +2688,25 @@ const agoText = t => { if (!t) return 'never'; const m = Math.max(0, Math.round(
 const leftText = t => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min'; };
 function renderNumbers() {
   if (!nums) return;
-  const r = nums.rate, t = nums.total;
-  $('#nm_rate').value = r;
-  $('#nm_totals').innerHTML = [['Today', t.today], ['This week', t.week], ['This month', t.month]].map(x => `<div class="stat"><span>${x[0]}</span><b>${x[1].uses} uses</b><em>${usd(x[1].cost)} (${ngn(x[1].cost, r)})</em></div>`).join('') + `<div class="stat ${nums.failed_today ? 'bad' : ''}"><span>Failed today</span><b>${nums.failed_today || 0}</b><em>${nums.workflows_checked ? nums.workflows_checked + ' workflows checked' : 'workflow check not connected'}</em></div>`;
-  const h = nums.health || [];
+  const r = nums.rate || 1550, t = nums.total;
+  const money = v => usd(v) + ' / ' + ngn(v, r);
+  const tbl = (head, rows, empty) => `<div class="tblwrap"><table class="dtab"><thead><tr>${head.map(h => `<th${h[1] ? ' class="' + h[1] + '"' : ''}>${h[0]}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.join('') : `<tr><td colspan="${head.length}" class="muted">${empty}</td></tr>`}</tbody></table></div>`;
+  $('#nm_totals').innerHTML = tbl([['Period'], ['Uses', 'num'], ['Spent', 'num']], [['Today', t.today], ['This week', t.week], ['This month', t.month]].map(x => `<tr><td>${x[0]}</td><td class="num">${x[1].uses}</td><td class="num">${money(x[1].cost)}</td></tr>`), '');
   const STATE = { ok: ['Working', 'green'], warn: ['Had errors', 'amber'], broken: ['Broken', 'red'], off: ['Switched off', ''] };
-  $('#nm_health').innerHTML = h.length ? h.map(w => { const st = STATE[w.state] || ['', '']; return `<div class="hrow"><b>${esc(w.name)}</b><span class="tag ${st[1]}">${st[0]}</span><span class="muted small">${w.runs_24h} runs, ${w.errors_24h} errors in 24 h. Last run ${agoText(w.last_run)}</span></div>`; }).join('') : '<div class="muted small">Workflow health is not connected yet. The n8n API key needs to be saved as a credential.</div>';
-  const ppl = nums.people || [];
-  $('#nm_people').innerHTML = ppl.length ? ppl.map(p => `<details class="prow"><summary><b>${esc(p.name || p.email)}</b><span class="pill ${p.role === 'super_admin' ? 'red' : ''}">${esc(ROLE_NAMES[p.role] || p.role)}</span><span class="muted small">${p.periods.today.uses} today, ${p.periods.week.uses} this week, ${p.periods.month.uses} this month, ${usd(p.periods.month.cost)} (${ngn(p.periods.month.cost, r)})</span></summary>
-    <table class="ptab"><thead><tr><th>Tool</th><th>Today</th><th>Week</th><th>Month</th><th>Limit used</th><th>Resets in</th></tr></thead><tbody>${p.tools.filter(x => x.month || x.window_used).map(x => `<tr><td>${esc(x.label)}</td><td>${x.today}</td><td>${x.week}</td><td>${x.month}</td><td>${x.limit ? x.window_used + ' of ' + x.limit : 'no limit'}</td><td>${x.reset_at > Date.now() ? leftText(x.reset_at) : ''}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">No uses yet</td></tr>'}</tbody></table>
-    ${p.role === 'copywriter' ? `<button class="btn ghost sm" data-reset="${esc(p.client_id)}">Reset limits for ${esc(p.name || p.email)}</button>` : ''}</details>`).join('') : '<div class="muted small">No uses yet.</div>';
+  const h = nums.health || [];
+  $('#nm_health').innerHTML = tbl([['Workflow'], ['Status'], ['Runs, 24 h', 'num'], ['Errors, 24 h', 'num'], ['Last run']], h.map(w => { const st = STATE[w.state] || ['', '']; return `<tr><td>${esc(w.name)}</td><td><span class="tag ${st[1]}">${st[0]}</span></td><td class="num">${w.runs_24h}</td><td class="num">${w.errors_24h}</td><td>${agoText(w.last_run)}</td></tr>`; }), 'Workflow health is not connected yet. The n8n API key needs to be saved as a credential.');
+  const ppl = (nums.people || []);
+  $('#nm_people').innerHTML = tbl([['Copywriter'], ['Today', 'num'], ['This week', 'num'], ['This month', 'num'], ['Spent this month', 'num'], ['', 'act']], ppl.map(p => `<tr><td><b>${esc(p.name || p.email)}</b>${p.role === 'super_admin' ? ' <span class="pill red">Super admin</span>' : ''}<div class="muted small">${esc(p.email)}</div></td><td class="num">${p.periods.today.uses}</td><td class="num">${p.periods.week.uses}</td><td class="num">${p.periods.month.uses}</td><td class="num">${money(p.periods.month.cost)}</td><td class="act">${p.role === 'copywriter' ? `<button class="btn ghost sm" data-reset="${esc(p.client_id)}">Reset limits</button>` : ''}</td></tr>`), 'No accounts yet.');
   $$('#nm_people [data-reset]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     if (!confirm('Reset every daily limit for this copywriter?')) return;
     await call('adminNumbers', { action: 'reset', target_client_id: b.dataset.reset }); toast('Limits reset', 'ok'); await loadNumbers();
   })));
-  $('#nm_tools').innerHTML = (nums.tools || []).filter(x => x.month.uses).map(x => `<tr><td>${esc(x.label)}</td><td>${x.today.uses}</td><td>${x.week.uses}</td><td>${x.month.uses}</td><td>${usd(x.month.cost)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No uses yet</td></tr>';
+  const lim = [];
+  ppl.forEach(p => p.tools.forEach(x => { if (x.limit && x.window_used && x.reset_at > Date.now()) lim.push(`<tr><td>${esc(p.name || p.email)}</td><td>${esc(x.label)}</td><td class="num">${x.window_used} of ${x.limit}</td><td class="num">${leftText(x.reset_at)}</td></tr>`); }));
+  $('#nm_limits').innerHTML = tbl([['Copywriter'], ['Tool'], ['Used', 'num'], ['Resets in', 'num']], lim, 'No daily limits in use right now.');
+  $('#nm_tools').innerHTML = tbl([['Tool'], ['Today', 'num'], ['This week', 'num'], ['This month', 'num'], ['Spent this month', 'num']], (nums.tools || []).filter(x => x.month.uses).map(x => `<tr><td>${esc(x.label)}</td><td class="num">${x.today.uses}</td><td class="num">${x.week.uses}</td><td class="num">${x.month.uses}</td><td class="num">${money(x.month.cost)}</td></tr>`), 'No uses yet.');
   const FS = { worked: ['Worked', 'green'], failed: ['Failed', 'red'], running: ['Running', 'amber'], unchecked: ['Not checked', ''] };
-  $('#nm_feed').innerHTML = (nums.feed || []).length ? nums.feed.map(f => { const st = FS[f.status] || ['', '']; return `<div class="frow"><span class="muted small">${agoText(f.at)}</span><b>${esc(f.name || f.email)}</b><span>${esc(f.label)}</span><span class="tag ${st[1]}">${st[0]}</span>${f.error ? `<span class="muted small">${esc(f.error)}</span>` : ''}</div>`; }).join('') : '<div class="muted small">Nothing yet. Actions show here as copywriters use the tools.</div>';
+  $('#nm_feed').innerHTML = tbl([['When'], ['Copywriter'], ['Tool'], ['Result'], ['Note']], (nums.feed || []).map(f => { const st = FS[f.status] || ['', '']; return `<tr><td>${agoText(f.at)}</td><td>${esc(f.name || f.email)}</td><td>${esc(f.label)}</td><td><span class="tag ${st[1]}">${st[0]}</span></td><td class="muted small">${esc(f.error || '')}</td></tr>`; }), 'Nothing yet. Actions show here as copywriters use the tools.');
   $('#nm_updated').textContent = 'Updated ' + new Date(nums.now || Date.now()).toLocaleTimeString();
 }
 async function loadNumbers() {
@@ -2594,10 +2715,7 @@ async function loadNumbers() {
 }
 function startNumbers() { loadNumbers(); stopNumbers(); numsTimer = setInterval(() => { if (!document.hidden) loadNumbers(); }, 15000); }
 function stopNumbers() { if (numsTimer) { clearInterval(numsTimer); numsTimer = null; } }
-$('#nm_rate_go').addEventListener('click', () => run($('#nm_rate_go'), null, async () => {
-  const rate = Number($('#nm_rate').value); if (!(rate >= 100)) throw new Error('Enter the dollar rate in naira, for example 1550.');
-  await call('adminNumbers', { action: 'rate', rate }); toast('Rate saved', 'ok'); await loadNumbers();
-}));
+
 
 /* ---------- account and settings ---------- */
 $('#settingsBtn').addEventListener('click', () => {
@@ -2615,7 +2733,7 @@ function enterApp() {
   loadLocal(); brandCache = store.get(key('brandcache'), {}) || {}; brandData = EMPTY_BRAND(); spy.last = store.get(key('lastSpy'), null); ownPage = store.get(key('page'), null);
   $('#gr_contacts').value = store.get(key('contacts'), '') || '';
   refreshAll(); renderBrand(); renderSpy();
-  showStep(current ? Math.min(progress(current)[0] + 1, 4) : 1, false);
+  showStep(current ? Math.min(progress(current)[0] + 1, 5) : 1, false);
   const first = (location.hash || '').slice(1).replace(/[^a-z]/g, '');
   showScreen(SCREENS.includes(first) ? first : (campaigns.length ? 'research' : 'campaign'));
   call('me', {}).then(me => { session = Object.assign({}, session, { name: me.name, email: me.email, role: me.role || (me.is_admin ? 'super_admin' : 'copywriter'), is_admin: !!me.is_admin }); store.set('adspadi.session', session); refreshAll(); }).catch(() => {});
