@@ -492,6 +492,18 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .pkgabouts .field{margin-bottom:10px}
 .prodpick{margin:0 0 14px}
 
+.pkgprod{display:block;border:1px solid #e6e7eb;border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}
+.pkghead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pkgrow{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.pkgcnts{display:flex;gap:10px;flex-wrap:wrap}.pkgcnts .field{flex:1 1 110px;margin-bottom:0}
+.pkgadd{display:flex;gap:10px;align-items:center;margin:4px 0 6px}
+.ownoffer{margin-top:18px;padding:16px;border:1px dashed #c9ccd4;border-radius:12px}
+.ownoffer h3{margin:0 0 4px;font-size:16px}
+.ownoffer textarea{width:100%}
+.lpchoice{margin-top:16px;padding:14px;border:1px solid #e6e7eb;border-radius:12px;display:grid;gap:8px}
+.lpchoice .chk{display:flex;gap:8px;align-items:center;font-weight:600}
+@media(max-width:760px){.pkgrow{grid-template-columns:1fr}}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -694,6 +706,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
       <div class="empty" id="c_offers_empty"><b>No offers yet</b>The agent writes four options for this campaign. The first time can take up to 8 minutes.<br><button class="btn" id="c_offers_go"><span class="spin"></span>Write 4 offers</button></div>
       <div class="working hidden" id="c_offers_working"><div class="bar"><i></i></div><span>Writing four offers for your buyer. The first time can take up to 8 minutes.</span></div>
       <div class="offers hidden" id="c_offers"></div>
+      <div class="ownoffer hidden" id="c_own"><h3>Or write your own offer</h3><p class="muted small">The four offers above follow what is winning in your niche. Only write your own if the client cannot deliver them. Say what the buyer gets, what they pay and when it ends, in plain words.</p><div class="field"><label for="c_own_text">Your offer</label><textarea id="c_own_text" rows="3" maxlength="600" placeholder="Order 20 pieces or more and get 10% off, plus free delivery. This offer ends 20th November 2026."></textarea></div><button class="btn soft sm" id="c_own_save"><span class="spin"></span>Use my own offer</button></div>
       <div class="note green hidden" id="c_chosen" style="margin-top:18px"></div>
       <div class="hidden" id="c_prod_offers" style="margin-top:18px"></div>
       <div class="actions"><button class="btn ghost" data-goto="3">Back</button><button class="btn hidden" id="c_step3_next" data-goto="5">Continue to generate</button></div>
@@ -707,6 +720,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
         <label><input type="checkbox" name="gen" value="flyer_copy" checked><div>Flyer copy<span>Hook, offer, call to action</span></div></label>
         <label><input type="checkbox" name="gen" value="landing_page_copy" checked><div>Landing page copy<span>Hero to FAQ</span></div></label>
       </div>
+      <div class="lpchoice hidden" id="c_gen_lp_wrap"><b>This client has more than one product. How many landing pages?</b><div class="muted small" id="c_gen_lp_names"></div><label class="chk"><input type="radio" name="lpmode" value="one"> One landing page for all the products</label><label class="chk"><input type="radio" name="lpmode" value="each"> A separate landing page for each product</label></div>
       <p class="muted small" style="margin:10px 0 0">The video script comes with creative direction: the creative type to shoot, who is on camera, the shot list and notes for the AI video. Short form scripts have their own screen.</p>
       <div class="actions"><button class="btn ghost" data-goto="4">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
       <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Writing and checking your copy. About 3 minutes.</span></div>
@@ -1391,7 +1405,7 @@ function showStep(n, scroll) {
   $$('.step').forEach(s => s.classList.toggle('hidden', s.dataset.step !== String(n)));
   $$('.rail button').forEach(b => { const k = Number(b.dataset.step); if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < n); b.disabled = k > 1 && !(current && current.campaign_id); });
   if (n === 3) renderPackage();
-  if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } }
+  if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenLp(); }
   if (scroll !== false) $('#cmp_flow').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 $$('.rail button').forEach(b => b.addEventListener('click', () => showStep(Number(b.dataset.step))));
@@ -1429,27 +1443,40 @@ const pkgById = id => PKGS.find(p => p.id === id) || null;
 // The backend keeps only three tiers; Authority is saved there as Acceleration (the biggest one it knows).
 const apiTier = t => t === 'authority' ? 'acceleration' : t;
 const DELIV = [['script', 'scripts', 'Video scripts'], ['flyer', 'flyers', 'Flyers'], ['landing', 'pages', 'Landing pages']];
+const PKG_CAP = { scripts: 15, flyers: 10, pages: 5 }; // most the backend will write in one go
+const PKG_PER_MAX = { scripts: 10, flyers: 5, pages: 5 }; // most one product can take
+const MAX_PRODUCTS = 5;
+// a new product added to a package gets this much: the package share for one product
+const unitOf = p => ({ scripts: Math.ceil(p.scripts / p.products), flyers: Math.ceil(p.flyers / p.products), pages: Math.ceil(p.pages / p.products) });
+// starting count for product i of a package: the first products share the package, extra products get one product's share
+const defCount = (p, ck, i) => i < p.products ? splitEven(p[ck], p.products)[i] : unitOf(p)[ck];
 function getPkg(cid) {
   const v = store.get(key('pkg.' + cid), null);
   if (v && pkgById(v.tier) && Array.isArray(v.products)) return v;
   // not saved in this browser: rebuild it from what the backend saved with the campaign (another device, or cleared storage)
   const c = campaigns.find(x => x.campaign_id === cid); const p = c && pkgById(c.package);
   if (!p || !Array.isArray(c.products) || !c.products.length) return null;
-  const n = c.products.length; const sc = splitEven(p.scripts, n), fl = splitEven(p.flyers, n), pg = splitEven(p.pages, n);
   const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
   const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
-  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', scripts: sc[i], flyers: fl[i], pages: pg[i], offer_id: '' })) };
+  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i), offer_id: '' })) };
 }
 function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
 const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
 const splitEven = (total, n) => Array.from({ length: n }, (_, i) => Math.floor(total / n) + (i < total % n ? 1 : 0));
 let pkgDraft = null;
 function newPkgDraft(tier, old) {
-  const p = pkgById(tier); const s = splitEven(p.scripts, p.products), f = splitEven(p.flyers, p.products), g = splitEven(p.pages, p.products);
+  const p = pkgById(tier);
   const main = (current && (current.product || (current.fields || {}).product)) || '';
   const del = {}; DELIV.forEach(([k, ck]) => { del[k] = !!p[ck] && !(old && old.del && old.del[k] === false); });
-  return { tier, del, products: Array.from({ length: p.products }, (_, i) => Object.assign({ name: i === 0 ? main : '', price: '', about: '', scripts: s[i], flyers: f[i], pages: g[i], offer_id: '' }, old && old.tier === tier && old.products[i] ? old.products[i] : {})) };
+  const n = Math.max(p.products, old && old.products ? old.products.length : 0);
+  return { tier, del, products: Array.from({ length: n }, (_, i) => {
+    const o = (old && old.products && old.products[i]) || null;
+    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
+    if (o) { ['name', 'price', 'about', 'offer_id'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
+    return x;
+  }) };
 }
+const PKG_COUNTS = [['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']];
 function renderPackage() {
   if (!current) return;
   if (!pkgDraft || pkgDraft.cid !== current.campaign_id) { const old = getPkg(current.campaign_id); pkgDraft = old ? Object.assign({ cid: current.campaign_id }, old) : { cid: current.campaign_id, tier: '', products: [] }; }
@@ -1458,45 +1485,51 @@ function renderPackage() {
   $$('#c_pkgs [data-pkg]').forEach(b => b.addEventListener('click', () => { const old = d.tier ? { tier: d.tier, products: d.products, del: d.del } : null; const nd = newPkgDraft(b.dataset.pkg, old); d.tier = nd.tier; d.products = nd.products; d.del = nd.del; renderPackage(); }));
   const box = $('#c_pkg_products'); const p = pkgById(d.tier);
   if (!p) { box.innerHTML = ''; return; }
-  const multi = p.products > 1;
   if (!d.del) d.del = {}; DELIV.forEach(([k, ck]) => { if (d.del[k] === undefined) d.del[k] = !!p[ck]; });
   const on = ck => { const dk = DELIV.find(x => x[1] === ck)[0]; return !!p[ck] && d.del[dk] !== false; };
   const tot = k => d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0);
-  const totals = () => `<div class="pkgtot">${[['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']].filter(([k]) => on(k)).map(([k, n]) => `<span class="${tot(k) === p[k] ? 'ok' : 'off'}">${tot(k)} of ${p[k]} ${n}</span>`).join('')}</div>`;
+  const totals = () => `<div class="pkgtot">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<span class="${tot(k) > PKG_CAP[k] ? 'off' : 'ok'}">${tot(k)} ${n.toLowerCase()}${tot(k) > PKG_CAP[k] ? ' (most is ' + PKG_CAP[k] + ')' : ''}</span>`).join('')}</div>`;
   const delHtml = `<fieldset class="pkgdel"><legend>What is this client getting?</legend><p class="muted small" style="margin:0 0 8px">Untick what was not bought. The copy then never mentions it, and the video call to action goes to WhatsApp instead of a page link when there is no landing page.</p><div class="pkgdel-row">${DELIV.filter(([k, ck]) => p[ck]).map(([k, ck, n]) => `<label class="chk"><input type="checkbox" data-del="${k}" ${d.del[k] !== false ? 'checked' : ''}>${n}</label>`).join('')}</div></fieldset>`;
-  box.innerHTML = delHtml + (multi ? `<p class="muted small" style="margin:16px 0 8px">Type each product and share the package between them. The totals must match what the client bought.</p>` : `<p class="muted small" style="margin:16px 0 8px">One product: <b>${esc(d.products[0].name || 'the product from step 1')}</b>. You get ${esc(pkgLine(p).replace(/^1 product, /, ''))}.</p>`)
-    + (multi ? d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="field"><label for="pp_n${i}">Product ${i + 1}</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div>${[['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']].filter(([k]) => on(k)).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${p[k]}" value="${x[k]}"></div>`).join('')}</div>`).join('') + '<div id="pkg_tot">' + totals() + '</div>' : '');
-  box.insertAdjacentHTML('beforeend', `<div class="pkgabouts"><p class="muted small" style="margin:14px 0 8px">Say what each product is in a few words, so the copy stays about the right thing (optional).</p>${d.products.map((x, i) => `<div class="field" data-ab="${i}"><label for="pa_${i}">About ${esc(x.name || ('product ' + (i + 1)))}</label><input id="pa_${i}" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>`).join('')}</div>`);
-  $$('#c_pkg_products .pkgabouts [data-ab] input').forEach(inp => inp.addEventListener('input', () => { d.products[Number(inp.closest('[data-ab]').dataset.ab)].about = inp.value; }));
+  const cards = d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${i + 1}</b>${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
+    <div class="pkgrow"><div class="field"><label for="pp_n${i}">Name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div></div>
+    <div class="field"><label for="pa_${i}">About this product (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>
+    <div class="pkgcnts">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${PKG_PER_MAX[k]}" value="${x[k]}"></div>`).join('')}</div></div>`).join('');
+  box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs.</p>` + cards
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${d.products.length >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button>${d.products.length >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}</div><div id="pkg_tot">${totals()}</div>`;
+  $('#pkg_add').addEventListener('click', () => { if (d.products.length >= MAX_PRODUCTS) return; const x = { name: '', price: '', about: '', offer_id: '' }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); d.products.push(x); renderPackage(); });
+  $$('#c_pkg_products [data-rm]').forEach(b => b.addEventListener('click', () => { d.products.splice(Number(b.dataset.rm), 1); renderPackage(); }));
   $$('#c_pkg_products [data-del]').forEach(cb => cb.addEventListener('change', () => {
     d.del[cb.dataset.del] = cb.checked;
-    if (cb.checked) { const ck = DELIV.find(x => x[0] === cb.dataset.del)[1]; if (!d.products.some(x => Number(x[ck]) > 0)) { const sp = splitEven(p[ck], d.products.length); d.products.forEach((x, i) => { x[ck] = sp[i]; }); } } // ticked again: give the counts back
+    if (cb.checked) { const ck = DELIV.find(x => x[0] === cb.dataset.del)[1]; if (!d.products.some(x => Number(x[ck]) > 0)) d.products.forEach((x, i) => { x[ck] = defCount(p, ck, i); }); } // ticked again: give the counts back
     renderPackage();
   }));
-  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; x[f] = (f === 'name' || f === 'price') ? inp.value : Math.max(0, parseInt(inp.value, 10) || 0); if (f !== 'name' && f !== 'price') $('#pkg_tot').innerHTML = totals(); })));
+  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about'; x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (!text) $('#pkg_tot').innerHTML = totals(); })));
 }
 $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
   const d = pkgDraft; const p = d && pkgById(d.tier);
   if (!p) throw new Error('Pick the package the client bought.');
   d.products.forEach(x => { x.name = String(x.name || '').trim(); x.price = String(x.price || '').trim(); x.about = String(x.about || '').trim(); });
+  if (!d.products.length) throw new Error('Add at least one product.');
+  if (!d.products[0].name) d.products[0].name = String((current && (current.product || (current.fields || {}).product)) || '').trim();
   if (!d.del) d.del = {};
   const live = DELIV.filter(([k, ck]) => p[ck] && d.del[k] !== false);
   if (!live.length) throw new Error('Tick at least one thing the client is getting.');
-  if (p.products > 1) {
-    if (d.products.some(x => !x.name)) throw new Error('Type the name of every product.');
-    for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { if (!live.some(x => x[1] === k)) continue; const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (p[k] && t !== p[k]) throw new Error('Share exactly ' + p[k] + ' ' + n + ' between the products. You have ' + t + '.'); }
-  }
+  if (d.products.some(x => !x.name)) throw new Error('Type the name of every product.');
   // what was switched off is not made: its count is zero for every product
   DELIV.forEach(([k, ck]) => { if (d.del[k] === false) d.products.forEach(x => { x[ck] = 0; }); });
-  const saved = { tier: d.tier, del: Object.assign({}, d.del), products: d.products };
+  for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (t > PKG_CAP[k]) throw new Error('That is ' + t + ' ' + n + ' in total. The most we can write at once is ' + PKG_CAP[k] + '. Lower the counts.'); }
+  const idle = d.products.findIndex(x => !PKG_COUNTS.some(([k]) => Number(x[k]) > 0));
+  if (idle >= 0) throw new Error('Product ' + (idle + 1) + ' has nothing to make. Give it at least one piece, or remove it.');
+  const saved = { tier: d.tier, del: Object.assign({}, d.del), products: d.products, lp_mode: (getPkg(current.campaign_id) || {}).lp_mode || '' };
+  const mode = d.products.length > 1 ? 'multiple' : 'one';
   // the backend keeps the package, the products and what is being made, so the copy, flyers, pages and videos all follow the same scope
   await call('campaignSave', {
-    campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: p.products > 1 ? 'multiple' : 'one',
+    campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: mode,
     products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })),
     deliverables: live.map(x => x[0])
   });
-  upsert({ campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: p.products > 1 ? 'multiple' : 'one', products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })), deliverables: live.map(x => x[0]) });
+  upsert({ campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: mode, products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })), deliverables: live.map(x => x[0]) });
   setPkg(current.campaign_id, saved);
   renderProdPickers();
   toast(p.name + ' package saved', 'ok'); showStep(4);
@@ -1542,10 +1575,26 @@ function renderOffers() {
     const offs = offers.map(x => x.offer_id === o.offer_id ? Object.assign({}, x, { offer: text, selected: true }) : Object.assign({}, x, { selected: false }));
     upsert({ campaign_id: current.campaign_id, offers: offs, chosen_offer_id: r.chosen_offer_id, chosen_offer: r.chosen_offer }); toast('Offer saved', 'ok');
   })));
+  const own = $('#c_own'); if (own) {
+    own.classList.toggle('hidden', !offers.length);
+    const t = $('#c_own_text'); const isOwn = current && current.chosen_offer_id === 'custom';
+    if (t && document.activeElement !== t) t.value = isOwn ? String(current.chosen_offer || '').split('\n').slice(1).join('\n') : t.value;
+    $('#c_own_save').textContent = isOwn ? 'Update my offer' : 'Use my own offer';
+  }
   $('#c_chosen').classList.toggle('hidden', !has); $('#c_step3_next').classList.toggle('hidden', !has); renderProdOffers();
   if (has) $('#c_chosen').innerHTML = `<div class="chosen-box"><div class="tick"><svg class="i"><use href="#i-check"/></svg></div><div><b>Your offer</b><br>${esc(current.chosen_offer).replace(/\n/g, '<br>')}</div></div>`;
 }
 
+$('#c_own_save').addEventListener('click', e => run(e.currentTarget, null, async () => {
+  if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
+  const text = $('#c_own_text').value.trim();
+  if (text.length < 15) throw new Error('Write your offer in a full sentence: what the buyer gets, what they pay and when it ends.');
+  if (/\[[A-Za-z][^\[\]\n]{0,40}\]/.test(text)) throw new Error('Take out the square brackets and type the real detail.');
+  const r = await call('offersSelect', { campaign_id: current.campaign_id, custom_offer: text });
+  const offs = ((current && current.offers) || []).map(x => Object.assign({}, x, { selected: false }));
+  upsert({ campaign_id: current.campaign_id, offers: offs, chosen_offer_id: r.chosen_offer_id || 'custom', chosen_offer: r.chosen_offer || ('Your own offer\n' + text) });
+  toast('Your offer is saved', 'ok');
+}));
 function renderProdOffers() {
   const box = $('#c_prod_offers'); if (!box) return;
   const pk = current && getPkg(current.campaign_id); const offers = (current && current.offers) || [];
@@ -1596,13 +1645,30 @@ async function generateCopy(items, extra, workingId) {
     return { recovered: true, assets: (campaigns.find(x => x.campaign_id === cid) || {}).assets || {}, failed: items.filter(k => !got.includes(k)) };
   }
 }
+// more than one product and a landing page: ask whether it is one page for all of them or a page each
+function genLpAsk() { const pk = current && getPkg(current.campaign_id); return !!(pk && pk.products.length > 1 && pk.del && pk.del.landing !== false && pk.products.some(x => Number(x.pages) > 0)); }
+function renderGenLp() {
+  const w = $('#c_gen_lp_wrap'); if (!w) return;
+  const ask = genLpAsk(); w.classList.toggle('hidden', !ask); if (!ask) return;
+  const pk = getPkg(current.campaign_id); const cur = pk.lp_mode || '';
+  $$('input[name="lpmode"]').forEach(r => { r.checked = r.value === cur; });
+  $('#c_gen_lp_names').textContent = pk.products.filter(x => x.name).map(x => x.name).join(', ');
+}
+$$('input[name="lpmode"]').forEach(r => r.addEventListener('change', () => { const pk = current && getPkg(current.campaign_id); if (!pk) return; pk.lp_mode = r.value; setPkg(current.campaign_id, pk); }));
 $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_working', async () => {
   if (!current || !current.chosen_offer) { toast('Choose an offer first.', 'err'); return showStep(4); }
   const items = $$('input[name="gen"]:checked').map(c => c.value); if (!items.length) throw new Error('Tick at least one thing to generate.');
+  let lpMode = '';
+  if (items.includes('landing_page_copy') && genLpAsk()) {
+    const r = $('input[name="lpmode"]:checked'); lpMode = r ? r.value : '';
+    if (!lpMode) throw new Error('Choose one landing page for all the products, or a separate landing page for each product.');
+  }
   const plan = buildPlan(); const failed = [];
   if (plan) {
-    const cnt = { script: plan.reduce((s, u) => s + u.scripts, 0), flyer_copy: plan.reduce((s, u) => s + u.flyers, 0), landing_page_copy: plan.reduce((s, u) => s + u.pages, 0) };
-    for (const it of items.filter(k => cnt[k] > 0)) { const r = await generateCopy([it], { plan }, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); fillForm(); renderGenResults(); }
+    // one shared page: a single page that covers every product, so only the first product carries the page
+    const planOne = plan.map((u, i) => Object.assign({}, u, { pages: i === 0 ? 1 : 0 }));
+    const cnt = { script: plan.reduce((s, u) => s + u.scripts, 0), flyer_copy: plan.reduce((s, u) => s + u.flyers, 0), landing_page_copy: lpMode === 'one' ? 1 : plan.reduce((s, u) => s + u.pages, 0) };
+    for (const it of items.filter(k => cnt[k] > 0)) { const ex = it === 'landing_page_copy' && lpMode === 'one' ? { plan: planOne, shared_page: true } : { plan }; const r = await generateCopy([it], ex, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); fillForm(); renderGenResults(); }
   } else { const r = await generateCopy(items, {}, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); }
   fillForm(); renderSources();
   if (failed.length) toast('Ready, but ' + failed.map(k => (ASSET_NAMES[k] || k).toLowerCase()).join(', ') + ' did not come through. Generate again for those.', 'err');
@@ -1612,30 +1678,30 @@ function renderGenResults() {
   const a = (current && current.assets) || {}; const keys = ['script', 'creative_direction', 'flyer_copy', 'landing_page_copy'].filter(k => a[k]); const box = $('#c_gen_results');
   box.classList.toggle('hidden', !keys.length);
   const bl = keys.filter(k => blanksIn(a[k]).length);
-  const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again. The PDF lists them on its last page so the client can send them.</div></div>` : '';
-  const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One PDF with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send.</div><button class="btn sm" id="c_pdf"><span class="spin"></span>Download PDF</button></div>`;
+  const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again. The document lists them near the end so the client can send them.</div></div>` : '';
+  const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One Word document (.docx) with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send. It opens and edits in Word and Google Docs.</div><button class="btn sm" id="c_pdf"><span class="spin"></span>Download Word doc</button></div>`;
   const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
   box.innerHTML = pdfBar + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
   chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
-  const pb = $('#c_pdf'); if (pb) pb.addEventListener('click', e => run(e.currentTarget, null, async () => { const r = await buildClientPdf(current); toast('PDF downloaded: ' + r.name, 'ok'); }));
+  const pb = $('#c_pdf'); if (pb) pb.addEventListener('click', e => run(e.currentTarget, null, async () => { const r = await buildClientDoc(current); toast('Word document downloaded: ' + r.name, 'ok'); }));
 }
 
-/* ---------- PDF for the client ----------
-   One document the team sends to the client for approval (approval happens outside the app).
-   Built in the browser with jsPDF, loaded only when someone downloads. */
-const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-let jspdfLoad = null;
-function loadPdfMaker() {
-  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
-  if (!jspdfLoad) jspdfLoad = new Promise((resolve, reject) => {
-    const s = document.createElement('script'); s.src = JSPDF_URL; s.async = true;
-    const fail = () => { jspdfLoad = null; s.remove(); reject(new Error('The PDF maker did not load. Check your internet connection and try again.')); };
-    s.onload = () => (window.jspdf && window.jspdf.jsPDF) ? resolve(window.jspdf.jsPDF) : fail();
+/* ---------- Word document for the client ----------
+   Built in the browser with the docx library, loaded only when someone downloads.
+   A .docx opens and edits in Word and Google Docs, including on a phone. */
+const DOCX_URL = 'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js';
+let docxLoad = null;
+function loadDocMaker() {
+  if (window.docx && window.docx.Document) return Promise.resolve(window.docx);
+  if (!docxLoad) docxLoad = new Promise((resolve, reject) => {
+    const s = document.createElement('script'); s.src = DOCX_URL; s.async = true;
+    const fail = () => { docxLoad = null; s.remove(); reject(new Error('The document maker did not load. Check your internet connection and try again.')); };
+    s.onload = () => (window.docx && window.docx.Document) ? resolve(window.docx) : fail();
     s.onerror = fail;
     document.head.appendChild(s);
   });
-  return jspdfLoad;
+  return docxLoad;
 }
 // Clean text for the PDF: no dashes or hyphens between words, no emoji or markdown, only characters the PDF font prints
 function pdfText(s) {
@@ -1712,8 +1778,9 @@ function pdfBlocks(raw, caseFix) {
   return out;
 }
 const PDF_STAGES = { 'Unaware': 'They do not yet know they have the problem the product solves.', 'Problem-aware': 'They feel the problem but do not know a solution exists.', 'Solution-aware': 'They know solutions exist but have not seen this one.', 'Product-aware': 'They know the product and its competitors, but have not chosen.', 'Most-aware': 'They know and trust the brand. They are waiting for the right offer.' };
-async function buildClientPdf(c) {
-  const JsPDF = await loadPdfMaker();
+async function buildClientDoc(c) {
+  const D = await loadDocMaker();
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType, Footer, Header, PageNumber } = D;
   const f = c.fields || {}; const a = c.assets || {};
   const brand = pdfText(f.brand || c.brand || 'Campaign');
   const keepWords = ['WhatsApp', 'TikTok', 'Instagram', 'Facebook', 'YouTube', 'Nigeria', 'Lagos', 'Abuja', 'Ghana', 'Accra', 'AI', 'CTA', 'FAQ', 'UGC', 'POV', 'I']
@@ -1721,59 +1788,37 @@ async function buildClientPdf(c) {
   const fixWords = t => { keepWords.forEach(w => { t = t.replace(new RegExp('(^|[^A-Za-z])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z])', 'gi'), (m, p) => p + w); }); return t; };
   const caseFix = s => fixWords(pdfText(s).toLowerCase().replace(/^[a-z]/, x => x.toUpperCase()).replace(/\bn(\d)/g, 'N$1'));
   const proper = s => fixWords(pdfText(s).replace(/^[a-z]/, x => x.toUpperCase()));
-  const doc = new JsPDF({ unit: 'mm', format: 'a4', compress: true });
-  doc.setProperties({ title: brand + ' campaign copy', subject: 'Campaign copy for approval', author: 'Prolanz Digitals', creator: 'My Ads Padi' });
-  const W = 210, H = 297, M = 20, CW = W - 2 * M, TOP = 24, BOTTOM = H - 22, PT = 0.3528, LABW = 34;
-  const C = { red: '#e10d1c', deep: '#b50b18', ink: '#121316', ink2: '#2a2c33', grey: '#6b7080', soft: '#9aa0ad', line: '#e6e7eb', tint: '#fffbe0', yellow: '#fde900', redTint: '#fdeaec' };
-  let y = TOP;
-  const font = (size, style, color) => { doc.setFont('helvetica', style || 'normal'); doc.setFontSize(size); doc.setTextColor(color || C.ink2); };
-  const lh = size => size * PT * 1.48;
-  const newPage = () => { doc.addPage(); y = TOP; };
-  const room = h => { if (y + h > BOTTOM) newPage(); };
-  const split = (text, width, size, style) => { font(size, style); return doc.splitTextToSize(text, width); };
-  const write = (text, x, width, size, style, color, hl) => { const t = pdfText(text); if (!t) return; const h = lh(size); split(t, width, size, style).forEach(l => { room(h); font(size, style, color); if (hl) { const w = doc.getTextWidth(l); doc.setFillColor(C.yellow); doc.rect(x - 0.7, y - 0.5, w + 1.4, h, 'F'); } doc.text(l, x, y, { baseline: 'top' }); y += h; }); };
-  const hr = (color, gapBefore, gapAfter) => { y += gapBefore || 0; doc.setDrawColor(color || C.line); doc.setLineWidth(0.25); doc.line(M, y, M + CW, y); y += gapAfter || 0; };
-  const labRow = (b, x0) => {
-    const x = x0 || M; const label = pdfText(b.label); const text = pdfText(b.text);
+  const C = { red: 'E10D1C', deep: 'B50B18', ink: '121316', ink2: '2A2C33', grey: '6B7080', line: 'E6E7EB', tint: 'FFFBE0' };
+  const FONT = 'Calibri';
+  const NONE = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+  const NOB = { top: NONE, bottom: NONE, left: NONE, right: NONE };
+  const runs = (t, o) => { o = o || {}; return pdfText(t).split('\n').map((l, i) => new TextRun({ text: l, break: i ? 1 : 0, font: FONT, size: o.size || 21, bold: !!o.bold, italics: !!o.italics, color: o.color || C.ink2, highlight: o.hl ? 'yellow' : undefined })); };
+  const P = (t, o) => { o = o || {}; const tx = pdfText(t); if (!tx) return null; return new Paragraph({ children: runs(tx, o), spacing: { before: o.before || 0, after: o.after == null ? 120 : o.after, line: 300 }, alignment: o.align, keepNext: !!o.keepNext }); };
+  const kids = [];
+  const add = x => { if (x) kids.push(x); };
+  const gap = () => kids.push(new Paragraph({ children: [], spacing: { after: 60 } }));
+  const cell = (children, w, o) => new TableCell({ children: children.length ? children : [new Paragraph({ children: [] })], width: { size: w, type: WidthType.DXA }, borders: (o && o.borders) || NOB, shading: o && o.fill ? { type: ShadingType.CLEAR, color: 'auto', fill: o.fill } : undefined, margins: { top: 80, bottom: 80, left: (o && o.left) || 100, right: 100 } });
+  const table = (rows, widths) => new Table({ rows, width: { size: widths.reduce((s, x) => s + x, 0), type: WidthType.DXA }, columnWidths: widths, borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideHorizontal: NONE, insideVertical: NONE } });
+  const section = (n, title) => { add(new Paragraph({ children: [new TextRun({ text: n + '  ' + title, font: FONT, size: 36, bold: true, color: C.ink })], spacing: { before: 360, after: 160 }, keepNext: true, border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: C.red, space: 4 } } })); };
+  const labRow = b => {
+    const label = pdfText(b.label); const text = pdfText(b.text);
     const spoken = PDF_SPOKEN.test(label); const direction = PDF_DIRECTION.test(label);
-    const size = 10.3; const style = direction ? 'italic' : spoken ? 'bold' : 'normal'; const color = spoken ? '#000000' : C.ink2;
-    room(lh(size) + (b.items && b.items.length ? lh(size) : 0));
-    const y0 = y; const pg = doc.getNumberOfPages(); let labelEnd = y;
-    if (label) { const ll = split(label, LABW - 3, 8.8, 'bold'); font(8.8, 'bold', spoken ? C.deep : C.grey); ll.forEach((l, i) => doc.text(l, x, y0 + 0.5 + i * lh(8.8), { baseline: 'top' })); labelEnd = y0 + ll.length * lh(8.8) + 0.5; }
-    const tx = label ? x + LABW : x; const tw = M + CW - tx;
-    if (text) write(text, tx, tw, size, style, color, spoken);
-    (b.items || []).forEach((it, i) => { room(lh(size)); const yy = y; font(size, 'bold', C.red); doc.text((i + 1) + '.', tx, yy, { baseline: 'top' }); write(it, tx + 6, tw - 6, size, style, color, spoken); y += 0.6; });
-    y = (doc.getNumberOfPages() === pg ? Math.max(y, labelEnd) : y) + 1.6;
+    const body = [];
+    if (text) body.push(P(text, { italics: direction, bold: spoken, color: spoken ? '000000' : C.ink2, hl: spoken, after: 40 }));
+    (b.items || []).forEach((it, i) => body.push(new Paragraph({ children: [new TextRun({ text: (i + 1) + '.  ', font: FONT, size: 21, bold: true, color: C.red })].concat(runs(it, { bold: spoken, italics: direction, hl: spoken })), spacing: { after: 60, line: 300 }, indent: { left: 360, hanging: 360 } })));
+    kids.push(table([new TableRow({ children: [cell(label ? [P(label, { size: 18, bold: true, color: spoken ? C.deep : C.grey, after: 0 })] : [], 1900), cell(body.filter(Boolean), 7100)], cantSplit: false })], [1900, 7100]));
   };
   const renderBlocks = blocks => blocks.forEach(b => {
-    if (b.t === 'gap') { y += 2; return; }
-    if (b.t === 'rule') { room(14); hr(C.line, 4, 6); return; }
-    if (b.t === 'h') { room(lh(11.5) + 14); y += 3; write(b.text, M, CW, 11.5, 'bold', C.ink); y += 1.6; return; }
-    if (b.t === 'title') { room(lh(13.5) + 20); y += 3; doc.setFillColor(C.red); doc.rect(M, y, 10, 1.1, 'F'); y += 3.5; write(b.text, M, CW, 13.5, 'bold', C.ink); y += 2.5; return; }
-    if (b.t === 'p') { write(b.text, M, CW, 10.5, 'normal', C.ink2); y += 1.4; return; }
-    if (b.t === 'li') {
-      const t = pdfText(b.text); if (!t) return; room(lh(10.5));
-      if (b.n) { font(10.5, 'bold', C.red); doc.text(b.n + '.', M, y, { baseline: 'top' }); } else { doc.setFillColor(C.red); doc.circle(M + 1.6, y + 1.95, 0.75, 'F'); }
-      write(t, M + 6, CW - 6, 10.5, 'normal', C.ink2); y += 1.3; return;
-    }
+    if (b.t === 'gap' || b.t === 'rule') { gap(); return; }
+    if (b.t === 'h') { add(P(b.text, { bold: true, size: 24, color: C.ink, before: 160, after: 80, keepNext: true })); return; }
+    if (b.t === 'title') { add(new Paragraph({ children: runs(b.text, { bold: true, size: 28, color: C.ink }), spacing: { before: 280, after: 120 }, keepNext: true, border: { left: { style: BorderStyle.SINGLE, size: 24, color: C.red, space: 8 } } })); return; }
+    if (b.t === 'p') { add(P(b.text)); return; }
+    if (b.t === 'li') { const t = pdfText(b.text); if (!t) return; add(new Paragraph({ children: [new TextRun({ text: b.n ? b.n + '.  ' : '•  ', font: FONT, size: 21, bold: true, color: C.red })].concat(runs(t)), spacing: { after: 80, line: 300 }, indent: { left: 360, hanging: 360 } })); return; }
     if (b.t === 'lab') { labRow(b); return; }
-    if (b.t === 'scene') {
-      room(lh(9.5) + lh(10.3) * 2 + 4); y += 1;
-      write('Scene ' + b.n, M, CW, 9.5, 'bold', C.deep); y += 1.2;
-      b.rows.forEach(r => labRow(r));
-      hr(C.line, 0.5, 3.5); return;
-    }
-    if (b.t === 'qa' || b.t === 'q') { room(lh(10.5) * 2 + 2); write(b.t === 'qa' ? b.q : b.text, M, CW, 10.5, 'bold', C.ink); y += 0.8; if (b.t === 'qa') { write(b.a, M, CW, 10.5, 'normal', C.ink2); y += 3.2; } return; }
-    if (b.t === 'a') { write(b.text, M, CW, 10.5, 'normal', C.ink2); y += 3.2; return; }
+    if (b.t === 'scene') { add(P('Scene ' + b.n, { bold: true, size: 19, color: C.deep, before: 120, after: 60, keepNext: true })); b.rows.forEach(r => labRow(r)); gap(); return; }
+    if (b.t === 'qa' || b.t === 'q') { add(P(b.t === 'qa' ? b.q : b.text, { bold: true, color: C.ink, after: 40, keepNext: true })); if (b.t === 'qa') add(P(b.a, { after: 160 })); return; }
+    if (b.t === 'a') { add(P(b.text, { after: 160 })); return; }
   });
-  const marks = [];
-  const section = (n, title) => {
-    if (y > TOP + 1) { if (y + 75 > BOTTOM) newPage(); else y += 10; }
-    marks.push({ n, title, page: doc.getNumberOfPages() });
-    font(18, 'bold', C.red); doc.text(String(n), M, y, { baseline: 'top' });
-    font(18, 'bold', C.ink); doc.text(title, M + 9, y, { baseline: 'top' }); y += lh(18) + 1.5;
-    doc.setFillColor(C.red); doc.rect(M, y, 14, 1.1, 'F'); y += 7;
-  };
 
   // What goes in, in order
   const offer = (c.offers || []).find(o => o.selected || (c.chosen_offer_id && o.offer_id === c.chosen_offer_id));
@@ -1793,80 +1838,67 @@ async function buildClientPdf(c) {
   const toc = [{ title: 'Campaign summary' }].concat(PARTS).concat(blankList.length ? [{ title: 'Details we need from you' }] : []).concat([{ title: 'Next steps' }]);
 
   // Cover
-  doc.setFillColor(C.red); doc.rect(0, 0, W, 7, 'F'); doc.setFillColor(C.yellow); doc.rect(0, 7, W, 1.4, 'F');
-  y = 22; write('Prolanz Digitals', M, CW, 10.5, 'bold', C.red); y += 7;
-  write(brand, M, CW, 28, 'bold', C.ink); y += 0.5;
-  write('Campaign copy for your approval', M, CW, 14, 'normal', C.grey); y += 5;
+  add(P('Prolanz Digitals', { bold: true, size: 21, color: C.red, after: 120 }));
+  add(P(brand, { bold: true, size: 56, color: C.ink, after: 60 }));
+  add(P('Campaign copy for your approval', { size: 28, color: C.grey, after: 200 }));
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   [['Prepared', today], ['Product or service', proper(f.product || c.product)]].filter(r => pdfText(r[1])).forEach(r => labRow({ label: r[0], text: r[1], items: [] }));
-  y += 3;
-  write('This document holds the copy we wrote for your campaign: the offer, the video ad script, the flyer copy and the landing page copy. Please read each part and tell us what you would like changed, or confirm that it is approved. Once you approve it, we produce the video, the flyer, the landing page and the voiceover from this copy.', M, CW, 10.5, 'normal', C.ink2);
-  y += 6;
-  const tocY = y; const tocH = 12 + toc.length * 7.2;
-  doc.setFillColor('#f7f7f5'); doc.rect(M, tocY, CW, tocH, 'F'); doc.setFillColor(C.red); doc.rect(M, tocY, 1.2, tocH, 'F');
-  y = tocY + tocH + 4;
+  gap();
+  add(P('This document holds the copy we wrote for your campaign: the offer, the video ad script, the flyer copy and the landing page copy. Please read each part and tell us what you would like changed, or confirm that it is approved. Once you approve it, we produce the video, the flyer, the landing page and the voiceover from this copy.', { after: 200 }));
+  add(P('What is inside', { bold: true, size: 22, color: C.ink, after: 60 }));
+  toc.forEach((t, i) => add(P((i + 1) + '   ' + t.title, { after: 30 })));
 
   // 1. Campaign summary
   let n = 1;
   section(n++, 'Campaign summary');
   const stage = f.awareness || c.awareness || '';
   const rows = [['Brand', f.brand || c.brand], ['Industry', f.industry], ['Product or service', f.product || c.product], ['Price', f.price], ['Campaign goal', f.goal || c.goal], ['What a win looks like', f.desired_outcome], ['Market', f.market], ['Who we are targeting', f.audience], ['Age range', f.age_range], ['Location', f.location], ['Buyer stage', stage ? stage + '. ' + (PDF_STAGES[stage] || '') : '']].filter(r => pdfText(r[1]));
-  rows.forEach((r, i) => {
-    const t = proper(r[1]); const ls = split(t, CW - 50, 10.5, 'normal'); const h = ls.length * lh(10.5) + 4.2;
-    const pg = doc.getNumberOfPages(); room(h); if (i === 0 || doc.getNumberOfPages() !== pg) hr(C.line);
-    font(9, 'bold', C.grey); doc.text(r[0], M, y + 2.3, { baseline: 'top' });
-    ls.forEach((l, k) => { font(10.5, 'normal', C.ink2); doc.text(l, M + 50, y + 2 + k * lh(10.5), { baseline: 'top' }); });
-    y += h; hr(C.line);
-  });
+  if (rows.length) {
+    const bd = { top: { style: BorderStyle.SINGLE, size: 4, color: C.line }, bottom: { style: BorderStyle.SINGLE, size: 4, color: C.line }, left: NONE, right: NONE };
+    kids.push(table(rows.map(r => new TableRow({ children: [cell([P(r[0], { size: 18, bold: true, color: C.grey, after: 0 })], 2600, { borders: bd }), cell([P(proper(r[1]), { after: 0 })], 6400, { borders: bd })] })), [2600, 6400]));
+  }
 
   // The rest, in order
   PARTS.forEach(p => {
     section(n++, p.title);
     if (p.key === 'offer') {
-      const tl = offerTitle ? split(pdfText(offerTitle), CW - 16, 14, 'bold') : [];
-      const ol = split(pdfText(offerText), CW - 16, 11.5, 'normal');
-      const boxH = 12 + tl.length * lh(14) + (tl.length ? 2 : 0) + ol.length * lh(11.5);
-      room(boxH + 4);
-      doc.setFillColor(C.tint); doc.rect(M, y, CW, boxH, 'F'); doc.setFillColor(C.red); doc.rect(M, y, 1.4, boxH, 'F');
-      let yy = y + 6;
-      tl.forEach(l => { font(14, 'bold', C.ink); doc.text(l, M + 8, yy, { baseline: 'top' }); yy += lh(14); }); if (tl.length) yy += 2;
-      ol.forEach(l => { font(11.5, 'normal', C.ink2); doc.text(l, M + 8, yy, { baseline: 'top' }); yy += lh(11.5); });
-      y += boxH + 6;
-      if (offer && pdfText(offer.why_it_works)) { renderBlocks([{ t: 'h', text: 'Why this offer works' }, { t: 'p', text: offer.why_it_works }]); }
+      const inner = [];
+      if (offerTitle) inner.push(P(offerTitle, { bold: true, size: 28, color: C.ink, after: 80 }));
+      inner.push(P(offerText, { size: 23, after: 0 }));
+      const side = { style: BorderStyle.SINGLE, size: 24, color: C.red };
+      kids.push(table([new TableRow({ children: [cell(inner.filter(Boolean), 9000, { fill: C.tint, left: 220, borders: { top: NONE, bottom: NONE, right: NONE, left: side } })] })], [9000]));
+      gap();
+      if (offer && pdfText(offer.why_it_works)) renderBlocks([{ t: 'h', text: 'Why this offer works' }, { t: 'p', text: offer.why_it_works }]);
       return;
     }
     const doPiece = text => {
-    let blocks = pdfBlocks(text, caseFix);
-    if (p.key === 'flyer_copy') {
-      // Show the flyer words the way they will sit on the flyer
-      const parts = []; let angle = '';
-      blocks.forEach((b, i) => { if (b.t === 'lab' && /^angle$/i.test(b.label)) angle = b.text; if (b.t === 'h' && blocks[i + 1] && blocks[i + 1].t === 'p') parts.push([b.text, blocks[i + 1].text]); });
-      if (parts.length >= 2) {
-        const style = k => /headline/i.test(k) ? [19, 'bold', C.ink] : /offer/i.test(k) ? [14, 'bold', C.deep] : /call to action|cta/i.test(k) ? [12.5, 'bold', C.ink] : [12, 'normal', C.ink2];
-        const lay = parts.map(([k, v]) => { const st = style(k); return { k, st, ls: split(pdfText(v), CW - 20, st[0], st[1]) }; });
-        const boxH = 10 + lay.reduce((s, l) => s + lh(8.5) + 1 + l.ls.length * lh(l.st[0]) + 5, 0);
-        room(boxH + 6 + (angle ? lh(10.3) * 2 + 2 : 0));
-        if (angle) labRow({ label: 'Angle', text: angle, items: [] });
-        y += 2;
-        doc.setDrawColor(C.line); doc.setLineWidth(0.4); doc.roundedRect(M, y, CW, boxH, 3, 3, 'S');
-        let yy = y + 8;
-        lay.forEach(l => { font(8.5, 'bold', C.grey); doc.text(l.k, M + 10, yy, { baseline: 'top' }); yy += lh(8.5) + 1; l.ls.forEach(t => { font(l.st[0], l.st[1], l.st[2]); doc.text(t, M + 10, yy, { baseline: 'top' }); yy += lh(l.st[0]); }); yy += 5; });
-        y += boxH + 6;
-        const rest = blocks.filter((b, i) => !(b.t === 'lab' && /^angle$/i.test(b.label)) && !(b.t === 'h' && blocks[i + 1] && blocks[i + 1].t === 'p') && !(b.t === 'p' && blocks[i - 1] && blocks[i - 1].t === 'h'));
-        if (rest.some(b => b.t !== 'gap')) renderBlocks(rest);
-        return;
+      const blocks = pdfBlocks(text, caseFix);
+      if (p.key === 'flyer_copy') {
+        // Show the flyer words the way they will sit on the flyer
+        const parts = []; let angle = '';
+        blocks.forEach((b, i) => { if (b.t === 'lab' && /^angle$/i.test(b.label)) angle = b.text; if (b.t === 'h' && blocks[i + 1] && blocks[i + 1].t === 'p') parts.push([b.text, blocks[i + 1].text]); });
+        if (parts.length >= 2) {
+          if (angle) labRow({ label: 'Angle', text: angle, items: [] });
+          const style = k => /headline/i.test(k) ? { size: 38, bold: true, color: C.ink } : /offer/i.test(k) ? { size: 28, bold: true, color: C.deep } : /call to action|cta/i.test(k) ? { size: 25, bold: true, color: C.ink } : { size: 24, color: C.ink2 };
+          const inner = []; parts.forEach(([k, v]) => { inner.push(P(k, { size: 17, bold: true, color: C.grey, after: 20 })); inner.push(P(v, Object.assign({ after: 140 }, style(k)))); });
+          const bs = { style: BorderStyle.SINGLE, size: 8, color: C.line };
+          kids.push(table([new TableRow({ children: [cell(inner.filter(Boolean), 9000, { left: 240, borders: { top: bs, bottom: bs, left: bs, right: bs } })] })], [9000]));
+          gap();
+          const rest = blocks.filter((b, i) => !(b.t === 'lab' && /^angle$/i.test(b.label)) && !(b.t === 'h' && blocks[i + 1] && blocks[i + 1].t === 'p') && !(b.t === 'p' && blocks[i - 1] && blocks[i - 1].t === 'h'));
+          if (rest.some(b => b.t !== 'gap')) renderBlocks(rest);
+          return;
+        }
       }
-    }
-    renderBlocks(blocks);
+      renderBlocks(blocks);
     };
     const pcs = splitPieces(a[p.key]);
-    pcs.forEach(pc => { if (pcs.length > 1) { room(30); y += 4; const pr = pc.title.split(' | '); renderBlocks([{ t: 'title', text: pr[0].charAt(0) + pr[0].slice(1).toLowerCase() + (pr[1] ? ' (' + pr[1] + ')' : '') }]); } doPiece(pc.text); });
+    pcs.forEach(pc => { if (pcs.length > 1) { const pr = pc.title.split(' | '); renderBlocks([{ t: 'title', text: pr[0].charAt(0) + pr[0].slice(1).toLowerCase() + (pr[1] ? ' (' + pr[1] + ')' : '') }]); } doPiece(pc.text); });
   });
 
   // Blanks the client must fill
   if (blankList.length) {
     section(n++, 'Details we need from you');
-    write('We left these details blank because we do not have them yet. Please send them with your approval and we will fill them in everywhere they appear.', M, CW, 10.5, 'normal', C.ink2); y += 4;
+    add(P('We left these details blank because we do not have them yet. Please send them with your approval and we will fill them in everywhere they appear.', { after: 160 }));
     blankList.forEach(([title, items]) => labRow({ label: title, text: '', items: items.map(x => x.replace(/^[a-z]/, m => m.toUpperCase())) }));
   }
   section(n++, 'Next steps');
@@ -1876,20 +1908,23 @@ async function buildClientPdf(c) {
     { t: 'li', n: '3', text: 'Once you approve it, we produce the video, the flyer, the landing page and the voiceover from this copy.' }
   ]);
 
-  // Contents with page numbers, then the header and footer on every page
-  const pages = doc.getNumberOfPages();
-  doc.setPage(1);
-  let ty = tocY + 5; font(10.5, 'bold', C.ink); doc.text('What is inside', M + 7, ty, { baseline: 'top' }); ty += 7.5;
-  toc.forEach((t, i) => { const mk = marks.find(m => m.title === t.title); font(10, 'normal', C.ink2); doc.text((i + 1) + '   ' + t.title, M + 7, ty, { baseline: 'top' }); font(10, 'normal', C.grey); doc.text(mk ? 'Page ' + mk.page : '', M + CW - 6, ty, { baseline: 'top', align: 'right' }); ty += 7.2; });
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    if (i > 1) { font(8.5, 'bold', C.red); doc.text('Prolanz Digitals', M, 11, { baseline: 'top' }); font(8.5, 'normal', C.grey); doc.text(brand + ', campaign copy for approval', M + CW, 11, { baseline: 'top', align: 'right' }); doc.setDrawColor(C.line); doc.setLineWidth(0.25); doc.line(M, 16, M + CW, 16); }
-    doc.setDrawColor(C.line); doc.setLineWidth(0.25); doc.line(M, H - 15, M + CW, H - 15);
-    font(8.5, 'normal', C.grey); doc.text('Prepared by Prolanz Digitals for ' + brand, M, H - 12, { baseline: 'top' }); doc.text('Page ' + i + ' of ' + pages, M + CW, H - 12, { baseline: 'top', align: 'right' });
-  }
-  const name = (brand + ' campaign copy').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
-  doc.save(name);
-  return { name, pages };
+  const small = (t, o) => new TextRun(Object.assign({ text: t, font: FONT, size: 17, color: C.grey }, o || {}));
+  const doc = new Document({
+    creator: 'My Ads Padi', title: brand + ' campaign copy', description: 'Campaign copy for approval',
+    styles: { default: { document: { run: { font: FONT, size: 21 } } } },
+    sections: [{
+      properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1300, bottom: 1200, left: 1453, right: 1453 } } },
+      headers: { default: new Header({ children: [new Paragraph({ children: [small('Prolanz Digitals', { bold: true, color: C.red }), small('   ' + brand + ', campaign copy for approval')] })] }) },
+      footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [small('Prepared by Prolanz Digitals for ' + brand + '     Page '), new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 17, color: C.grey }), small(' of '), new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: 17, color: C.grey })] })] }) },
+      children: kids
+    }]
+  });
+  const blob = await Packer.toBlob(doc);
+  const name = (brand + ' campaign copy').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.docx';
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href = url; link.download = name; document.body.appendChild(link); link.click();
+  setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 4000);
+  return { name };
 }
 
 /* ---------- spy on competitors ---------- */
