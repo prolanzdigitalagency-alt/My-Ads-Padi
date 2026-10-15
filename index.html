@@ -485,6 +485,13 @@ select:disabled{opacity:.55;cursor:not-allowed}
 #sp_bar select#sp_campaign{color-scheme:light;background-color:#fff;color:#121316;-webkit-text-fill-color:#121316;opacity:1;text-overflow:ellipsis}
 #sp_bar select#sp_campaign option{color:#121316;background-color:#fff;-webkit-text-fill-color:#121316}
 
+.pkgdel{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:12px 14px;margin:16px 0 4px}
+.pkgdel legend{font-weight:700;padding:0 6px;font-size:14px}
+.pkgdel-row{display:flex;gap:18px;flex-wrap:wrap}
+.pkgdel .chk{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px;cursor:pointer}
+.pkgabouts .field{margin-bottom:10px}
+.prodpick{margin:0 0 14px}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -783,6 +790,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
       </div>
     </div>
     <div class="card" style="margin-top:14px">
+      <div class="field prodpick hidden" id="vd_prod_wrap"><label for="vd_prod">Which product is this video for?</label><select id="vd_prod"></select><div class="hint">This campaign has more than one product. Pick one, or keep all of them together.</div></div>
       <div class="field"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
         <div class="tray" id="vd_tray" data-where="AI Videos"></div>
         <div class="hint">The video is built around these photos. No photo? It uses your first product image in Brand Assets.</div></div>
@@ -825,6 +833,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
         <div class="field"><label for="gr_o_copy">Flyer copy</label><textarea id="gr_o_copy" placeholder="Pay on delivery. Original Skincare Gift Set, N25,000. Order on WhatsApp."></textarea><div class="hint">A hook, the price or offer, and what to do next. Keep it under 15 words.</div></div>
         <div class="field"><label for="gr_o_brand">Brand name</label><input id="gr_o_brand" placeholder="Skin by Ferry"></div>
       </div>
+      <div class="field prodpick hidden" id="gr_prod_wrap"><label for="gr_prod">Which product is this flyer for?</label><select id="gr_prod"></select><div class="hint">This campaign has more than one product. Pick one, or keep all of them together.</div></div>
       <div class="field" style="margin-top:18px"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
         <div class="tray" id="gr_tray" data-where="AI Graphics"></div>
         <div class="hint">No photo? The design agent uses your first product image in Brand Assets, or makes a product photo with AI.</div></div>
@@ -873,7 +882,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
       </div>
       <div class="field"><label for="lp_o_offer">The offer</label><textarea id="lp_o_offer" placeholder="Pay on delivery in Lagos. Free face towel with every set this month."></textarea><div class="err">Add the offer.</div></div>
     </div>
-    <div class="field" style="margin-top:16px"><label>Product photos for the page <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
+    <div class="field prodpick hidden" id="lp_prod_wrap"><label for="lp_prod">Which product is this page for?</label><select id="lp_prod"></select><div class="hint">This campaign has more than one product. Pick one, or keep all of them together.</div></div>
+      <div class="field" style="margin-top:16px"><label>Product photos for the page <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
       <div class="tray" id="lp_tray" data-where="Landing Pages"></div>
       <div class="hint">These go in the hero and the product section first. Without photos, the page uses your product images in Brand Assets.</div></div>
     <div class="field" style="margin-top:16px"><label for="lp_whatsapp">WhatsApp number for orders</label><input id="lp_whatsapp" inputmode="numeric" placeholder="2348012345678"><div class="hint">Digits with the country code. Leads from the page go to this number.</div><div class="err">Use digits with the country code, for example 2348012345678.</div></div>
@@ -1170,7 +1180,7 @@ $('#logoutBtn').addEventListener('click', logout); $('#logoutBtn2').addEventList
 /* ---------- campaigns (the backend is the source; this browser keeps a copy) ---------- */
 let campaigns = [], current = null; const sel = new Set();
 const mode = { vd: 'campaign', gr: 'campaign', lp: 'campaign', vo: 'campaign', touched: false };
-function setMode(k, m) { mode[k] = m; const p = document.querySelector(`.srcpanel[data-src="${k}"]`); p.querySelectorAll('.srctabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m)); p.querySelectorAll('.srcbody').forEach(b => b.classList.toggle('hidden', b.dataset.mode !== m)); }
+function setMode(k, m) { mode[k] = m; const p = document.querySelector(`.srcpanel[data-src="${k}"]`); p.querySelectorAll('.srctabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m)); p.querySelectorAll('.srcbody').forEach(b => b.classList.toggle('hidden', b.dataset.mode !== m));  if (typeof renderProdPickers === 'function') renderProdPickers(); }
 function loadLocal() {
   campaigns = store.get(key('campaigns'), []);
   const want = store.get(key('current'), null);
@@ -1228,7 +1238,7 @@ function refreshAll() {
   $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '';
   $$('.admin-only').forEach(el => el.classList.toggle('hidden', !session.is_admin));
   const ae = document.activeElement; const typing = ae && ae.closest && ae.closest('#cmp_flow') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
-  renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
+  renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderProdPickers(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
   if (!$('#cs_detail').classList.contains('hidden') && (viewing || current) && !detailDirty) showDetail(false);
 }
 
@@ -1416,7 +1426,20 @@ const PKGS = [
   { id: 'authority', name: 'Authority', products: 3, scripts: 10, flyers: 5, pages: 3 }
 ];
 const pkgById = id => PKGS.find(p => p.id === id) || null;
-function getPkg(cid) { const v = store.get(key('pkg.' + cid), null); return v && pkgById(v.tier) && Array.isArray(v.products) ? v : null; }
+// The backend keeps only three tiers; Authority is saved there as Acceleration (the biggest one it knows).
+const apiTier = t => t === 'authority' ? 'acceleration' : t;
+const DELIV = [['script', 'scripts', 'Video scripts'], ['flyer', 'flyers', 'Flyers'], ['landing', 'pages', 'Landing pages']];
+function getPkg(cid) {
+  const v = store.get(key('pkg.' + cid), null);
+  if (v && pkgById(v.tier) && Array.isArray(v.products)) return v;
+  // not saved in this browser: rebuild it from what the backend saved with the campaign (another device, or cleared storage)
+  const c = campaigns.find(x => x.campaign_id === cid); const p = c && pkgById(c.package);
+  if (!p || !Array.isArray(c.products) || !c.products.length) return null;
+  const n = c.products.length; const sc = splitEven(p.scripts, n), fl = splitEven(p.flyers, n), pg = splitEven(p.pages, n);
+  const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
+  const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
+  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', scripts: sc[i], flyers: fl[i], pages: pg[i], offer_id: '' })) };
+}
 function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
 const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
 const splitEven = (total, n) => Array.from({ length: n }, (_, i) => Math.floor(total / n) + (i < total % n ? 1 : 0));
@@ -1424,36 +1447,62 @@ let pkgDraft = null;
 function newPkgDraft(tier, old) {
   const p = pkgById(tier); const s = splitEven(p.scripts, p.products), f = splitEven(p.flyers, p.products), g = splitEven(p.pages, p.products);
   const main = (current && (current.product || (current.fields || {}).product)) || '';
-  return { tier, products: Array.from({ length: p.products }, (_, i) => Object.assign({ name: i === 0 ? main : '', price: '', scripts: s[i], flyers: f[i], pages: g[i], offer_id: '' }, old && old.tier === tier && old.products[i] ? old.products[i] : {})) };
+  const del = {}; DELIV.forEach(([k, ck]) => { del[k] = !!p[ck] && !(old && old.del && old.del[k] === false); });
+  return { tier, del, products: Array.from({ length: p.products }, (_, i) => Object.assign({ name: i === 0 ? main : '', price: '', about: '', scripts: s[i], flyers: f[i], pages: g[i], offer_id: '' }, old && old.tier === tier && old.products[i] ? old.products[i] : {})) };
 }
 function renderPackage() {
   if (!current) return;
   if (!pkgDraft || pkgDraft.cid !== current.campaign_id) { const old = getPkg(current.campaign_id); pkgDraft = old ? Object.assign({ cid: current.campaign_id }, old) : { cid: current.campaign_id, tier: '', products: [] }; }
   const d = pkgDraft;
   $('#c_pkgs').innerHTML = PKGS.map(p => `<button type="button" class="pkg ${d.tier === p.id ? 'on' : ''}" role="radio" aria-checked="${d.tier === p.id}" data-pkg="${p.id}"><b>${p.name}</b><span>${esc(pkgLine(p))}</span></button>`).join('');
-  $$('#c_pkgs [data-pkg]').forEach(b => b.addEventListener('click', () => { const old = d.tier ? { tier: d.tier, products: d.products } : null; const nd = newPkgDraft(b.dataset.pkg, old); d.tier = nd.tier; d.products = nd.products; renderPackage(); }));
+  $$('#c_pkgs [data-pkg]').forEach(b => b.addEventListener('click', () => { const old = d.tier ? { tier: d.tier, products: d.products, del: d.del } : null; const nd = newPkgDraft(b.dataset.pkg, old); d.tier = nd.tier; d.products = nd.products; d.del = nd.del; renderPackage(); }));
   const box = $('#c_pkg_products'); const p = pkgById(d.tier);
   if (!p) { box.innerHTML = ''; return; }
   const multi = p.products > 1;
+  if (!d.del) d.del = {}; DELIV.forEach(([k, ck]) => { if (d.del[k] === undefined) d.del[k] = !!p[ck]; });
+  const on = ck => { const dk = DELIV.find(x => x[1] === ck)[0]; return !!p[ck] && d.del[dk] !== false; };
   const tot = k => d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0);
-  const totals = () => `<div class="pkgtot">${[['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']].filter(([k]) => p[k]).map(([k, n]) => `<span class="${tot(k) === p[k] ? 'ok' : 'off'}">${tot(k)} of ${p[k]} ${n}</span>`).join('')}</div>`;
-  box.innerHTML = (multi ? `<p class="muted small" style="margin:16px 0 8px">Type each product and share the package between them. The totals must match what the client bought.</p>` : `<p class="muted small" style="margin:16px 0 8px">One product: <b>${esc(d.products[0].name || 'the product from step 1')}</b>. You get ${esc(pkgLine(p).replace(/^1 product, /, ''))}.</p>`)
-    + (multi ? d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="field"><label for="pp_n${i}">Product ${i + 1}</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div>${[['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']].filter(([k]) => p[k]).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${p[k]}" value="${x[k]}"></div>`).join('')}</div>`).join('') + '<div id="pkg_tot">' + totals() + '</div>' : '');
+  const totals = () => `<div class="pkgtot">${[['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']].filter(([k]) => on(k)).map(([k, n]) => `<span class="${tot(k) === p[k] ? 'ok' : 'off'}">${tot(k)} of ${p[k]} ${n}</span>`).join('')}</div>`;
+  const delHtml = `<fieldset class="pkgdel"><legend>What is this client getting?</legend><p class="muted small" style="margin:0 0 8px">Untick what was not bought. The copy then never mentions it, and the video call to action goes to WhatsApp instead of a page link when there is no landing page.</p><div class="pkgdel-row">${DELIV.filter(([k, ck]) => p[ck]).map(([k, ck, n]) => `<label class="chk"><input type="checkbox" data-del="${k}" ${d.del[k] !== false ? 'checked' : ''}>${n}</label>`).join('')}</div></fieldset>`;
+  box.innerHTML = delHtml + (multi ? `<p class="muted small" style="margin:16px 0 8px">Type each product and share the package between them. The totals must match what the client bought.</p>` : `<p class="muted small" style="margin:16px 0 8px">One product: <b>${esc(d.products[0].name || 'the product from step 1')}</b>. You get ${esc(pkgLine(p).replace(/^1 product, /, ''))}.</p>`)
+    + (multi ? d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="field"><label for="pp_n${i}">Product ${i + 1}</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div>${[['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']].filter(([k]) => on(k)).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${p[k]}" value="${x[k]}"></div>`).join('')}</div>`).join('') + '<div id="pkg_tot">' + totals() + '</div>' : '');
+  box.insertAdjacentHTML('beforeend', `<div class="pkgabouts"><p class="muted small" style="margin:14px 0 8px">Say what each product is in a few words, so the copy stays about the right thing (optional).</p>${d.products.map((x, i) => `<div class="field" data-ab="${i}"><label for="pa_${i}">About ${esc(x.name || ('product ' + (i + 1)))}</label><input id="pa_${i}" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>`).join('')}</div>`);
+  $$('#c_pkg_products .pkgabouts [data-ab] input').forEach(inp => inp.addEventListener('input', () => { d.products[Number(inp.closest('[data-ab]').dataset.ab)].about = inp.value; }));
+  $$('#c_pkg_products [data-del]').forEach(cb => cb.addEventListener('change', () => {
+    d.del[cb.dataset.del] = cb.checked;
+    if (cb.checked) { const ck = DELIV.find(x => x[0] === cb.dataset.del)[1]; if (!d.products.some(x => Number(x[ck]) > 0)) { const sp = splitEven(p[ck], d.products.length); d.products.forEach((x, i) => { x[ck] = sp[i]; }); } } // ticked again: give the counts back
+    renderPackage();
+  }));
   $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; x[f] = (f === 'name' || f === 'price') ? inp.value : Math.max(0, parseInt(inp.value, 10) || 0); if (f !== 'name' && f !== 'price') $('#pkg_tot').innerHTML = totals(); })));
 }
 $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
   const d = pkgDraft; const p = d && pkgById(d.tier);
   if (!p) throw new Error('Pick the package the client bought.');
-  d.products.forEach(x => { x.name = String(x.name || '').trim(); });
+  d.products.forEach(x => { x.name = String(x.name || '').trim(); x.price = String(x.price || '').trim(); x.about = String(x.about || '').trim(); });
+  if (!d.del) d.del = {};
+  const live = DELIV.filter(([k, ck]) => p[ck] && d.del[k] !== false);
+  if (!live.length) throw new Error('Tick at least one thing the client is getting.');
   if (p.products > 1) {
     if (d.products.some(x => !x.name)) throw new Error('Type the name of every product.');
-    for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (p[k] && t !== p[k]) throw new Error('Share exactly ' + p[k] + ' ' + n + ' between the products. You have ' + t + '.'); }
+    for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { if (!live.some(x => x[1] === k)) continue; const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (p[k] && t !== p[k]) throw new Error('Share exactly ' + p[k] + ' ' + n + ' between the products. You have ' + t + '.'); }
   }
-  setPkg(current.campaign_id, { tier: d.tier, products: d.products });
+  // what was switched off is not made: its count is zero for every product
+  DELIV.forEach(([k, ck]) => { if (d.del[k] === false) d.products.forEach(x => { x[ck] = 0; }); });
+  const saved = { tier: d.tier, del: Object.assign({}, d.del), products: d.products };
+  // the backend keeps the package, the products and what is being made, so the copy, flyers, pages and videos all follow the same scope
+  await call('campaignSave', {
+    campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: p.products > 1 ? 'multiple' : 'one',
+    products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })),
+    deliverables: live.map(x => x[0])
+  });
+  upsert({ campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: p.products > 1 ? 'multiple' : 'one', products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })), deliverables: live.map(x => x[0]) });
+  setPkg(current.campaign_id, saved);
+  renderProdPickers();
   toast(p.name + ' package saved', 'ok'); showStep(4);
   if (!((current && current.offers) || []).length) writeOffers($('#c_offers_go')); // the offers start as soon as the package is set
 }));
+
 
 /* ---------- step 4: offers ---------- */
 async function writeOffers(btn) {
@@ -1507,8 +1556,21 @@ function renderProdOffers() {
 }
 function buildPlan() {
   const pk = current && getPkg(current.campaign_id); if (!pk) return null; const offers = current.offers || [];
-  return pk.products.map((x, i) => { let offer = current.chosen_offer; if (i > 0 && x.offer_id) { const o = offers.find(q => q.offer_id === x.offer_id); if (o) offer = o.offer; } return { product: x.name, price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages }; });
+  return pk.products.map((x, i) => { let offer = current.chosen_offer; if (i > 0 && x.offer_id) { const o = offers.find(q => q.offer_id === x.offer_id); if (o) offer = o.offer; } return { slot: i + 1, product: x.name, price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages }; });
 }
+/* ---------- one product at a time: flyers, pages and videos can focus on one saved product ---------- */
+const campaignProducts = () => { const pk = current && getPkg(current.campaign_id); return pk ? pk.products.map((x, i) => ({ slot: i + 1, name: x.name })).filter(x => x.name) : []; };
+function renderProdPickers() {
+  const ps = campaignProducts();
+  ['gr', 'vd', 'lp'].forEach(k => {
+    const wrap = $('#' + k + '_prod_wrap'), sel = $('#' + k + '_prod'); if (!wrap || !sel) return;
+    const show = ps.length > 1 && useCampaign(k); wrap.classList.toggle('hidden', !show); if (!show) return;
+    const keep = sel.value; const together = k === 'gr' ? 'Each flyer gets its own product' : k === 'vd' ? 'All the products together' : 'All the products on one page';
+    sel.innerHTML = `<option value="">${together}</option>` + ps.map(x => `<option value="${x.slot}">${esc(x.name)}</option>`).join('');
+    sel.value = ps.some(x => String(x.slot) === keep) ? keep : '';
+  });
+}
+const prodSlot = k => { const sel = $('#' + k + '_prod'); const wrap = $('#' + k + '_prod_wrap'); const n = sel && wrap && !wrap.classList.contains('hidden') ? parseInt(sel.value, 10) : 0; return n >= 1 && n <= 5 ? n : 0; };
 // several scripts, flyers or pages live in one text, each under a "==== SCRIPT 2 of 5 | Product ====" line
 const splitPieces = t => { const s = String(t || ''); if (!/^==== .+ ====$/m.test(s)) return s.trim() ? [{ title: '', text: s.trim() }] : []; const out = []; let cur = null; s.split('\n').forEach(l => { const m = l.match(/^==== (.+) ====$/); if (m) { cur = { title: m[1], text: '' }; out.push(cur); } else if (cur) cur.text += l + '\n'; }); return out.map(x => ({ title: x.title, text: x.text.trim() })); };
 
@@ -2204,7 +2266,12 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   const cid = base.campaign_id || '';
   const jobs = Array.from({ length: n }, (x, i) => {
     const body = Object.assign({}, base, { variant: i + 1, variants: n, layout, style_seed: Math.floor(Math.random() * 1000) });
-    if (base.campaign_id) { const pcs = splitPieces((current.assets || {}).flyer_copy); if (pcs.length > 1) body.flyer_copy = pcs[i % pcs.length].text; } // each flyer gets its own copy from the package
+    if (base.campaign_id) {
+      const slot = prodSlot('gr'); const pn = slot && (campaignProducts().find(x => x.slot === slot) || {}).name;
+      let pcs = splitPieces((current.assets || {}).flyer_copy);
+      if (pn) { body.product_slot = slot; const mine = pcs.filter(x => x.title.split('|').pop().trim().toLowerCase() === pn.toLowerCase()); if (mine.length) pcs = mine; } // one product: only its own flyer copy
+      if (pcs.length > 1 || (pn && pcs.length === 1 && pcs[0].title)) body.flyer_copy = pcs[i % pcs.length].text; // each flyer gets its own copy from the package
+    }
     if (layout === 'collection') body.product_photo_urls = urls.slice(0, 4);
     else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
     const tmp = { tmp: 'tmp_' + Date.now().toString(36) + '_' + i, label: n === 1 ? 'Your flyer' : 'Flyer ' + (i + 1) + ' of ' + n, status: 'working', campaign_id: cid };
@@ -2278,6 +2345,7 @@ $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () =>
   let started = 0, firstErr = null;
   for (let i = 0; i < n; i++) {
     const body = Object.assign({}, base, { variant: i + 1, variants: n });
+    if (base.campaign_id && prodSlot('vd')) body.product_slot = prodSlot('vd');
     if (layout === 'together') body.product_photo_urls = urls.slice(0, 4); else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
     try { await startVideo(body, lbl + (n > 1 ? ' (' + (i + 1) + ' of ' + n + ')' : ''), true); started++; }
     catch (e) { if (e.auth) throw e; firstErr = firstErr || e; }
@@ -2503,7 +2571,7 @@ async function buildPage(btn, changes) {
       body = { page_id: page.page_id, changes, campaign_id: page.campaign_id || undefined };
     } else if (useCampaign('lp')) {
       if (!(current.assets && current.assets.landing_page_copy)) { toast('This campaign has no landing page copy yet. Generate it in New Campaign, step 5, or describe the business here.', 'err'); return; }
-      body = { campaign_id: current.campaign_id };
+      body = { campaign_id: current.campaign_id }; if (prodSlot('lp')) body.product_slot = prodSlot('lp');
     } else {
       const o = { brand: $('#lp_o_brand').value.trim(), product: $('#lp_o_product').value.trim(), price: $('#lp_o_price').value.trim(), audience: $('#lp_o_audience').value.trim(), goal: $('#lp_o_goal').value, offer: $('#lp_o_offer').value.trim(), business_type: $('#lp_o_type').value };
       if (!o.brand || !o.product || !o.offer) { mode.touched = true; setMode('lp', 'own'); validate([['lp_o_brand', !!o.brand], ['lp_o_product', !!o.product], ['lp_o_offer', !!o.offer]]); return; }
