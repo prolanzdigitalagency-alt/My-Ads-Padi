@@ -510,6 +510,7 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
 
 .mvrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.mvrow select{flex:1 1 220px;min-width:0}
 #cs_detail.ro .mvbox button{display:inline-flex}
+.pkgprod.combo{border-color:#f0c419;background:#fffdf3}.pkgdel-row{display:flex;gap:14px;flex-wrap:wrap}
 
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
@@ -1184,7 +1185,7 @@ function showAuth(msg) {
 }
 function endSession(msg) {
   if (session) { ['campaigns', 'current', 'media', 'brand', 'brandcache', 'lastSpy'].forEach(k => store.set(key(k), null)); }
-  brandCache = {}; brandFolders = []; brandSel = ''; brandNew = false; allCampaigns = []; viewing = null;
+  brandCache = {}; brandFolders = []; brandSel = ''; brandNew = false; allCampaigns = []; viewing = null; moveNames = null;
   session = null; store.set('adspadi.session', null); campaigns = []; current = null; brandData = { files: [], intelligence: null, updating: false };
   $('#settings').classList.add('hidden'); showAuth(msg);
 }
@@ -1314,6 +1315,36 @@ function renderLibrary() {
   }));
 }
 let detailDirty = false;
+let moveNames = null, movePending = null; // who a campaign can be moved to; fetched once per login
+async function setupMove(cid) {
+  const fill = () => {
+    const sel2 = $('#mv_to'), go = $('#mv_go'); if (!sel2 || !go || !moveNames || go.dataset.bound) return; go.dataset.bound = '1';
+    const c = viewing || current; const ownerId = viewing ? viewing.owner : session.client_id;
+    const list = moveNames.filter(x => x.client_id !== ownerId);
+    sel2.innerHTML = list.length ? '<option value="">Choose who gets it</option>' + list.map(x => `<option value="${esc(x.client_id)}" data-name="${esc(x.name)}">${esc(x.name)}${x.role === 'super_admin' ? ' (super admin)' : ''}${x.me ? ' (you)' : ''}</option>`).join('') : '<option value="">No one else to move it to</option>';
+    sel2.addEventListener('change', () => { go.disabled = !sel2.value; });
+    go.addEventListener('click', () => {
+      const to = sel2.value; if (!to) return; const nm = sel2.selectedOptions[0].dataset.name || 'this person';
+      if (!confirm('Move this campaign to ' + nm + '? It leaves ' + (viewing ? (viewing.owner_name || 'the current copywriter') + "'s" : 'your') + ' list.')) return;
+      run(go, null, async () => {
+        const r = await call('campaignTransfer', { action: 'move', campaign_ids: [cid], to_client_id: to });
+        if (current && current.campaign_id === cid && to !== session.client_id) { current = null; store.set(key('current'), ''); }
+        viewing = null; sel.delete(cid);
+        await syncCampaigns();
+        if (session.is_admin && $('#cs_all').checked) await loadAllCampaigns();
+        $('#cs_detail').classList.add('hidden'); saveCampaigns(); refreshAll(); renderLibrary();
+        toast('Moved to ' + (r.to_name || nm), 'ok');
+      });
+    });
+  };
+  if (moveNames) return fill();
+  try {
+    if (!movePending) movePending = call('campaignTransfer', { action: 'recipients' }).finally(() => { movePending = null; });
+    const r = await movePending;
+    moveNames = r.recipients || [];
+    fill();
+  } catch (e) { const sel2 = $('#mv_to'); if (sel2) sel2.innerHTML = '<option value="">Could not load names. Close and open the campaign again.</option>'; }
+}
 function showDetail(scroll) {
   detailDirty = false;
   const c = viewing || current; if (!c) return; const a = c.assets || {}; const f = c.fields || {};
@@ -1373,30 +1404,7 @@ function showDetail(scroll) {
     detailDirty = false; upsert({ campaign_id: cid, review_status: r.review_status, performance: r.performance, performance_notes: r.performance_notes }); toast('Status saved', 'ok');
   }));
   $('#st_delete').addEventListener('click', e => deleteCampaigns([cid], e.currentTarget));
-  (async () => {
-    const sel2 = $('#mv_to'), go = $('#mv_go'); if (!sel2) return;
-    try {
-      const r = await call('campaignTransfer', { action: 'recipients' });
-      const ownerId = viewing ? viewing.owner : session.client_id;
-      const list = (r.recipients || []).filter(x => x.client_id !== ownerId);
-      if (!$('#mv_to') || $('#mv_to') !== sel2) return;
-      sel2.innerHTML = list.length ? '<option value="">Choose who gets it</option>' + list.map(x => `<option value="${esc(x.client_id)}" data-name="${esc(x.name)}">${esc(x.name)}${x.role === 'super_admin' ? ' (super admin)' : ''}${x.me ? ' (you)' : ''}</option>`).join('') : '<option value="">No one else to move it to</option>';
-      sel2.addEventListener('change', () => { go.disabled = !sel2.value; });
-    } catch (e) { sel2.innerHTML = '<option value="">Could not load names</option>'; }
-    go.addEventListener('click', () => {
-      const to = sel2.value; if (!to) return; const nm = sel2.selectedOptions[0].dataset.name || 'this person';
-      if (!confirm('Move this campaign to ' + nm + '? It leaves ' + (viewing ? (viewing.owner_name || 'the current copywriter') + "'s" : 'your') + ' list.')) return;
-      run(go, null, async () => {
-        const r = await call('campaignTransfer', { action: 'move', campaign_ids: [cid], to_client_id: to });
-        if (current && current.campaign_id === cid && to !== session.client_id) { current = null; store.set(key('current'), ''); }
-        viewing = null; sel.delete(cid);
-        await syncCampaigns();
-        if (session.is_admin && $('#cs_all').checked) await loadAllCampaigns();
-        $('#cs_detail').classList.add('hidden'); saveCampaigns(); refreshAll(); renderLibrary();
-        toast('Moved to ' + (r.to_name || nm), 'ok');
-      });
-    });
-  })();
+  setupMove(cid);
   const link = (btn, body, msg) => run(btn, null, async () => { const r = await call('reviewLink', Object.assign({ campaign_id: cid }, body)); upsert({ campaign_id: cid, review_url: r.review_url || '' }); toast(msg, 'ok'); });
   if ($('#rv_make')) $('#rv_make').addEventListener('click', e => link(e.currentTarget, {}, 'Review link ready. Copy it and send it.'));
   if ($('#rv_copy')) $('#rv_copy').addEventListener('click', () => copyText($('#rv_url').value));
@@ -1446,6 +1454,7 @@ function showStep(n, scroll) {
   $$('.step').forEach(s => s.classList.toggle('hidden', s.dataset.step !== String(n)));
   $$('.rail button').forEach(b => { const k = Number(b.dataset.step); if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < n); b.disabled = k > 1 && !(current && current.campaign_id); });
   if (n === 3) renderPackage();
+  if (n === 4) renderProdOffers();
   if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenTicks(); renderGenLp(); }
   if (scroll !== false) $('#cmp_flow').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
@@ -1486,7 +1495,10 @@ const apiTier = t => t === 'authority' ? 'acceleration' : t;
 const DELIV = [['script', 'scripts', 'Video scripts'], ['flyer', 'flyers', 'Flyers'], ['landing', 'pages', 'Landing pages']];
 const PKG_CAP = { scripts: 15, flyers: 10, pages: 5 }; // most the backend will write in one go
 const PKG_PER_MAX = { scripts: 10, flyers: 5, pages: 5 }; // most one product can take
-const MAX_PRODUCTS = 5;
+const MAX_PRODUCTS = 5, MAX_COMBOS = 3; // up to 5 products, plus up to 3 combos (2 or 3 of those products sold together)
+const itemLabel = (items, i) => { const combo = itemKind(items[i]); return (combo ? 'Combo ' : 'Product ') + (items.slice(0, i + 1).filter(q => itemKind(q) === itemKind(items[i])).length); };
+const itemKind = x => (x && x.kind === 'combo') ? 'combo' : '';
+const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id === '__own' ? String(x.offer || '') : '' }));
 // a new product added to a package gets this much: the package share for one product
 const unitOf = p => ({ scripts: Math.ceil(p.scripts / p.products), flyers: Math.ceil(p.flyers / p.products), pages: Math.ceil(p.pages / p.products) });
 // starting count for product i of a package: the first products share the package, extra products get one product's share
@@ -1499,7 +1511,7 @@ function getPkg(cid) {
   if (!p || !Array.isArray(c.products) || !c.products.length) return null;
   const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
   const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
-  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i), offer_id: '' })) };
+  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '' })) };
 }
 function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
 const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
@@ -1512,8 +1524,8 @@ function newPkgDraft(tier, old) {
   const n = Math.max(p.products, old && old.products ? old.products.length : 0);
   return { tier, del, products: Array.from({ length: n }, (_, i) => {
     const o = (old && old.products && old.products[i]) || null;
-    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
-    if (o) { ['name', 'price', 'about', 'offer_id'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
+    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', offer: '', kind: '', inc: [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
+    if (o) { x.kind = itemKind(o); x.inc = (o.inc || []).slice(); ['name', 'price', 'about', 'offer_id', 'offer'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
     return x;
   }) };
 }
@@ -1531,20 +1543,39 @@ function renderPackage() {
   const tot = k => d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0);
   const totals = () => `<div class="pkgtot">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<span class="${tot(k) > PKG_CAP[k] ? 'off' : 'ok'}">${tot(k)} ${n.toLowerCase()}${tot(k) > PKG_CAP[k] ? ' (most is ' + PKG_CAP[k] + ')' : ''}</span>`).join('')}</div>`;
   const delHtml = `<fieldset class="pkgdel"><legend>What is this client getting?</legend><p class="muted small" style="margin:0 0 8px">Untick what was not paid for. The copy then never mentions it, and the video call to action goes to WhatsApp instead of a page link when there is no landing page.</p><div class="pkgdel-row">${DELIV.filter(([k, ck]) => p[ck]).map(([k, ck, n]) => `<label class="chk"><input type="checkbox" data-del="${k}" ${d.del[k] !== false ? 'checked' : ''}>${n}</label>`).join('')}</div></fieldset>`;
-  const cards = d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${i + 1}</b>${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
+  const prodIdx = d.products.map((x, i) => i).filter(i => !itemKind(d.products[i]));
+  let pn = 0, cn = 0;
+  const counts = (x, i) => `<div class="pkgcnts">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${PKG_PER_MAX[k]}" value="${x[k]}"></div>`).join('')}</div>`;
+  const cards = d.products.map((x, i) => {
+    if (itemKind(x)) {
+      cn++;
+      const named = prodIdx;
+      return `<div class="pkgprod combo" data-i="${i}"><div class="pkghead"><b>Combo ${cn}</b><button type="button" class="btn ghost sm" data-rm="${i}">Remove</button></div>
+    <div class="pkgrow"><div class="field"><label for="pp_n${i}">Combo name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="Glow Duo"></div><div class="field"><label for="pp_p${i}">Combo price</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N40,000"></div></div>
+    <div class="field"><label>Products in this combo (pick 2 or 3)</label>${named.length >= 2 ? `<div class="pkgdel-row">${named.map(j => `<label class="chk"><input type="checkbox" data-inc="${j}" ${x.inc.includes(j) ? 'checked' : ''} ${!x.inc.includes(j) && x.inc.length >= 3 ? 'disabled' : ''}><span data-incname="${j}">${esc(d.products[j].name || ('Product ' + (named.indexOf(j) + 1)))}</span></label>`).join('')}</div>` : '<span class="muted small">Add at least 2 products above first.</span>'}</div>
+    <div class="field"><label for="pa_${i}">About this combo (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: save N5,000, free delivery when you buy both"></div>
+    ${counts(x, i)}</div>`;
+    }
+    pn++;
+    return `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${pn}</b>${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
     <div class="pkgrow"><div class="field"><label for="pp_n${i}">Name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div></div>
     <div class="field"><label for="pa_${i}">About this product (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>
-    <div class="pkgcnts">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${PKG_PER_MAX[k]}" value="${x[k]}"></div>`).join('')}</div></div>`).join('');
-  box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs.</p>` + cards
-    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${d.products.length >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button>${d.products.length >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}</div><div id="pkg_tot">${totals()}</div>`;
-  $('#pkg_add').addEventListener('click', () => { if (d.products.length >= MAX_PRODUCTS) return; const x = { name: '', price: '', about: '', offer_id: '' }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); d.products.push(x); renderPackage(); });
-  $$('#c_pkg_products [data-rm]').forEach(b => b.addEventListener('click', () => { d.products.splice(Number(b.dataset.rm), 1); renderPackage(); }));
+    ${counts(x, i)}</div>`;
+  }).join('');
+  const nProd = prodIdx.length, nCombo = d.products.length - nProd;
+  box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS || prodIdx.filter(j => d.products[j].name.trim()).length < 2 ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div id="pkg_tot">${totals()}</div>`;
+  const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
+  $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
+  $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; d.products.push(fresh('combo')); renderPackage(); });
+  $$('#c_pkg_products [data-rm]').forEach(b => b.addEventListener('click', () => { const at = Number(b.dataset.rm); const gone = d.products[at]; d.products.splice(at, 1); if (!itemKind(gone)) d.products.forEach(q => { if (itemKind(q)) q.inc = (q.inc || []).filter(j => j !== at).map(j => j > at ? j - 1 : j); }); renderPackage(); }));
+  $$('#c_pkg_products [data-inc]').forEach(cb => cb.addEventListener('change', () => { const x = d.products[Number(cb.closest('.pkgprod').dataset.i)]; const j = Number(cb.dataset.inc); x.inc = (x.inc || []).filter(v => v !== j); if (cb.checked) x.inc.push(j); renderPackage(); }));
   $$('#c_pkg_products [data-del]').forEach(cb => cb.addEventListener('change', () => {
     d.del[cb.dataset.del] = cb.checked;
     if (cb.checked) { const ck = DELIV.find(x => x[0] === cb.dataset.del)[1]; if (!d.products.some(x => Number(x[ck]) > 0)) d.products.forEach((x, i) => { x[ck] = defCount(p, ck, i); }); } // ticked again: give the counts back
     renderPackage();
   }));
-  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about'; x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (!text) $('#pkg_tot').innerHTML = totals(); })));
+  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input[data-f]').forEach(inp => { inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about';     x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (f === 'name') $$('#c_pkg_products [data-incname="' + row.dataset.i + '"]').forEach(sp => { sp.textContent = inp.value.trim() || ('Product ' + (prodIdx.indexOf(Number(row.dataset.i)) + 1)); }); const ac = $('#pkg_add_combo'); if (ac && f === 'name') ac.disabled = d.products.filter(q => itemKind(q)).length >= MAX_COMBOS || d.products.filter(q => !itemKind(q) && q.name.trim()).length < 2; if (!text) $('#pkg_tot').innerHTML = totals(); }); }));
 }
 $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
@@ -1556,21 +1587,24 @@ $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async
   if (!d.del) d.del = {};
   const live = DELIV.filter(([k, ck]) => p[ck] && d.del[k] !== false);
   if (!live.length) throw new Error('Tick at least one thing the client is getting.');
-  if (d.products.some(x => !x.name)) throw new Error('Type the name of every product.');
+  if (d.products.some(x => !x.name)) throw new Error('Type the name of every product and combo.');
+  d.products.forEach((x, i) => { if (itemKind(x)) { x.inc = (x.inc || []).filter(j => d.products[j] && !itemKind(d.products[j])); } });
+  const badCombo = d.products.findIndex(x => itemKind(x) && (x.inc.length < 2 || x.inc.length > 3));
+  if (badCombo >= 0) throw new Error(itemLabel(d.products, badCombo) + ' needs 2 or 3 products. Tick them inside the combo.');
   // what was switched off is not made: its count is zero for every product
   DELIV.forEach(([k, ck]) => { if (d.del[k] === false) d.products.forEach(x => { x[ck] = 0; }); });
   for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (t > PKG_CAP[k]) throw new Error('That is ' + t + ' ' + n + ' in total. The most we can write at once is ' + PKG_CAP[k] + '. Lower the counts.'); }
   const idle = d.products.findIndex(x => !PKG_COUNTS.some(([k]) => Number(x[k]) > 0));
-  if (idle >= 0) throw new Error('Product ' + (idle + 1) + ' has nothing to make. Give it at least one piece, or remove it.');
+  if (idle >= 0) throw new Error(itemLabel(d.products, idle) + ' has nothing to make. Give it at least one piece, or remove it.');
   const saved = { tier: d.tier, del: Object.assign({}, d.del), products: d.products, lp_mode: (getPkg(current.campaign_id) || {}).lp_mode || '' };
   const mode = d.products.length > 1 ? 'multiple' : 'one';
   // the backend keeps the package, the products and what is being made, so the copy, flyers, pages and videos all follow the same scope
   await call('campaignSave', {
     campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: mode,
-    products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })),
+    products: itemsToApi(d.products),
     deliverables: live.map(x => x[0])
   });
-  upsert({ campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: mode, products: d.products.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about })), deliverables: live.map(x => x[0]) });
+  upsert({ campaign_id: current.campaign_id, package: apiTier(d.tier), product_mode: mode, products: itemsToApi(d.products), deliverables: live.map(x => x[0]) });
   setPkg(current.campaign_id, saved);
   renderProdPickers();
   toast(p.name + ' package saved', 'ok'); showStep(4);
@@ -1636,31 +1670,39 @@ $('#c_own_save').addEventListener('click', e => run(e.currentTarget, null, async
   upsert({ campaign_id: current.campaign_id, offers: offs, chosen_offer_id: r.chosen_offer_id || 'custom', chosen_offer: r.chosen_offer || ('Your own offer\n' + text) });
   toast('Your offer is saved', 'ok');
 }));
+function persistItems() { const q = current && getPkg(current.campaign_id); if (!q) return; const items = itemsToApi(q.products); upsert({ campaign_id: current.campaign_id, products: items }); call('campaignSave', { campaign_id: current.campaign_id, products: items }).catch(() => {}); }
 function renderProdOffers() {
   const box = $('#c_prod_offers'); if (!box) return;
   const pk = current && getPkg(current.campaign_id); const offers = (current && current.offers) || [];
   if (!pk || pk.products.length < 2 || !current.chosen_offer) { box.classList.add('hidden'); box.innerHTML = ''; return; }
   box.classList.remove('hidden');
-  box.innerHTML = '<b>Offer for each product</b><p class="muted small" style="margin:4px 0 10px">The offer you chose above goes with ' + esc(pk.products[0].name) + '. Pick the offer for each of the other products.</p>' + pk.products.slice(1).map((x, i) => `<div class="field"><label for="po_${i + 1}">${esc(x.name)}</label><select id="po_${i + 1}" data-pi="${i + 1}"><option value="">Same as ${esc(pk.products[0].name)}</option>${offers.map(o => `<option value="${esc(o.offer_id)}" ${x.offer_id === o.offer_id ? 'selected' : ''}>Offer ${esc(o.number)}: ${esc(o.title)}</option>`).join('')}</select></div>`).join('');
-  $$('#c_prod_offers select').forEach(s => s.addEventListener('change', () => { const q = getPkg(current.campaign_id); if (!q) return; q.products[Number(s.dataset.pi)].offer_id = s.value; setPkg(current.campaign_id, q); }));
+  box.innerHTML = '<b>Offer for each product and combo</b><p class="muted small" style="margin:4px 0 10px">Each one starts with the offer you chose above. Give any of them a different offer, or write your own.</p>' + pk.products.map((x, i) => `<div class="field"><label for="po_${i}">${esc(x.name || ('Item ' + (i + 1)))}${itemKind(x) ? ' (combo)' : ''}</label><select id="po_${i}" data-pi="${i}"><option value="">The offer chosen above</option>${offers.map(o => `<option value="${esc(o.offer_id)}" ${x.offer_id === o.offer_id ? 'selected' : ''}>Offer ${esc(o.number)}: ${esc(o.title)}</option>`).join('')}<option value="__own" ${x.offer_id === '__own' ? 'selected' : ''}>Write my own offer</option></select>${x.offer_id === '__own' ? `<textarea id="pot_${i}" data-pt="${i}" rows="3" style="margin-top:8px" placeholder="Buy 2, get the third at half price. Free delivery in Lagos. Ends Sunday.">${esc(x.offer || '')}</textarea>` : ''}</div>`).join('');
+  $$('#c_prod_offers select').forEach(sl => sl.addEventListener('change', () => { const q = getPkg(current.campaign_id); if (!q) return; q.products[Number(sl.dataset.pi)].offer_id = sl.value; setPkg(current.campaign_id, q); persistItems(); renderProdOffers(); }));
+  $$('#c_prod_offers textarea').forEach(t => t.addEventListener('change', () => { const q = getPkg(current.campaign_id); if (!q) return; q.products[Number(t.dataset.pt)].offer = t.value.trim(); setPkg(current.campaign_id, q); persistItems(); }));
 }
 function buildPlan() {
   const pk = current && getPkg(current.campaign_id); if (!pk) return null; const offers = current.offers || [];
-  return pk.products.map((x, i) => { let offer = current.chosen_offer; if (i > 0 && x.offer_id) { const o = offers.find(q => q.offer_id === x.offer_id); if (o) offer = o.offer; } return { slot: i + 1, product: x.name, price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages }; });
+  return pk.products.map((x, i) => {
+    let offer = current.chosen_offer;
+    if (x.offer_id === '__own') { const t = String(x.offer || '').trim(); if (t) offer = t; }
+    else if (x.offer_id) { const o = offers.find(q => q.offer_id === x.offer_id); if (o) offer = o.offer; }
+    const combo = itemKind(x) === 'combo';
+    return { slot: i + 1, product: x.name, kind: combo ? 'combo' : '', includes: combo ? (x.inc || []).map(j => (pk.products[j] || {}).name).filter(Boolean).join(' + ') : '', price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages };
+  });
 }
 /* ---------- one product at a time: flyers, pages and videos can focus on one saved product ---------- */
-const campaignProducts = () => { const pk = current && getPkg(current.campaign_id); return pk ? pk.products.map((x, i) => ({ slot: i + 1, name: x.name })).filter(x => x.name) : []; };
+const campaignProducts = () => { const pk = current && getPkg(current.campaign_id); return pk ? pk.products.map((x, i) => ({ slot: i + 1, name: x.name, label: x.name + (itemKind(x) ? ' (combo)' : '') })).filter(x => x.name) : []; };
 function renderProdPickers() {
   const ps = campaignProducts();
   ['gr', 'vd', 'lp'].forEach(k => {
     const wrap = $('#' + k + '_prod_wrap'), sel = $('#' + k + '_prod'); if (!wrap || !sel) return;
     const show = ps.length > 1 && useCampaign(k); wrap.classList.toggle('hidden', !show); if (!show) return;
     const keep = sel.value; const together = k === 'gr' ? 'Each flyer gets its own product' : k === 'vd' ? 'All the products together' : 'All the products on one page';
-    sel.innerHTML = `<option value="">${together}</option>` + ps.map(x => `<option value="${x.slot}">${esc(x.name)}</option>`).join('');
+    sel.innerHTML = `<option value="">${together}</option>` + ps.map(x => `<option value="${x.slot}">${esc(x.label || x.name)}</option>`).join('');
     sel.value = ps.some(x => String(x.slot) === keep) ? keep : '';
   });
 }
-const prodSlot = k => { const sel = $('#' + k + '_prod'); const wrap = $('#' + k + '_prod_wrap'); const n = sel && wrap && !wrap.classList.contains('hidden') ? parseInt(sel.value, 10) : 0; return n >= 1 && n <= 5 ? n : 0; };
+const prodSlot = k => { const sel = $('#' + k + '_prod'); const wrap = $('#' + k + '_prod_wrap'); const n = sel && wrap && !wrap.classList.contains('hidden') ? parseInt(sel.value, 10) : 0; return n >= 1 && n <= 8 ? n : 0; };
 // several scripts, flyers or pages live in one text, each under a "==== SCRIPT 2 of 5 | Product ====" line
 const splitPieces = t => { const s = String(t || ''); if (!/^==== .+ ====$/m.test(s)) return s.trim() ? [{ title: '', text: s.trim() }] : []; const out = []; let cur = null; s.split('\n').forEach(l => { const m = l.match(/^==== (.+) ====$/); if (m) { cur = { title: m[1], text: '' }; out.push(cur); } else if (cur) cur.text += l + '\n'; }); return out.map(x => ({ title: x.title, text: x.text.trim() })); };
 
