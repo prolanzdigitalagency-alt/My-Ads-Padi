@@ -508,6 +508,9 @@ select:disabled{opacity:.55;cursor:not-allowed}
 
 mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 
+.mvrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.mvrow select{flex:1 1 220px;min-width:0}
+#cs_detail.ro .mvbox button{display:inline-flex}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -1024,6 +1027,7 @@ const API = {
   spySearch:      { path: '/ads-padi/spy/search',        live: true }, // {mode: niche|brand, query, platform: meta|tiktok|linkedin, country, refresh?} -> {ok, cached, searched_at, ads:[...], insight:{summary, hooks, offers, angles, formats, model_this}, note}
   spyUse:         { path: '/ads-padi/spy/use',           live: true }, // {campaign_id, picks:[ad], clear?} -> {ok, campaign_id, picks_saved}
   landingUnpublish: { path: '/ads-padi/landing/unpublish', live: true }, // {page_id} -> {ok}; deletes the project on Vercel and clears the live link
+  campaignTransfer: { path: '/ads-padi/campaign/transfer', live: true }, // {action: recipients} -> {ok, recipients:[{client_id, name, role, me}]}; {action: move, campaign_ids:[...], to_client_id} -> {ok, moved, to_name}
   campaignDelete: { path: '/ads-padi/campaign/delete',   live: true }, // {campaign_ids:[...]} -> {ok, deleted}
   campaignList:   { path: '/ads-padi/campaign/list',     live: true }, // {html_for?:[page_id]} -> {ok, campaigns:[{campaign_id, brand, product, goal, awareness, fields, chosen_offer, offers, assets, media, pages, research, spy_picks, review_status, performance, performance_notes, review_url, blanks}]}
   campaignSave:   { path: '/ads-padi/campaign/save',     live: true }, // {campaign_id?, ...fields} -> {ok, campaign_id, is_new, status}
@@ -1331,6 +1335,11 @@ function showDetail(scroll) {
       </div>
       <div class="field" style="margin-top:12px"><label for="st_notes">What is working and what is not</label><textarea id="st_notes" placeholder="Hook 2 got the cheapest WhatsApp chats. The flyer with the price did better than the one without.">${esc(c.performance_notes || '')}</textarea></div>
       <div class="actions" style="margin-top:12px"><button class="btn sm" id="st_save"><span class="spin"></span>Save status</button><button class="btn ghost sm danger" id="st_delete"><span class="spin"></span>Delete campaign</button></div>
+      <div class="mvbox" style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px">
+        <b style="display:block;margin-bottom:4px">Move to another copywriter</b>
+        <p class="muted small" style="margin-bottom:10px">${session && session.is_admin ? 'Hand this campaign to a copywriter, or take it back. ' : 'Hand this campaign to a colleague. '}The offers, copy, flyers, videos, landing pages and leads go with it. It leaves your list once moved. Brand files and brand intelligence stay with the account they were saved under.</p>
+        <div class="mvrow"><select id="mv_to" aria-label="Move to"><option value="">Loading names...</option></select><button class="btn sm" id="mv_go" disabled><span class="spin"></span>Move campaign</button></div>
+      </div>
       <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px">
         <b style="display:block;margin-bottom:4px">Review link</b>
         <p class="muted small" style="margin-bottom:10px">A clean, read-only page with the brief, offer, copy, flyers and landing page. Send it to your boss or the client yourself. Nobody can change anything through it.</p>
@@ -1364,6 +1373,30 @@ function showDetail(scroll) {
     detailDirty = false; upsert({ campaign_id: cid, review_status: r.review_status, performance: r.performance, performance_notes: r.performance_notes }); toast('Status saved', 'ok');
   }));
   $('#st_delete').addEventListener('click', e => deleteCampaigns([cid], e.currentTarget));
+  (async () => {
+    const sel2 = $('#mv_to'), go = $('#mv_go'); if (!sel2) return;
+    try {
+      const r = await call('campaignTransfer', { action: 'recipients' });
+      const ownerId = viewing ? viewing.owner : session.client_id;
+      const list = (r.recipients || []).filter(x => x.client_id !== ownerId);
+      if (!$('#mv_to') || $('#mv_to') !== sel2) return;
+      sel2.innerHTML = list.length ? '<option value="">Choose who gets it</option>' + list.map(x => `<option value="${esc(x.client_id)}" data-name="${esc(x.name)}">${esc(x.name)}${x.role === 'super_admin' ? ' (super admin)' : ''}${x.me ? ' (you)' : ''}</option>`).join('') : '<option value="">No one else to move it to</option>';
+      sel2.addEventListener('change', () => { go.disabled = !sel2.value; });
+    } catch (e) { sel2.innerHTML = '<option value="">Could not load names</option>'; }
+    go.addEventListener('click', () => {
+      const to = sel2.value; if (!to) return; const nm = sel2.selectedOptions[0].dataset.name || 'this person';
+      if (!confirm('Move this campaign to ' + nm + '? It leaves ' + (viewing ? (viewing.owner_name || 'the current copywriter') + "'s" : 'your') + ' list.')) return;
+      run(go, null, async () => {
+        const r = await call('campaignTransfer', { action: 'move', campaign_ids: [cid], to_client_id: to });
+        if (current && current.campaign_id === cid && to !== session.client_id) { current = null; store.set(key('current'), ''); }
+        viewing = null; sel.delete(cid);
+        await syncCampaigns();
+        if (session.is_admin && $('#cs_all').checked) await loadAllCampaigns();
+        $('#cs_detail').classList.add('hidden'); saveCampaigns(); refreshAll(); renderLibrary();
+        toast('Moved to ' + (r.to_name || nm), 'ok');
+      });
+    });
+  })();
   const link = (btn, body, msg) => run(btn, null, async () => { const r = await call('reviewLink', Object.assign({ campaign_id: cid }, body)); upsert({ campaign_id: cid, review_url: r.review_url || '' }); toast(msg, 'ok'); });
   if ($('#rv_make')) $('#rv_make').addEventListener('click', e => link(e.currentTarget, {}, 'Review link ready. Copy it and send it.'));
   if ($('#rv_copy')) $('#rv_copy').addEventListener('click', () => copyText($('#rv_url').value));
