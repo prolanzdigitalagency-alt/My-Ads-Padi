@@ -504,6 +504,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .lpchoice .chk{display:flex;gap:8px;align-items:center;font-weight:600}
 @media(max-width:760px){.pkgrow{grid-template-columns:1fr}}
 
+.ticks label.locked{opacity:.55;cursor:not-allowed}.ticks label.locked input{cursor:not-allowed}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -720,6 +722,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
         <label><input type="checkbox" name="gen" value="flyer_copy" checked><div>Flyer copy<span>Hook, offer, call to action</span></div></label>
         <label><input type="checkbox" name="gen" value="landing_page_copy" checked><div>Landing page copy<span>Hero to FAQ</span></div></label>
       </div>
+      <p class="muted small hidden" id="c_gen_none" style="margin:10px 0 0">This package has no video scripts, flyers or landing pages to write. Change the package in step 3.</p>
       <div class="lpchoice hidden" id="c_gen_lp_wrap"><b>This client has more than one product. How many landing pages?</b><div class="muted small" id="c_gen_lp_names"></div><label class="chk"><input type="radio" name="lpmode" value="one"> One landing page for all the products</label><label class="chk"><input type="radio" name="lpmode" value="each"> A separate landing page for each product</label></div>
       <p class="muted small" style="margin:10px 0 0">The video script comes with creative direction: the creative type to shoot, who is on camera, the shot list and notes for the AI video. Short form scripts have their own screen.</p>
       <div class="actions"><button class="btn ghost" data-goto="4">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
@@ -1405,7 +1408,7 @@ function showStep(n, scroll) {
   $$('.step').forEach(s => s.classList.toggle('hidden', s.dataset.step !== String(n)));
   $$('.rail button').forEach(b => { const k = Number(b.dataset.step); if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < n); b.disabled = k > 1 && !(current && current.campaign_id); });
   if (n === 3) renderPackage();
-  if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenLp(); }
+  if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenTicks(); renderGenLp(); }
   if (scroll !== false) $('#cmp_flow').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 $$('.rail button').forEach(b => b.addEventListener('click', () => showStep(Number(b.dataset.step))));
@@ -1467,7 +1470,7 @@ let pkgDraft = null;
 function newPkgDraft(tier, old) {
   const p = pkgById(tier);
   const main = (current && (current.product || (current.fields || {}).product)) || '';
-  const del = {}; DELIV.forEach(([k, ck]) => { del[k] = !!p[ck] && !(old && old.del && old.del[k] === false); });
+  const del = {}; DELIV.forEach(([k, ck]) => { del[k] = !!p[ck] && !(old && old.tier === tier && old.del && old.del[k] === false); });
   const n = Math.max(p.products, old && old.products ? old.products.length : 0);
   return { tier, del, products: Array.from({ length: n }, (_, i) => {
     const o = (old && old.products && old.products[i]) || null;
@@ -1647,6 +1650,18 @@ async function generateCopy(items, extra, workingId) {
 }
 // more than one product and a landing page: ask whether it is one page for all of them or a page each
 function genLpAsk() { const pk = current && getPkg(current.campaign_id); return !!(pk && pk.products.length > 1 && pk.del && pk.del.landing !== false && pk.products.some(x => Number(x.pages) > 0)); }
+// the Generate ticks follow the package: only what the client bought is shown, and all of it starts ticked
+const GEN_KEY = { script: ['script', 'scripts'], flyer_copy: ['flyer', 'flyers'], landing_page_copy: ['landing', 'pages'] };
+function genAllowed() {
+  const pk = current && getPkg(current.campaign_id); if (!pk) return null;
+  const out = {}; Object.keys(GEN_KEY).forEach(k => { const [d, c] = GEN_KEY[k]; out[k] = pk.del[d] !== false && pk.products.some(x => Number(x[c]) > 0); });
+  return out;
+}
+function renderGenTicks() {
+  const ok = genAllowed();
+  $$('input[name="gen"]').forEach(cb => { const lab = cb.closest('label'); const on = ok ? !!ok[cb.value] : true; if (lab) { lab.classList.toggle('locked', !on); const sp = lab.querySelector('span'); if (sp) { if (sp.dataset.was === undefined) sp.dataset.was = sp.textContent; sp.textContent = on ? sp.dataset.was : 'Not in this package'; } } cb.checked = on; cb.disabled = !on; });
+  const note = $('#c_gen_none'); if (note) note.classList.toggle('hidden', !(ok && !Object.values(ok).some(Boolean)));
+}
 function renderGenLp() {
   const w = $('#c_gen_lp_wrap'); if (!w) return;
   const ask = genLpAsk(); w.classList.toggle('hidden', !ask); if (!ask) return;
