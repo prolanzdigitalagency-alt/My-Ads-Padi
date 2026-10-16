@@ -512,6 +512,13 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
 #cs_detail.ro .mvbox button{display:inline-flex}
 .pkgprod.combo{border-color:#f0c419;background:#fffdf3}.pkgdel-row{display:flex;gap:14px;flex-wrap:wrap}
 
+.poblock{margin-top:22px;padding-top:16px;border-top:1px solid #e6e8ee}
+.poblock:first-child{margin-top:8px;padding-top:0;border-top:0}
+.pohead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.pohead h3{margin:0 0 2px;font-size:18px}
+.poblock .ownoffer summary{cursor:pointer;font-weight:600}
+.poblock .ownoffer[open] summary{margin-bottom:6px}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -710,13 +717,11 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
     </div>
 
     <div class="card step hidden" data-step="4">
-      <div class="cap"><div><h2>Your offer</h2><p>Four offers shaped by your goal and the buyer's stage. Pick the one you can actually deliver. Where the agent does not know a detail, it leaves a blank for you to fill.</p></div><button class="btn soft sm hidden" id="c_offers_again"><span class="spin"></span>Write 4 new offers</button></div>
-      <div class="empty" id="c_offers_empty"><b>No offers yet</b>The agent writes four options for this campaign. The first time can take up to 8 minutes.<br><button class="btn" id="c_offers_go"><span class="spin"></span>Write 4 offers</button></div>
-      <div class="working hidden" id="c_offers_working"><div class="bar"><i></i></div><span>Writing four offers for your buyer. The first time can take up to 8 minutes.</span></div>
-      <div class="offers hidden" id="c_offers"></div>
-      <div class="ownoffer hidden" id="c_own"><h3>Or write your own offer</h3><p class="muted small">The four offers above follow what is winning in your niche. Only write your own if the client cannot deliver them. Say what the buyer gets, what they pay and when it ends, in plain words.</p><div class="field"><label for="c_own_text">Your offer</label><textarea id="c_own_text" rows="3" maxlength="600" placeholder="Order 20 pieces or more and get 10% off, plus free delivery. This offer ends 20th November 2026."></textarea></div><button class="btn soft sm" id="c_own_save"><span class="spin"></span>Use my own offer</button></div>
+      <div class="cap"><div><h2>Your offer</h2><p>Four offers for each product and combo, shaped by your goal and the buyer's stage. Pick one offer for each. Different products can take different offers, or share the same one. Where the agent does not know a detail, it leaves a blank for you to fill.</p></div><button class="btn soft sm hidden" id="c_offers_again"><span class="spin"></span>Write all new offers</button></div>
+      <div class="empty" id="c_offers_empty"><b>No offers yet</b>The agent writes four options for each product and combo. The first time can take up to 8 minutes.<br><button class="btn" id="c_offers_go"><span class="spin"></span>Write the offers</button></div>
+      <div class="working hidden" id="c_offers_working"><div class="bar"><i></i></div><span>Writing four offers for each of your products. The first time can take up to 8 minutes.</span></div>
+      <div class="hidden" id="c_offers"></div>
       <div class="note green hidden" id="c_chosen" style="margin-top:18px"></div>
-      <div class="hidden" id="c_prod_offers" style="margin-top:18px"></div>
       <div class="actions"><button class="btn ghost" data-goto="3">Back</button><button class="btn hidden" id="c_step3_next" data-goto="5">Continue to generate</button></div>
     </div>
 
@@ -1454,8 +1459,8 @@ function showStep(n, scroll) {
   $$('.step').forEach(s => s.classList.toggle('hidden', s.dataset.step !== String(n)));
   $$('.rail button').forEach(b => { const k = Number(b.dataset.step); if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < n); b.disabled = k > 1 && !(current && current.campaign_id); });
   if (n === 3) renderPackage();
-  if (n === 4) renderProdOffers();
-  if (n === 5) { const el = $('#c_gen_offer'); const has = current && current.chosen_offer; el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + esc(current.chosen_offer.split('\n')[0]) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenTicks(); renderGenLp(); }
+  if (n === 4) renderOffers();
+  if (n === 5) { const el = $('#c_gen_offer'); const has = allPicked(); el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + (pk.products.length > 1 ? pk.products.map(x => esc(x.name) + ': ' + esc(itemOfferTitle(x) || 'chosen offer')).join('<br>') : esc(itemOfferTitle(pk.products[0]) || String(current.chosen_offer || '').split('\n')[0])) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenTicks(); renderGenLp(); }
   if (scroll !== false) $('#cmp_flow').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 $$('.rail button').forEach(b => b.addEventListener('click', () => showStep(Number(b.dataset.step))));
@@ -1498,7 +1503,7 @@ const PKG_PER_MAX = { scripts: 10, flyers: 5, pages: 5 }; // most one product ca
 const MAX_PRODUCTS = 5, MAX_COMBOS = 3; // up to 5 products, plus up to 3 combos (2 or 3 of those products sold together)
 const itemLabel = (items, i) => { const combo = itemKind(items[i]); return (combo ? 'Combo ' : 'Product ') + (items.slice(0, i + 1).filter(q => itemKind(q) === itemKind(items[i])).length); };
 const itemKind = x => (x && x.kind === 'combo') ? 'combo' : '';
-const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id === '__own' ? String(x.offer || '') : '' }));
+const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '' }));
 // a new product added to a package gets this much: the package share for one product
 const unitOf = p => ({ scripts: Math.ceil(p.scripts / p.products), flyers: Math.ceil(p.flyers / p.products), pages: Math.ceil(p.pages / p.products) });
 // starting count for product i of a package: the first products share the package, extra products get one product's share
@@ -1511,7 +1516,7 @@ function getPkg(cid) {
   if (!p || !Array.isArray(c.products) || !c.products.length) return null;
   const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
   const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
-  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '' })) };
+  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
 }
 function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
 const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
@@ -1524,16 +1529,20 @@ function newPkgDraft(tier, old) {
   const n = Math.max(p.products, old && old.products ? old.products.length : 0);
   return { tier, del, products: Array.from({ length: n }, (_, i) => {
     const o = (old && old.products && old.products[i]) || null;
-    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', offer: '', kind: '', inc: [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
-    if (o) { x.kind = itemKind(o); x.inc = (o.inc || []).slice(); ['name', 'price', 'about', 'offer_id', 'offer'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
+    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind: '', inc: [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
+    if (o) { x.kind = itemKind(o); x.inc = (o.inc || []).slice(); ['name', 'price', 'about', 'offer_id', 'offer', 'ofn'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
     return x;
   }) };
 }
 const PKG_COUNTS = [['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']];
+const itemKey = x => String((x && x.name) || '').trim().toLowerCase() + (itemKind(x) ? '|combo' : '');
+// the offers picked in step 4 live in the saved package; the package form keeps its own copy while it is being edited, so bring the picks across
+function syncPicks(d) { const st = current && getPkg(current.campaign_id); if (!st || !d) return; d.products.forEach((x, i) => { const sp = st.products[i]; if (sp && itemKey(sp) === itemKey(x)) { x.offer_id = sp.offer_id || ''; x.offer = sp.offer || ''; x.ofn = sp.ofn || ''; } }); }
 function renderPackage() {
   if (!current) return;
   if (!pkgDraft || pkgDraft.cid !== current.campaign_id) { const old = getPkg(current.campaign_id); pkgDraft = old ? Object.assign({ cid: current.campaign_id }, old) : { cid: current.campaign_id, tier: '', products: [] }; }
   const d = pkgDraft;
+  syncPicks(d);
   $('#c_pkgs').innerHTML = PKGS.map(p => `<button type="button" class="pkg ${d.tier === p.id ? 'on' : ''}" role="radio" aria-checked="${d.tier === p.id}" data-pkg="${p.id}"><b>${p.name}</b><span>${esc(pkgLine(p))}</span></button>`).join('');
   $$('#c_pkgs [data-pkg]').forEach(b => b.addEventListener('click', () => { const old = d.tier ? { tier: d.tier, products: d.products, del: d.del } : null; const nd = newPkgDraft(b.dataset.pkg, old); d.tier = nd.tier; d.products = nd.products; d.del = nd.del; renderPackage(); }));
   const box = $('#c_pkg_products'); const p = pkgById(d.tier);
@@ -1564,10 +1573,10 @@ function renderPackage() {
   }).join('');
   const nProd = prodIdx.length, nCombo = d.products.length - nProd;
   box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
-    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS || prodIdx.filter(j => d.products[j].name.trim()).length < 2 ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Name at least 2 products first, then click + Add combo. <b>Combos build v2</b></div><div id="pkg_tot">${totals()}</div>`;
-  const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. <b>Combos build v3</b></div><div id="pkg_tot">${totals()}</div>`;
+  const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
   $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
-  $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; d.products.push(fresh('combo')); renderPackage(); });
+  $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; while (d.products.filter(q => !itemKind(q)).length < 2) d.products.splice(d.products.filter(q => !itemKind(q)).length, 0, fresh('')); d.products.push(fresh('combo')); renderPackage(); });
   $$('#c_pkg_products [data-rm]').forEach(b => b.addEventListener('click', () => { const at = Number(b.dataset.rm); const gone = d.products[at]; d.products.splice(at, 1); if (!itemKind(gone)) d.products.forEach(q => { if (itemKind(q)) q.inc = (q.inc || []).filter(j => j !== at).map(j => j > at ? j - 1 : j); }); renderPackage(); }));
   $$('#c_pkg_products [data-inc]').forEach(cb => cb.addEventListener('change', () => { const x = d.products[Number(cb.closest('.pkgprod').dataset.i)]; const j = Number(cb.dataset.inc); x.inc = (x.inc || []).filter(v => v !== j); if (cb.checked) x.inc.push(j); renderPackage(); }));
   $$('#c_pkg_products [data-del]').forEach(cb => cb.addEventListener('change', () => {
@@ -1575,7 +1584,7 @@ function renderPackage() {
     if (cb.checked) { const ck = DELIV.find(x => x[0] === cb.dataset.del)[1]; if (!d.products.some(x => Number(x[ck]) > 0)) d.products.forEach((x, i) => { x[ck] = defCount(p, ck, i); }); } // ticked again: give the counts back
     renderPackage();
   }));
-  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input[data-f]').forEach(inp => { inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about';     x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (f === 'name') $$('#c_pkg_products [data-incname="' + row.dataset.i + '"]').forEach(sp => { sp.textContent = inp.value.trim() || ('Product ' + (prodIdx.indexOf(Number(row.dataset.i)) + 1)); }); const ac = $('#pkg_add_combo'); if (ac && f === 'name') ac.disabled = d.products.filter(q => itemKind(q)).length >= MAX_COMBOS || d.products.filter(q => !itemKind(q) && q.name.trim()).length < 2; if (!text) $('#pkg_tot').innerHTML = totals(); }); }));
+  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input[data-f]').forEach(inp => { inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about';     x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (f === 'name') $$('#c_pkg_products [data-incname="' + row.dataset.i + '"]').forEach(sp => { sp.textContent = inp.value.trim() || ('Product ' + (prodIdx.indexOf(Number(row.dataset.i)) + 1)); }); if (!text) $('#pkg_tot').innerHTML = totals(); }); }));
 }
 $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
@@ -1596,6 +1605,8 @@ $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async
   for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (t > PKG_CAP[k]) throw new Error('That is ' + t + ' ' + n + ' in total. The most we can write at once is ' + PKG_CAP[k] + '. Lower the counts.'); }
   const idle = d.products.findIndex(x => !PKG_COUNTS.some(([k]) => Number(x[k]) > 0));
   if (idle >= 0) throw new Error(itemLabel(d.products, idle) + ' has nothing to make. Give it at least one piece, or remove it.');
+  syncPicks(d);
+  { const prev = getPkg(current.campaign_id); d.products.forEach((x, i) => { const pv = prev && prev.products[i]; if ((!pv || itemKey(pv) !== itemKey(x)) && ((current && current.offers) || []).some(o => offerSlot(o) === i + 1)) { x.ofn = '__stale'; if (x.offer_id !== '__own') { x.offer_id = ''; x.offer = ''; } } }); } // a product that changed since its offers were written needs new offers
   const saved = { tier: d.tier, del: Object.assign({}, d.del), products: d.products, lp_mode: (getPkg(current.campaign_id) || {}).lp_mode || '' };
   const mode = d.products.length > 1 ? 'multiple' : 'one';
   // the backend keeps the package, the products and what is being made, so the copy, flyers, pages and videos all follow the same scope
@@ -1612,80 +1623,126 @@ $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async
 }));
 
 
-/* ---------- step 4: offers ---------- */
-async function writeOffers(btn) {
+/* ---------- step 4: offers (four for each product and combo, one pick each) ---------- */
+// offer ids: cmp_x-p2-o3 = the 3rd offer written for item 2; cmp_x-o3 = an older campaign-wide offer
+const offerSlot = o => { const m = /-p([1-8])-o[1-4]$/.exec(String((o && o.offer_id) || '')); return m ? Number(m[1]) : 0; };
+const itemAt = slot => { const pk = current && getPkg(current.campaign_id); return pk ? pk.products[slot - 1] : null; };
+const staleAt = slot => { const it = itemAt(slot); return !!(it && it.ofn && it.ofn !== itemKey(it)); };
+const slotOffers = slot => { if (staleAt(slot)) return []; const all = (current && current.offers) || []; const own = all.filter(o => offerSlot(o) === slot); return own.length ? own : all.filter(o => offerSlot(o) === 0); };
+const legacyOffers = () => !((current && current.offers) || []).some(o => offerSlot(o) > 0);
+const offerDraft = {}; // what was typed in the blanks and own-offer boxes, kept while the cards redraw
+const itemPicked = x => x.ofn && x.ofn !== itemKey(x) && x.offer_id !== '__own' ? false : !!(x.offer_id && (x.offer_id !== '__own' || String(x.offer || '').trim())) || (!x.offer_id && legacyOffers() && !!(current && current.chosen_offer));
+const allPicked = () => { const pk = current && getPkg(current.campaign_id); return !!pk && pk.products.length > 0 && pk.products.every(itemPicked); };
+const itemOfferTitle = x => { if (x.offer_id === '__own') return 'Own offer'; const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); if (o) return o.title; return (!x.offer_id && current && current.chosen_offer) ? String(current.chosen_offer).split('\n')[0] : ''; };
+const itemOfferText = x => { if (x.offer_id) { if (String(x.offer || '').trim()) return String(x.offer).trim(); const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); return o ? o.offer : ''; } return (current && current.chosen_offer) || ''; };
+function persistItems() { const q = current && getPkg(current.campaign_id); if (!q) return; const items = itemsToApi(q.products); upsert({ campaign_id: current.campaign_id, products: items }); call('campaignSave', { campaign_id: current.campaign_id, products: items }).catch(() => {}); }
+async function writeSlotOffers(slot) {
+  const r = await runJob('offersGenerate', { campaign_id: current.campaign_id, slot }, { max: 600000 });
+  const keep = ((current && current.offers) || []).filter(o => offerSlot(o) !== slot);
+  const fresh = (r.offers || []).map(o => Object.assign({}, o, { selected: false }));
+  const patch = { campaign_id: current.campaign_id, offers: keep.concat(fresh) };
+  const pk = getPkg(current.campaign_id); const it = pk && pk.products[slot - 1];
+  if (it) { it.offer_id = ''; it.offer = ''; it.ofn = itemKey(it); setPkg(current.campaign_id, pk); }
+  if (slot === 1) { patch.chosen_offer_id = ''; patch.chosen_offer = ''; }
+  upsert(patch);
+  return r;
+}
+async function writeOffers(btn, only) {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
   if (!(current.awareness || (current.fields || {}).awareness)) { toast('Set the audience first. The offers depend on the buyer stage.', 'err'); return showStep(2); }
+  const pk = getPkg(current.campaign_id);
+  if (!pk || !pk.products.length) { toast('Set the package first. The offers are written for each product.', 'err'); return showStep(3); }
+  const slots = only ? [only] : pk.products.map((x, i) => i + 1);
   $('#c_offers_empty').classList.add('hidden');
   await run(btn, 'c_offers_working', async () => {
-    const r = await runJob('offersGenerate', { campaign_id: current.campaign_id }, { max: 600000 });
-    upsert({ campaign_id: current.campaign_id, offers: r.offers, chosen_offer_id: '', chosen_offer: '' });
-    toast('Four offers written for a ' + (r.awareness || '').toLowerCase() + ' buyer', 'ok');
+    const failed = []; let lastErr = null;
+    const one = async sl => { try { await writeSlotOffers(sl); renderOffers(); } catch (e) { if (e.auth) throw e; failed.push(sl); lastErr = e; } };
+    await one(slots[0]); // the first one warms the niche research that the others reuse
+    await Promise.all(slots.slice(1).map(one));
+    persistItems();
+    if (failed.length === slots.length && lastErr) throw lastErr;
+    if (failed.length) { const q = getPkg(current.campaign_id) || pk; toast('Could not write offers for ' + failed.map(sl => (q.products[sl - 1] || {}).name || ('item ' + sl)).join(', ') + '. Press Write 4 offers under it to try again.', 'err'); }
+    else toast(slots.length > 1 ? 'Four offers written for each of your ' + slots.length + ' items' : 'Four offers written', 'ok');
   });
   renderOffers();
 }
 $('#c_offers_go').addEventListener('click', e => writeOffers(e.currentTarget));
 $('#c_offers_again').addEventListener('click', e => writeOffers(e.currentTarget));
-function renderOffers() {
-  const offers = (current && current.offers) || []; const has = current && current.chosen_offer;
-  $('#c_offers_empty').classList.toggle('hidden', !!offers.length); $('#c_offers').classList.toggle('hidden', !offers.length); $('#c_offers_again').classList.toggle('hidden', !offers.length);
-  $('#c_offers').innerHTML = offers.map(o => { const ch = current.chosen_offer_id === o.offer_id; const bl = blanksIn(o.offer); return `
-    <div class="offer ${ch ? 'chosen' : ''}" data-oid="${esc(o.offer_id)}"><span class="ribbon">Your pick</span>
-      <div class="num">Offer ${esc(o.number)}</div><div class="title">${esc(o.title)}</div><div class="text">${markBlanks(o.offer)}</div>
-      ${bl.length ? `<div class="fills"><span class="lead">Fill in the details only you know</span>${bl.map(b => `<label><span>${esc(b.slice(1, -1))}</span><input data-blank="${esc(b)}" placeholder="Type the real ${esc(b.slice(1, -1))}"></label>`).join('')}</div>` : ''}
-      <div class="why"><b>Why it works:</b> ${esc(o.why_it_works)}</div>
-      <button class="btn ${ch ? '' : 'ghost'} sm" data-offer="${esc(o.offer_id)}"><span class="spin"></span>${ch ? 'Chosen' : 'Use this offer'}</button></div>`; }).join('');
-  $$('#c_offers [data-blank]').forEach(inp => inp.addEventListener('input', () => {
-    inp.classList.remove('bad'); const card = inp.closest('.offer'); const o = offers.find(x => x.offer_id === card.dataset.oid); let t = esc(o.offer);
-    card.querySelectorAll('[data-blank]').forEach(i => { const v = i.value.trim(); if (v) t = t.split(esc(i.dataset.blank)).join('<b>' + esc(v) + '</b>'); });
-    card.querySelector('.text').innerHTML = t.replace(/\[[A-Za-z][^\[\]\n]{0,40}\]/g, m => '<mark class="blank">' + m + '</mark>');
-  }));
-  $$('#c_offers [data-offer]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
-    const card = b.closest('.offer'); const o = offers.find(x => x.offer_id === b.dataset.offer); const inputs = Array.from(card.querySelectorAll('[data-blank]'));
-    let text = o.offer; let missing = false;
-    inputs.forEach(i => { const v = i.value.trim().replace(/[\[\]]/g, ''); if (!v) { missing = true; i.classList.add('bad'); } else text = text.split(i.dataset.blank).join(v); });
-    if (missing) { toast('Fill the highlighted details first. The offer goes into your ads exactly as written.', 'err'); return; }
-    const body = { campaign_id: current.campaign_id, offer_id: o.offer_id }; if (inputs.length) body.offer_text = text;
+async function pickOffer(slot, offerId, text, own, filled) {
+  const pk = getPkg(current.campaign_id); const it = pk && pk.products[slot - 1]; if (!it) return;
+  if (slot === 1) { // item 1 also becomes the campaign offer, which the older screens read
+    const body = { campaign_id: current.campaign_id };
+    if (own) body.custom_offer = text; else { body.offer_id = offerId; if (filled) body.offer_text = text; }
     const r = await call('offersSelect', body);
-    const offs = offers.map(x => x.offer_id === o.offer_id ? Object.assign({}, x, { offer: text, selected: true }) : Object.assign({}, x, { selected: false }));
-    upsert({ campaign_id: current.campaign_id, offers: offs, chosen_offer_id: r.chosen_offer_id, chosen_offer: r.chosen_offer }); toast('Offer saved', 'ok');
-  })));
-  const own = $('#c_own'); if (own) {
-    own.classList.toggle('hidden', !offers.length);
-    const t = $('#c_own_text'); const isOwn = current && current.chosen_offer_id === 'custom';
-    if (t && document.activeElement !== t) t.value = isOwn ? String(current.chosen_offer || '').split('\n').slice(1).join('\n') : t.value;
-    $('#c_own_save').textContent = isOwn ? 'Update my offer' : 'Use my own offer';
+    upsert({ campaign_id: current.campaign_id, chosen_offer_id: r.chosen_offer_id, chosen_offer: r.chosen_offer });
   }
-  $('#c_chosen').classList.toggle('hidden', !has); $('#c_step3_next').classList.toggle('hidden', !has); renderProdOffers();
-  if (has) $('#c_chosen').innerHTML = `<div class="chosen-box"><div class="tick"><svg class="i"><use href="#i-check"/></svg></div><div><b>Your offer</b><br>${esc(current.chosen_offer).replace(/\n/g, '<br>')}</div></div>`;
+  it.offer_id = own ? '__own' : offerId; it.offer = text; setPkg(current.campaign_id, pk); persistItems();
 }
-
-$('#c_own_save').addEventListener('click', e => run(e.currentTarget, null, async () => {
-  if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
-  const text = $('#c_own_text').value.trim();
-  if (text.length < 15) throw new Error('Write your offer in a full sentence: what the buyer gets, what they pay and when it ends.');
-  if (/\[[A-Za-z][^\[\]\n]{0,40}\]/.test(text)) throw new Error('Take out the square brackets and type the real detail.');
-  const r = await call('offersSelect', { campaign_id: current.campaign_id, custom_offer: text });
-  const offs = ((current && current.offers) || []).map(x => Object.assign({}, x, { selected: false }));
-  upsert({ campaign_id: current.campaign_id, offers: offs, chosen_offer_id: r.chosen_offer_id || 'custom', chosen_offer: r.chosen_offer || ('Your own offer\n' + text) });
-  toast('Your offer is saved', 'ok');
-}));
-function persistItems() { const q = current && getPkg(current.campaign_id); if (!q) return; const items = itemsToApi(q.products); upsert({ campaign_id: current.campaign_id, products: items }); call('campaignSave', { campaign_id: current.campaign_id, products: items }).catch(() => {}); }
-function renderProdOffers() {
-  const box = $('#c_prod_offers'); if (!box) return;
-  const pk = current && getPkg(current.campaign_id); const offers = (current && current.offers) || [];
-  if (!pk || pk.products.length < 2 || !current.chosen_offer) { box.classList.add('hidden'); box.innerHTML = ''; return; }
-  box.classList.remove('hidden');
-  box.innerHTML = '<b>Offer for each product and combo</b><p class="muted small" style="margin:4px 0 10px">Each one starts with the offer you chose above. Give any of them a different offer, or write your own.</p>' + pk.products.map((x, i) => `<div class="field"><label for="po_${i}">${esc(x.name || ('Item ' + (i + 1)))}${itemKind(x) ? ' (combo)' : ''}</label><select id="po_${i}" data-pi="${i}"><option value="">The offer chosen above</option>${offers.map(o => `<option value="${esc(o.offer_id)}" ${x.offer_id === o.offer_id ? 'selected' : ''}>Offer ${esc(o.number)}: ${esc(o.title)}</option>`).join('')}<option value="__own" ${x.offer_id === '__own' ? 'selected' : ''}>Write my own offer</option></select>${x.offer_id === '__own' ? `<textarea id="pot_${i}" data-pt="${i}" rows="3" style="margin-top:8px" placeholder="Buy 2, get the third at half price. Free delivery in Lagos. Ends Sunday.">${esc(x.offer || '')}</textarea>` : ''}</div>`).join('');
-  $$('#c_prod_offers select').forEach(sl => sl.addEventListener('change', () => { const q = getPkg(current.campaign_id); if (!q) return; q.products[Number(sl.dataset.pi)].offer_id = sl.value; setPkg(current.campaign_id, q); persistItems(); renderProdOffers(); }));
-  $$('#c_prod_offers textarea').forEach(t => t.addEventListener('change', () => { const q = getPkg(current.campaign_id); if (!q) return; q.products[Number(t.dataset.pt)].offer = t.value.trim(); setPkg(current.campaign_id, q); persistItems(); }));
+function renderOffers() {
+  const wrap = $('#c_offers'); if (!wrap) return;
+  const pk = current && getPkg(current.campaign_id); const items = pk ? pk.products : [];
+  const any = items.some((x, i) => slotOffers(i + 1).length);
+  $('#c_offers_empty').classList.toggle('hidden', any || !current); wrap.classList.toggle('hidden', !any); $('#c_offers_again').classList.toggle('hidden', !any);
+  const done = items.filter(itemPicked).length; const ok = any && allPicked();
+  const st = $('#c_chosen'); st.classList.toggle('hidden', !any); st.classList.toggle('green', ok);
+  st.innerHTML = any ? (ok ? '<b>Every item has its offer.</b> Continue when you are ready.' : '<b>' + done + ' of ' + items.length + ' chosen.</b> Pick one offer for each product and combo. Two items can use the same offer, or each can have a different one.') : '';
+  $('#c_step3_next').classList.toggle('hidden', !ok);
+  wrap.innerHTML = items.map((x, i) => {
+    const slot = i + 1; const offs = slotOffers(slot); const combo = itemKind(x); const name = x.name || itemLabel(items, i);
+    const inc = combo ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean).join(' + ') : '';
+    const head = `<div class="pohead"><div><h3>${esc(name)}${combo ? ' <span class="tag">combo</span>' : ''}</h3><span class="muted small">${[x.price, inc].filter(Boolean).map(esc).join(' &middot; ')}</span></div><button type="button" class="btn soft sm" data-regen="${slot}"><span class="spin"></span>${offs.length ? 'Write 4 new offers' : 'Write 4 offers'}</button></div>`;
+    if (!offs.length) return `<section class="poblock" data-slot="${slot}">${head}<p class="muted small" style="margin:6px 0 0">No offers for this item yet.</p></section>`;
+    const pickedId = x.offer_id || (legacyOffers() ? ((current && current.chosen_offer_id) || '') : '');
+    const cards = offs.map(o => {
+      const ch = pickedId === o.offer_id; const txt = ch && x.offer_id && String(x.offer || '').trim() ? x.offer : o.offer; const bl = ch ? [] : blanksIn(txt);
+      return `<div class="offer ${ch ? 'chosen' : ''}" data-oid="${esc(o.offer_id)}" data-slot="${slot}"><span class="ribbon">Your pick</span>
+      <div class="num">Offer ${esc(o.number)}</div><div class="title">${esc(o.title)}</div><div class="text">${markBlanks(txt)}</div>
+      ${bl.length ? `<div class="fills"><span class="lead">Fill in the details only you know</span>${bl.map(b => `<label><span>${esc(b.slice(1, -1))}</span><input data-blank="${esc(b)}" value="${esc(offerDraft[o.offer_id + '|' + b] || '')}" placeholder="Type the real ${esc(b.slice(1, -1))}"></label>`).join('')}</div>` : ''}
+      <div class="why"><b>Why it works:</b> ${esc(o.why_it_works)}</div>
+      <button type="button" class="btn ${ch ? '' : 'ghost'} sm" data-offer="${esc(o.offer_id)}" data-slot="${slot}"><span class="spin"></span>${ch ? 'Chosen' : 'Use this offer'}</button></div>`;
+    }).join('');
+    const isOwn = x.offer_id === '__own'; const dk = 'own|' + slot; const draft = offerDraft[dk] !== undefined ? offerDraft[dk] : (isOwn ? String(x.offer || '') : '');
+    const own = `<details class="ownoffer" ${isOwn || draft ? 'open' : ''}><summary>Or write my own offer for ${esc(name)}</summary><p class="muted small">Only if the client cannot deliver the four above. Say what the buyer gets, what they pay and when it ends, in plain words.</p><div class="field"><textarea rows="3" maxlength="600" data-own="${slot}" placeholder="Buy 2, get the third at half price. Free delivery in Lagos. Ends Sunday.">${esc(draft)}</textarea></div><button type="button" class="btn soft sm" data-ownsave="${slot}"><span class="spin"></span>${isOwn ? 'Update my offer' : 'Use my own offer'}</button></details>`;
+    const note = itemPicked(x) ? `<div class="note green" style="margin-top:12px"><b>Offer for ${esc(name)}:</b> ${esc(itemOfferText(x)).replace(/\n/g, '<br>')}</div>` : '';
+    return `<section class="poblock" data-slot="${slot}">${head}<div class="offers">${cards}</div>${own}${note}</section>`;
+  }).join('');
 }
+// one set of listeners for every item block (the blocks are redrawn, the wrapper stays)
+(() => {
+  const wrap = $('#c_offers'); if (!wrap) return;
+  wrap.addEventListener('input', e => {
+    const inp = e.target;
+    if (inp.matches('[data-blank]')) {
+      inp.classList.remove('bad'); const card = inp.closest('.offer'); const o = ((current && current.offers) || []).find(x => x.offer_id === card.dataset.oid); if (!o) return; let t = esc(o.offer);
+      offerDraft[card.dataset.oid + '|' + inp.dataset.blank] = inp.value;
+      card.querySelectorAll('[data-blank]').forEach(i => { const v = i.value.trim(); if (v) t = t.split(esc(i.dataset.blank)).join('<b>' + esc(v) + '</b>'); });
+      card.querySelector('.text').innerHTML = t.replace(/\[[A-Za-z][^\[\]\n]{0,40}\]/g, m => '<mark class="blank">' + m + '</mark>');
+    } else if (inp.matches('[data-own]')) offerDraft['own|' + inp.dataset.own] = inp.value;
+  });
+  wrap.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.disabled || !current) return;
+    if (b.dataset.regen) { writeOffers(b, Number(b.dataset.regen)); return; }
+    if (b.dataset.offer) run(b, null, async () => {
+      const slot = Number(b.dataset.slot); const card = b.closest('.offer'); const o = ((current && current.offers) || []).find(x => x.offer_id === b.dataset.offer); if (!o) return;
+      const inputs = Array.from(card.querySelectorAll('[data-blank]')); let text = o.offer; let missing = false;
+      inputs.forEach(i => { const v = i.value.trim().replace(/[\[\]]/g, ''); if (!v) { missing = true; i.classList.add('bad'); } else text = text.split(i.dataset.blank).join(v); });
+      if (missing) { toast('Fill the highlighted details first. The offer goes into your ads exactly as written.', 'err'); return; }
+      await pickOffer(slot, o.offer_id, text, false, inputs.length > 0);
+      renderOffers(); toast('Offer saved', 'ok');
+    });
+    else if (b.dataset.ownsave) run(b, null, async () => {
+      const slot = Number(b.dataset.ownsave); const ta = wrap.querySelector('[data-own="' + slot + '"]'); const text = (ta ? ta.value : '').trim();
+      if (text.length < 15) throw new Error('Write your offer in a full sentence: what the buyer gets, what they pay and when it ends.');
+      if (/\[[A-Za-z][^\[\]\n]{0,40}\]/.test(text)) throw new Error('Take out the square brackets and type the real detail.');
+      await pickOffer(slot, '__own', text, true, false);
+      delete offerDraft['own|' + slot]; renderOffers(); toast('Your offer is saved', 'ok');
+    });
+  });
+})();
 function buildPlan() {
-  const pk = current && getPkg(current.campaign_id); if (!pk) return null; const offers = current.offers || [];
+  const pk = current && getPkg(current.campaign_id); if (!pk) return null;
   return pk.products.map((x, i) => {
-    let offer = current.chosen_offer;
-    if (x.offer_id === '__own') { const t = String(x.offer || '').trim(); if (t) offer = t; }
-    else if (x.offer_id) { const o = offers.find(q => q.offer_id === x.offer_id); if (o) offer = o.offer; }
+    const offer = itemOfferText(x);
     const combo = itemKind(x) === 'combo';
     return { slot: i + 1, product: x.name, kind: combo ? 'combo' : '', includes: combo ? (x.inc || []).map(j => (pk.products[j] || {}).name).filter(Boolean).join(' + ') : '', price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages };
   });
@@ -1751,7 +1808,7 @@ function renderGenLp() {
 }
 $$('input[name="lpmode"]').forEach(r => r.addEventListener('change', () => { const pk = current && getPkg(current.campaign_id); if (!pk) return; pk.lp_mode = r.value; setPkg(current.campaign_id, pk); }));
 $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_working', async () => {
-  if (!current || !current.chosen_offer) { toast('Choose an offer first.', 'err'); return showStep(4); }
+  if (!current || !allPicked()) { toast('Choose an offer for every product first.', 'err'); return showStep(4); }
   const items = $$('input[name="gen"]:checked').map(c => c.value); if (!items.length) throw new Error('Tick at least one thing to generate.');
   let lpMode = '';
   if (items.includes('landing_page_copy') && genLpAsk()) {
