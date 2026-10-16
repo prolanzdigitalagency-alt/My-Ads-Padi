@@ -506,6 +506,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 
 .ticks label.locked{opacity:.55;cursor:not-allowed}.ticks label.locked input{cursor:not-allowed}
 
+mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -646,7 +648,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
     <div class="rail" role="list">
       <button data-step="1" aria-current="step"><span class="n">1</span><span>Business<span class="s">What you sell</span></span></button>
       <button data-step="2"><span class="n">2</span><span>Audience<span class="s">Who buys it</span></span></button>
-      <button data-step="3"><span class="n">3</span><span>Package<span class="s">What they bought</span></span></button>
+      <button data-step="3"><span class="n">3</span><span>Package<span class="s">What they paid for</span></span></button>
       <button data-step="4"><span class="n">4</span><span>Offer<span class="s">Pick one of four</span></span></button>
       <button data-step="5"><span class="n">5</span><span>Generate<span class="s">Script, flyer, page</span></span></button>
     </div>
@@ -697,7 +699,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
     </div>
 
     <div class="card step hidden" data-step="3">
-      <div class="cap"><div><h2>Package</h2><p>Pick what this client bought. It sets how many video scripts, flyers and landing pages you get. Acceleration and Authority cover more than one product, so you list each product and choose how the scripts, flyers and pages are shared between them.</p></div></div>
+      <div class="cap"><div><h2>Package</h2><p>Pick what this client paid for. It sets how many video scripts, flyers and landing pages you get. Acceleration and Authority cover more than one product, so you list each product and choose how the scripts, flyers and pages are shared between them.</p></div></div>
       <div class="pkgs" id="c_pkgs" role="radiogroup" aria-label="Package"></div>
       <div id="c_pkg_products"></div>
       <div class="actions"><button class="btn ghost" data-goto="2">Back</button><button class="btn" id="c_save_pkg"><span class="spin"></span>Save and continue</button></div>
@@ -1078,6 +1080,9 @@ const apiBase = () => (settings.base || DEFAULT_BASE).replace(/\/+$/, '');
 const clientId = () => (session && session.client_id) || 'guest';
 const key = s => 'adspadi.' + s + '.' + clientId();
 const blanksIn = t => Array.from(new Set(String(t || '').match(BLANK_RE) || []));
+// spoken lines (Talking head, Voiceover) stand out in bold on a yellow highlight, so the person reading the script sees at once what is said
+const SPOKEN_RE = /((?:Talking head|Voiceover|Voice over)\s*:[^\n]*?)(?=\s+(?:Visual|On[- ]screen text|Text on screen|End screen|Sound|Music|B-roll|Action)\s*:|\n|$)/gi;
+const markSpoken = t => markBlanks(t).replace(SPOKEN_RE, '<mark class="spoken">$1</mark>');
 const markBlanks = t => esc(t).replace(/\[[A-Za-z][^\[\]\n]{0,40}\]/g, m => '<mark class="blank">' + m + '</mark>');
 const dateLabel = v => { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
 const timeAgo = v => { const d = Date.parse(v); if (isNaN(d)) return ''; const m = Math.round((Date.now() - d) / 60000); if (m < 2) return 'just now'; if (m < 60) return m + ' minutes ago'; const h = Math.round(m / 60); return h < 24 ? h + (h === 1 ? ' hour ago' : ' hours ago') : dateLabel(v); };
@@ -1311,7 +1316,7 @@ function showDetail(scroll) {
   $('#cs_detail').classList.toggle('ro', !!viewing);
   $('#cs_title').textContent = label(c) + (viewing ? ' (' + (c.owner_name || 'another copywriter') + ')' : ''); $('#cs_sub').textContent = [c.goal, c.awareness, f.market].filter(Boolean).join(', ');
   const block = (t, body, copy, extra) => `<div class="out"><div class="oh"><span>${t}</span><span class="chipline">${extra || ''}${copy ? '<button class="btn ghost sm" data-copytext>Copy</button>' : ''}</span></div>${body}</div>`;
-  const txt = v => v ? `<pre>${markBlanks(v)}</pre>` : '<span class="muted small">Not generated yet.</span>';
+  const txt = (v, spoken) => v ? `<pre>${(spoken ? markSpoken : markBlanks)(v)}</pre>` : '<span class="muted small">Not generated yet.</span>';
   const graphics = (c.media || []).filter(m => m.type === 'Graphic' && m.file_url);
   const vids = (c.media || []).filter(m => m.type === 'Video' && m.file_url).map(m => ({ url: m.file_url, label: m.concept || 'Video' }));
   mediaList().filter(m => m.campaign_id === c.campaign_id && m.kind === 'video' && m.url && !vids.some(v => v.url === m.url)).forEach(m => vids.push({ url: m.url, label: m.label }));
@@ -1339,7 +1344,7 @@ function showDetail(scroll) {
     + block('Business', `<pre>${esc([f.brand, f.industry, f.product, f.price ? 'Price ' + f.price : '', f.desired_outcome].filter(Boolean).join('\n'))}</pre>`)
     + block('Audience', txt([f.audience, f.age_range, f.location, c.awareness].filter(Boolean).join('\n')))
     + block('Offer', txt(c.chosen_offer), !!c.chosen_offer)
-    + block('Video script', txt(a.script) + (a.script ? changeBox('cs:' + c.campaign_id + ':script') : ''), !!a.script, a.script ? changeBtn('cs:' + c.campaign_id + ':script') : '')
+    + block('Video script', txt(a.script, true) + (a.script ? changeBox('cs:' + c.campaign_id + ':script') : ''), !!a.script, a.script ? changeBtn('cs:' + c.campaign_id + ':script') : '')
     + block('Creative direction', txt(a.creative_direction) + (a.creative_direction ? changeBox('cs:' + c.campaign_id + ':creative_direction') : ''), !!a.creative_direction, a.creative_direction ? changeBtn('cs:' + c.campaign_id + ':creative_direction') : '')
     + block('Flyer copy', txt(a.flyer_copy) + (a.flyer_copy ? changeBox('cs:' + c.campaign_id + ':flyer_copy') : ''), !!a.flyer_copy, a.flyer_copy ? changeBtn('cs:' + c.campaign_id + ':flyer_copy') : '')
     + block('Landing page copy', txt(a.landing_page_copy) + (a.landing_page_copy ? changeBox('cs:' + c.campaign_id + ':landing_page_copy') : ''), !!a.landing_page_copy, a.landing_page_copy ? changeBtn('cs:' + c.campaign_id + ':landing_page_copy') : '')
@@ -1492,7 +1497,7 @@ function renderPackage() {
   const on = ck => { const dk = DELIV.find(x => x[1] === ck)[0]; return !!p[ck] && d.del[dk] !== false; };
   const tot = k => d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0);
   const totals = () => `<div class="pkgtot">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<span class="${tot(k) > PKG_CAP[k] ? 'off' : 'ok'}">${tot(k)} ${n.toLowerCase()}${tot(k) > PKG_CAP[k] ? ' (most is ' + PKG_CAP[k] + ')' : ''}</span>`).join('')}</div>`;
-  const delHtml = `<fieldset class="pkgdel"><legend>What is this client getting?</legend><p class="muted small" style="margin:0 0 8px">Untick what was not bought. The copy then never mentions it, and the video call to action goes to WhatsApp instead of a page link when there is no landing page.</p><div class="pkgdel-row">${DELIV.filter(([k, ck]) => p[ck]).map(([k, ck, n]) => `<label class="chk"><input type="checkbox" data-del="${k}" ${d.del[k] !== false ? 'checked' : ''}>${n}</label>`).join('')}</div></fieldset>`;
+  const delHtml = `<fieldset class="pkgdel"><legend>What is this client getting?</legend><p class="muted small" style="margin:0 0 8px">Untick what was not paid for. The copy then never mentions it, and the video call to action goes to WhatsApp instead of a page link when there is no landing page.</p><div class="pkgdel-row">${DELIV.filter(([k, ck]) => p[ck]).map(([k, ck, n]) => `<label class="chk"><input type="checkbox" data-del="${k}" ${d.del[k] !== false ? 'checked' : ''}>${n}</label>`).join('')}</div></fieldset>`;
   const cards = d.products.map((x, i) => `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${i + 1}</b>${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
     <div class="pkgrow"><div class="field"><label for="pp_n${i}">Name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div></div>
     <div class="field"><label for="pa_${i}">About this product (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>
@@ -1511,7 +1516,7 @@ function renderPackage() {
 $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
   const d = pkgDraft; const p = d && pkgById(d.tier);
-  if (!p) throw new Error('Pick the package the client bought.');
+  if (!p) throw new Error('Pick the package the client paid for.');
   d.products.forEach(x => { x.name = String(x.name || '').trim(); x.price = String(x.price || '').trim(); x.about = String(x.about || '').trim(); });
   if (!d.products.length) throw new Error('Add at least one product.');
   if (!d.products[0].name) d.products[0].name = String((current && (current.product || (current.fields || {}).product)) || '').trim();
@@ -1650,7 +1655,7 @@ async function generateCopy(items, extra, workingId) {
 }
 // more than one product and a landing page: ask whether it is one page for all of them or a page each
 function genLpAsk() { const pk = current && getPkg(current.campaign_id); return !!(pk && pk.products.length > 1 && pk.del && pk.del.landing !== false && pk.products.some(x => Number(x.pages) > 0)); }
-// the Generate ticks follow the package: only what the client bought is shown, and all of it starts ticked
+// the Generate ticks follow the package: only what the client paid for is shown, and all of it starts ticked
 const GEN_KEY = { script: ['script', 'scripts'], flyer_copy: ['flyer', 'flyers'], landing_page_copy: ['landing', 'pages'] };
 function genAllowed() {
   const pk = current && getPkg(current.campaign_id); if (!pk) return null;
@@ -1696,7 +1701,7 @@ function renderGenResults() {
   const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again. The document lists them near the end so the client can send them.</div></div>` : '';
   const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One Word document (.docx) with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send. It opens and edits in Word and Google Docs.</div><button class="btn sm" id="c_pdf"><span class="spin"></span>Download Word doc</button></div>`;
   const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
-  box.innerHTML = pdfBar + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${markBlanks(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
+  box.innerHTML = pdfBar + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${(k === 'script' ? markSpoken : markBlanks)(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
   chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
   const pb = $('#c_pdf'); if (pb) pb.addEventListener('click', e => run(e.currentTarget, null, async () => { const r = await buildClientDoc(current); toast('Word document downloaded: ' + r.name, 'ok'); }));
