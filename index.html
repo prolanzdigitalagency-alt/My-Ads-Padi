@@ -1106,8 +1106,17 @@ function toast(msg, kind) {
 }
 // Brand Assets tells us when an upload was filed under the wrong category and moved it
 const noteMoved = r => { if (r && r.moved_to && r.message) toast(r.message, 'ok'); };
+// the package and offers live in each browser; the server reads them from the saved campaign. Before anything is written from them, save this browser's copy so every account runs on what its writer sees.
+const NEEDS_PACKAGE = ['generate', 'landingBuild', 'graphicsDesign', 'videoGenerate'];
+async function pushPackage(cid) {
+  const pk = cid && getPkg(cid); if (!pk || !Array.isArray(pk.products) || !pk.products.length) return;
+  await call('campaignSave', { campaign_id: cid, products: itemsToApi(pk.products) });
+}
 async function call(name, body) {
   const ep = API[name];
+  if (NEEDS_PACKAGE.includes(name) && body && body.campaign_id && ep && ep.live && session && session.token) {
+    try { await pushPackage(body.campaign_id); } catch (e) { if (e.auth || e.network) throw e; /* a rejected package save must not block unrelated work */ }
+  }
   if (!ep.live) { await sleep(500); throw new Error('This feature is being connected. It will be switched on soon.'); }
   const payload = Object.assign({}, body || {});
   if (!ep.open) {
@@ -1268,7 +1277,7 @@ function refreshAll() {
   $('#cmp_pick').innerHTML = '<option value="">New campaign</option>' + folders().filter(f => byFolder[f.brand_key]).map(f => `<optgroup label="${esc(f.brand)}">` + byFolder[f.brand_key].map(c => `<option value="${esc(c.campaign_id)}">${esc(c.product || 'Untitled')} (${esc(progress(c)[1])})</option>`).join('') + '</optgroup>').join(''); $('#cmp_pick').value = current ? current.campaign_id : '';
   $('#brand_folders').innerHTML = folders().map(f => `<option value="${esc(f.brand)}"></option>`).join('');
   renderBrandPicker();
-  $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '';
+  $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = (session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '') + ' . build v8';
   $$('.admin-only').forEach(el => el.classList.toggle('hidden', !session.is_admin));
   const ae = document.activeElement; const typing = ae && ae.closest && ae.closest('#cmp_flow') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
   renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderProdPickers(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
@@ -1576,7 +1585,7 @@ function renderPackage() {
   }).join('');
   const nProd = prodIdx.length, nCombo = d.products.length - nProd;
   box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
-    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build v7</b></div><div id="pkg_tot">${totals()}</div>`;
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build v8</b></div><div id="pkg_tot">${totals()}</div>`;
   const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
   $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
   $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; while (d.products.filter(q => !itemKind(q)).length < 2) d.products.splice(d.products.filter(q => !itemKind(q)).length, 0, fresh('')); d.products.push(fresh('combo')); renderPackage(); });
