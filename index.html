@@ -1460,7 +1460,7 @@ function showStep(n, scroll) {
   $$('.rail button').forEach(b => { const k = Number(b.dataset.step); if (k === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < n); b.disabled = k > 1 && !(current && current.campaign_id); });
   if (n === 3) renderPackage();
   if (n === 4) renderOffers();
-  if (n === 5) { const el = $('#c_gen_offer'); const has = allPicked(); el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + (pk.products.length > 1 ? pk.products.map(x => esc(x.name) + ': ' + esc(itemOfferTitle(x) || 'chosen offer')).join('<br>') : esc(itemOfferTitle(pk.products[0]) || String(current.chosen_offer || '').split('\n')[0])) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenTicks(); renderGenLp(); }
+  if (n === 5) { const el = $('#c_gen_offer'); const has = allPicked(); el.classList.toggle('hidden', !has); if (has) { const pk = getPkg(current.campaign_id); el.querySelector('div').innerHTML = '<b>Building on:</b> ' + (pk.products.filter(isActive).length > 1 ? pk.products.filter(isActive).map(x => esc(x.name) + ': ' + esc(itemOfferTitle(x) || 'chosen offer')).join('<br>') : esc(itemOfferTitle(pk.products.find(isActive) || pk.products[0]) || String(current.chosen_offer || '').split('\n')[0])) + (pk ? '<br><b>' + esc(pkgById(pk.tier).name) + ' package:</b> ' + esc(pkgLine(pkgById(pk.tier))) : ''); } renderGenTicks(); renderGenLp(); }
   if (scroll !== false) $('#cmp_flow').scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 $$('.rail button').forEach(b => b.addEventListener('click', () => showStep(Number(b.dataset.step))));
@@ -1503,7 +1503,7 @@ const PKG_PER_MAX = { scripts: 10, flyers: 5, pages: 5 }; // most one product ca
 const MAX_PRODUCTS = 5, MAX_COMBOS = 3; // up to 5 products, plus up to 3 combos (2 or 3 of those products sold together)
 const itemLabel = (items, i) => { const combo = itemKind(items[i]); return (combo ? 'Combo ' : 'Product ') + (items.slice(0, i + 1).filter(q => itemKind(q) === itemKind(items[i])).length); };
 const itemKind = x => (x && x.kind === 'combo') ? 'combo' : '';
-const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '' }));
+const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '', active: isActive(x) }));
 // a new product added to a package gets this much: the package share for one product
 const unitOf = p => ({ scripts: Math.ceil(p.scripts / p.products), flyers: Math.ceil(p.flyers / p.products), pages: Math.ceil(p.pages / p.products) });
 // starting count for product i of a package: the first products share the package, extra products get one product's share
@@ -1516,7 +1516,7 @@ function getPkg(cid) {
   if (!p || !Array.isArray(c.products) || !c.products.length) return null;
   const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
   const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
-  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
+  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: x.active === false ? 0 : defCount(p, 'scripts', i), flyers: x.active === false ? 0 : defCount(p, 'flyers', i), pages: x.active === false ? 0 : defCount(p, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
 }
 function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
 const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
@@ -1535,6 +1535,7 @@ function newPkgDraft(tier, old) {
   }) };
 }
 const PKG_COUNTS = [['scripts', 'Video scripts'], ['flyers', 'Flyers'], ['pages', 'Landing pages']];
+const isActive = x => ['scripts', 'flyers', 'pages'].some(k => Number(x && x[k]) > 0); // makes something of its own
 const itemKey = x => String((x && x.name) || '').trim().toLowerCase() + (itemKind(x) ? '|combo' : '');
 // the offers picked in step 4 live in the saved package; the package form keeps its own copy while it is being edited, so bring the picks across
 function syncPicks(d) { const st = current && getPkg(current.campaign_id); if (!st || !d) return; d.products.forEach((x, i) => { const sp = st.products[i]; if (sp && itemKey(sp) === itemKey(x)) { x.offer_id = sp.offer_id || ''; x.offer = sp.offer || ''; x.ofn = sp.ofn || ''; } }); }
@@ -1566,14 +1567,15 @@ function renderPackage() {
     ${counts(x, i)}</div>`;
     }
     pn++;
-    return `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${pn}</b>${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
+    const onlyCombo = !isActive(x) && d.products.some(q => itemKind(q) && isActive(q) && (q.inc || []).includes(i));
+    return `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${pn}</b>${onlyCombo ? '<span class="tag green">Only sold inside a combo</span>' : ''}${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
     <div class="pkgrow"><div class="field"><label for="pp_n${i}">Name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div></div>
     <div class="field"><label for="pa_${i}">About this product (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>
     ${counts(x, i)}</div>`;
   }).join('');
   const nProd = prodIdx.length, nCombo = d.products.length - nProd;
   box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
-    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. <b>Combos build v3</b></div><div id="pkg_tot">${totals()}</div>`;
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build v5</b></div><div id="pkg_tot">${totals()}</div>`;
   const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
   $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
   $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; while (d.products.filter(q => !itemKind(q)).length < 2) d.products.splice(d.products.filter(q => !itemKind(q)).length, 0, fresh('')); d.products.push(fresh('combo')); renderPackage(); });
@@ -1584,7 +1586,7 @@ function renderPackage() {
     if (cb.checked) { const ck = DELIV.find(x => x[0] === cb.dataset.del)[1]; if (!d.products.some(x => Number(x[ck]) > 0)) d.products.forEach((x, i) => { x[ck] = defCount(p, ck, i); }); } // ticked again: give the counts back
     renderPackage();
   }));
-  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input[data-f]').forEach(inp => { inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about';     x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (f === 'name') $$('#c_pkg_products [data-incname="' + row.dataset.i + '"]').forEach(sp => { sp.textContent = inp.value.trim() || ('Product ' + (prodIdx.indexOf(Number(row.dataset.i)) + 1)); }); if (!text) $('#pkg_tot').innerHTML = totals(); }); }));
+  $$('#c_pkg_products .pkgprod').forEach(row => row.querySelectorAll('input[data-f]').forEach(inp => { inp.addEventListener('input', () => { const x = d.products[Number(row.dataset.i)]; const f = inp.dataset.f; const text = f === 'name' || f === 'price' || f === 'about';     x[f] = text ? inp.value : Math.max(0, Math.min(PKG_PER_MAX[f] || 10, parseInt(inp.value, 10) || 0)); if (f === 'name') $$('#c_pkg_products [data-incname="' + row.dataset.i + '"]').forEach(sp => { sp.textContent = inp.value.trim() || ('Product ' + (prodIdx.indexOf(Number(row.dataset.i)) + 1)); }); if (!text) $('#pkg_tot').innerHTML = totals(); }); if (!['name', 'price', 'about'].includes(inp.dataset.f)) inp.addEventListener('change', () => renderPackage()); }));
 }
 $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async () => {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
@@ -1603,8 +1605,10 @@ $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async
   // what was switched off is not made: its count is zero for every product
   DELIV.forEach(([k, ck]) => { if (d.del[k] === false) d.products.forEach(x => { x[ck] = 0; }); });
   for (const [k, n] of [['scripts', 'video scripts'], ['flyers', 'flyers'], ['pages', 'landing pages']]) { const t = d.products.reduce((s, x) => s + (Number(x[k]) || 0), 0); if (t > PKG_CAP[k]) throw new Error('That is ' + t + ' ' + n + ' in total. The most we can write at once is ' + PKG_CAP[k] + '. Lower the counts.'); }
-  const idle = d.products.findIndex(x => !PKG_COUNTS.some(([k]) => Number(x[k]) > 0));
-  if (idle >= 0) throw new Error(itemLabel(d.products, idle) + ' has nothing to make. Give it at least one piece, or remove it.');
+  // a product may have nothing of its own when it is sold inside a combo that has pieces (combos only)
+  const inCombo = j => d.products.some(q => itemKind(q) && (q.inc || []).includes(j) && PKG_COUNTS.some(([k]) => Number(q[k]) > 0));
+  const idle = d.products.findIndex((x, i) => !PKG_COUNTS.some(([k]) => Number(x[k]) > 0) && !(!itemKind(x) && inCombo(i)));
+  if (idle >= 0) throw new Error(itemLabel(d.products, idle) + ' has nothing to make. Give it at least one piece, put it inside a combo that has pieces, or remove it.');
   syncPicks(d);
   { const prev = getPkg(current.campaign_id); d.products.forEach((x, i) => { const pv = prev && prev.products[i]; if ((!pv || itemKey(pv) !== itemKey(x)) && ((current && current.offers) || []).some(o => offerSlot(o) === i + 1)) { x.ofn = '__stale'; if (x.offer_id !== '__own') { x.offer_id = ''; x.offer = ''; } } }); } // a product that changed since its offers were written needs new offers
   const saved = { tier: d.tier, del: Object.assign({}, d.del), products: d.products, lp_mode: (getPkg(current.campaign_id) || {}).lp_mode || '' };
@@ -1619,7 +1623,7 @@ $('#c_save_pkg').addEventListener('click', e => run(e.currentTarget, null, async
   setPkg(current.campaign_id, saved);
   renderProdPickers();
   toast(p.name + ' package saved', 'ok'); showStep(4);
-  if (!((current && current.offers) || []).length) writeOffers($('#c_offers_go')); // the offers start as soon as the package is set
+  { const miss = missingOfferSlots(); if (miss.length) writeOffers($('#c_offers_go'), miss); } // offers start as soon as the package is set, for every item that has none yet
 }));
 
 
@@ -1632,7 +1636,7 @@ const slotOffers = slot => { if (staleAt(slot)) return []; const all = (current 
 const legacyOffers = () => !((current && current.offers) || []).some(o => offerSlot(o) > 0);
 const offerDraft = {}; // what was typed in the blanks and own-offer boxes, kept while the cards redraw
 const itemPicked = x => x.ofn && x.ofn !== itemKey(x) && x.offer_id !== '__own' ? false : !!(x.offer_id && (x.offer_id !== '__own' || String(x.offer || '').trim())) || (!x.offer_id && legacyOffers() && !!(current && current.chosen_offer));
-const allPicked = () => { const pk = current && getPkg(current.campaign_id); return !!pk && pk.products.length > 0 && pk.products.every(itemPicked); };
+const allPicked = () => { const pk = current && getPkg(current.campaign_id); const act = pk ? pk.products.filter(isActive) : []; return act.length > 0 && act.every(itemPicked); };
 const itemOfferTitle = x => { if (x.offer_id === '__own') return 'Own offer'; const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); if (o) return o.title; return (!x.offer_id && current && current.chosen_offer) ? String(current.chosen_offer).split('\n')[0] : ''; };
 const itemOfferText = x => { if (x.offer_id) { if (String(x.offer || '').trim()) return String(x.offer).trim(); const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); return o ? o.offer : ''; } return (current && current.chosen_offer) || ''; };
 function persistItems() { const q = current && getPkg(current.campaign_id); if (!q) return; const items = itemsToApi(q.products); upsert({ campaign_id: current.campaign_id, products: items }); call('campaignSave', { campaign_id: current.campaign_id, products: items }).catch(() => {}); }
@@ -1647,12 +1651,19 @@ async function writeSlotOffers(slot) {
   upsert(patch);
   return r;
 }
+// items that make something but have no offers of their own yet (a new product or combo, or one that was renamed)
+function missingOfferSlots() {
+  const pk = current && getPkg(current.campaign_id); if (!pk) return [];
+  const all = (current && current.offers) || [];
+  return pk.products.map((x, i) => i + 1).filter(sl => isActive(pk.products[sl - 1]) && !(all.some(o => offerSlot(o) === sl) && !staleAt(sl)) && !(sl === 1 && legacyOffers() && all.length));
+}
 async function writeOffers(btn, only) {
   if (!current) { toast('Save step 1 first.', 'err'); return showStep(1); }
   if (!(current.awareness || (current.fields || {}).awareness)) { toast('Set the audience first. The offers depend on the buyer stage.', 'err'); return showStep(2); }
   const pk = getPkg(current.campaign_id);
   if (!pk || !pk.products.length) { toast('Set the package first. The offers are written for each product.', 'err'); return showStep(3); }
-  const slots = only ? [only] : pk.products.map((x, i) => i + 1);
+  const slots = only ? [].concat(only) : pk.products.map((x, i) => i + 1).filter(sl => isActive(pk.products[sl - 1]));
+  if (!slots.length) { toast('Nothing is being made yet. Give a product or combo at least one piece in the package step.', 'err'); return showStep(3); }
   $('#c_offers_empty').classList.add('hidden');
   await run(btn, 'c_offers_working', async () => {
     const failed = []; let lastErr = null;
@@ -1681,13 +1692,15 @@ async function pickOffer(slot, offerId, text, own, filled) {
 function renderOffers() {
   const wrap = $('#c_offers'); if (!wrap) return;
   const pk = current && getPkg(current.campaign_id); const items = pk ? pk.products : [];
-  const any = items.some((x, i) => slotOffers(i + 1).length);
+  const act = items.filter(isActive);
+  const any = items.some((x, i) => isActive(x) && slotOffers(i + 1).length);
   $('#c_offers_empty').classList.toggle('hidden', any || !current); wrap.classList.toggle('hidden', !any); $('#c_offers_again').classList.toggle('hidden', !any);
-  const done = items.filter(itemPicked).length; const ok = any && allPicked();
+  const done = act.filter(itemPicked).length; const ok = any && allPicked();
   const st = $('#c_chosen'); st.classList.toggle('hidden', !any); st.classList.toggle('green', ok);
-  st.innerHTML = any ? (ok ? '<b>Every item has its offer.</b> Continue when you are ready.' : '<b>' + done + ' of ' + items.length + ' chosen.</b> Pick one offer for each product and combo. Two items can use the same offer, or each can have a different one.') : '';
+  st.innerHTML = any ? (ok ? '<b>Every item has its offer.</b> Continue when you are ready.' : '<b>' + done + ' of ' + act.length + ' chosen.</b> Pick one offer for each product and combo. Two items can use the same offer, or each can have a different one.') : '';
   $('#c_step3_next').classList.toggle('hidden', !ok);
   wrap.innerHTML = items.map((x, i) => {
+    if (!isActive(x)) return '';
     const slot = i + 1; const offs = slotOffers(slot); const combo = itemKind(x); const name = x.name || itemLabel(items, i);
     const inc = combo ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean).join(' + ') : '';
     const head = `<div class="pohead"><div><h3>${esc(name)}${combo ? ' <span class="tag">combo</span>' : ''}</h3><span class="muted small">${[x.price, inc].filter(Boolean).map(esc).join(' &middot; ')}</span></div><button type="button" class="btn soft sm" data-regen="${slot}"><span class="spin"></span>${offs.length ? 'Write 4 new offers' : 'Write 4 offers'}</button></div>`;
@@ -1742,13 +1755,14 @@ function renderOffers() {
 function buildPlan() {
   const pk = current && getPkg(current.campaign_id); if (!pk) return null;
   return pk.products.map((x, i) => {
+    if (!isActive(x)) return null;
     const offer = itemOfferText(x);
     const combo = itemKind(x) === 'combo';
     return { slot: i + 1, product: x.name, kind: combo ? 'combo' : '', includes: combo ? (x.inc || []).map(j => (pk.products[j] || {}).name).filter(Boolean).join(' + ') : '', price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages };
-  });
+  }).filter(Boolean);
 }
 /* ---------- one product at a time: flyers, pages and videos can focus on one saved product ---------- */
-const campaignProducts = () => { const pk = current && getPkg(current.campaign_id); return pk ? pk.products.map((x, i) => ({ slot: i + 1, name: x.name, label: x.name + (itemKind(x) ? ' (combo)' : '') })).filter(x => x.name) : []; };
+const campaignProducts = () => { const pk = current && getPkg(current.campaign_id); return pk ? pk.products.map((x, i) => ({ slot: i + 1, name: x.name, label: x.name + (itemKind(x) ? ' (combo)' : ''), active: isActive(x) })).filter(x => x.name && x.active) : []; }; // only what makes something of its own
 function renderProdPickers() {
   const ps = campaignProducts();
   ['gr', 'vd', 'lp'].forEach(k => {
@@ -1786,7 +1800,7 @@ async function generateCopy(items, extra, workingId) {
   }
 }
 // more than one product and a landing page: ask whether it is one page for all of them or a page each
-function genLpAsk() { const pk = current && getPkg(current.campaign_id); return !!(pk && pk.products.length > 1 && pk.del && pk.del.landing !== false && pk.products.some(x => Number(x.pages) > 0)); }
+function genLpAsk() { const pk = current && getPkg(current.campaign_id); return !!(pk && pk.products.filter(x => Number(x.pages) > 0).length > 1 && pk.del && pk.del.landing !== false); }
 // the Generate ticks follow the package: only what the client paid for is shown, and all of it starts ticked
 const GEN_KEY = { script: ['script', 'scripts'], flyer_copy: ['flyer', 'flyers'], landing_page_copy: ['landing', 'pages'] };
 function genAllowed() {
