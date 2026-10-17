@@ -978,7 +978,7 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
     <h3>Daily limits in use</h3><div id="nm_limits"></div>
     <h3>By tool</h3><div id="nm_tools"></div>
     <h3>Workflow health</h3><div id="nm_health"></div>
-    <h3>Latest actions</h3><div id="nm_feed"></div>
+    <h3>Latest actions <span class="muted small">last 24 hours</span></h3><div id="nm_feed"></div>
   </div>
   <div class="card" id="ad_accounts">
     <div class="cap"><div><h2>Accounts</h2><p>Copywriters log in with the email and password you set. Up to 3 super admins.</p></div></div>
@@ -1028,6 +1028,7 @@ const API = {
   login:          { path: '/ads-padi/auth/login',        live: true, open: true }, // {email, password} -> {ok, token, client_id, name, email, is_admin}
   me:             { path: '/ads-padi/auth/me',           live: true }, // {token} -> {ok, client_id, name, email, is_admin} or 401
   logout:         { path: '/ads-padi/auth/logout',       live: true }, // {token}
+  googleDoc:      { path: '/ads-padi/gdoc',                live: true }, // {file_name, file_base64 (.docx)} -> {ok, url, name}; makes a Google Doc from the Word file
   adminNumbers:   { path: '/ads-padi/admin/numbers',    live: true }, // super admin: {token, action: stats|rate|reset, rate?, target_client_id?, tool?} -> {ok, now, rate, limit, total, tools, people, feed, health, failed_today}
   users:          { path: '/ads-padi/auth/users',        live: true }, // super admin: {token, action: list|add|remove|password, ...} -> {ok, users}
   spySearch:      { path: '/ads-padi/spy/search',        live: true }, // {mode: niche|brand, query, platform: meta|tiktok|linkedin, country, refresh?} -> {ok, cached, searched_at, ads:[...], insight:{summary, hooks, offers, angles, formats, model_this}, note}
@@ -1575,7 +1576,7 @@ function renderPackage() {
   }).join('');
   const nProd = prodIdx.length, nCombo = d.products.length - nProd;
   box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
-    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build v5</b></div><div id="pkg_tot">${totals()}</div>`;
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build v7</b></div><div id="pkg_tot">${totals()}</div>`;
   const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
   $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
   $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; while (d.products.filter(q => !itemKind(q)).length < 2) d.products.splice(d.products.filter(q => !itemKind(q)).length, 0, fresh('')); d.products.push(fresh('combo')); renderPackage(); });
@@ -1639,7 +1640,7 @@ const itemPicked = x => x.ofn && x.ofn !== itemKey(x) && x.offer_id !== '__own' 
 const allPicked = () => { const pk = current && getPkg(current.campaign_id); const act = pk ? pk.products.filter(isActive) : []; return act.length > 0 && act.every(itemPicked); };
 const itemOfferTitle = x => { if (x.offer_id === '__own') return 'Own offer'; const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); if (o) return o.title; return (!x.offer_id && current && current.chosen_offer) ? String(current.chosen_offer).split('\n')[0] : ''; };
 const itemOfferText = x => { if (x.offer_id) { if (String(x.offer || '').trim()) return String(x.offer).trim(); const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); return o ? o.offer : ''; } return (current && current.chosen_offer) || ''; };
-function persistItems() { const q = current && getPkg(current.campaign_id); if (!q) return; const items = itemsToApi(q.products); upsert({ campaign_id: current.campaign_id, products: items }); call('campaignSave', { campaign_id: current.campaign_id, products: items }).catch(() => {}); }
+function persistItems() { const q = current && getPkg(current.campaign_id); if (!q) return; const items = itemsToApi(q.products); upsert({ campaign_id: current.campaign_id, products: items }); return call('campaignSave', { campaign_id: current.campaign_id, products: items }).catch(e => { if (!e.auth) toast('Your offer pick could not be saved. Pick it again in a moment.', 'err'); }); }
 async function writeSlotOffers(slot) {
   const r = await runJob('offersGenerate', { campaign_id: current.campaign_id, slot }, { max: 600000 });
   const keep = ((current && current.offers) || []).filter(o => offerSlot(o) !== slot);
@@ -1845,11 +1846,20 @@ function renderGenResults() {
   box.classList.toggle('hidden', !keys.length);
   const bl = keys.filter(k => blanksIn(a[k]).length);
   const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again. The document lists them near the end so the client can send them.</div></div>` : '';
-  const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One Word document (.docx) with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send. It opens and edits in Word and Google Docs.</div><button class="btn sm" id="c_pdf"><span class="spin"></span>Download Word doc</button></div>`;
+  const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One document with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send. It opens in Google Docs, where you can edit it and share it.</div><span class="chipline"><button class="btn sm" id="c_gdoc"><span class="spin"></span>Open in Google Docs</button><button class="btn ghost sm" id="c_pdf"><span class="spin"></span>Word file</button></span></div>`;
   const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
   box.innerHTML = pdfBar + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${(k === 'script' ? markSpoken : markBlanks)(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
   chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
+  const gb = $('#c_gdoc'); if (gb) gb.addEventListener('click', e => { const w = window.open('', '_blank'); run(e.currentTarget, null, async () => {
+    try {
+      const r = await buildClientDoc(current, { noSave: true });
+      const b64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] || ''); fr.onerror = () => no(new Error('Could not read the document.')); fr.readAsDataURL(r.blob); });
+      const d = await call('googleDoc', { file_name: r.name, file_base64: b64 });
+      if (w) w.location.href = d.url; else window.location.href = d.url;
+      toast('Opened in Google Docs', 'ok');
+    } catch (err) { if (w) w.close(); throw err; }
+  }); });
   const pb = $('#c_pdf'); if (pb) pb.addEventListener('click', e => run(e.currentTarget, null, async () => { const r = await buildClientDoc(current); toast('Word document downloaded: ' + r.name, 'ok'); }));
 }
 
@@ -1944,7 +1954,7 @@ function pdfBlocks(raw, caseFix) {
   return out;
 }
 const PDF_STAGES = { 'Unaware': 'They do not yet know they have the problem the product solves.', 'Problem-aware': 'They feel the problem but do not know a solution exists.', 'Solution-aware': 'They know solutions exist but have not seen this one.', 'Product-aware': 'They know the product and its competitors, but have not chosen.', 'Most-aware': 'They know and trust the brand. They are waiting for the right offer.' };
-async function buildClientDoc(c) {
+async function buildClientDoc(c, opts) {
   const D = await loadDocMaker();
   const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, AlignmentType, Footer, Header, PageNumber } = D;
   const f = c.fields || {}; const a = c.assets || {};
@@ -1990,7 +2000,8 @@ async function buildClientDoc(c) {
   const offer = (c.offers || []).find(o => o.selected || (c.chosen_offer_id && o.offer_id === c.chosen_offer_id));
   const chosen = String(c.chosen_offer || '').split('\n');
   const offerTitle = offer ? offer.title : (chosen.length > 1 ? chosen[0] : '');
-  const offerText = offer ? offer.offer : (chosen.length > 1 ? chosen.slice(1).join('\n') : chosen[0]);
+  const ownOffers = (() => { const pk = getPkg(c.campaign_id); if (!pk) return []; const li = pk.products.filter(x => isActive(x) && x.offer_id && x.offer); return li.map(x => (li.length > 1 ? x.name + ': ' : '') + String(x.offer)); })();
+  const offerText = ownOffers.length ? ownOffers.join('\n\n') : (offer ? offer.offer : (chosen.length > 1 ? chosen.slice(1).join('\n') : chosen[0]));
   const PARTS = [
     { key: 'offer', title: 'The offer', has: !!pdfText(offerText) },
     { key: 'script', title: 'Video ad script', has: !!a.script },
@@ -2087,10 +2098,11 @@ async function buildClientDoc(c) {
   });
   const blob = await Packer.toBlob(doc);
   const name = (brand + ' campaign copy').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.docx';
+  if (opts && opts.noSave) return { name, blob };
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a'); link.href = url; link.download = name; document.body.appendChild(link); link.click();
   setTimeout(() => { link.remove(); URL.revokeObjectURL(url); }, 4000);
-  return { name };
+  return { name, blob };
 }
 
 /* ---------- spy on competitors ---------- */
@@ -2987,7 +2999,7 @@ function renderNumbers() {
   $('#nm_limits').innerHTML = tbl([['Copywriter'], ['Tool'], ['Used', 'num'], ['Resets in', 'num']], lim, 'No daily limits in use right now.');
   $('#nm_tools').innerHTML = tbl([['Tool'], ['Today', 'num'], ['This week', 'num'], ['This month', 'num'], ['Spent this month', 'num']], (nums.tools || []).filter(x => x.month.uses).map(x => `<tr><td>${esc(x.label)}</td><td class="num">${x.today.uses}</td><td class="num">${x.week.uses}</td><td class="num">${x.month.uses}</td><td class="num">${money(x.month.cost)}</td></tr>`), 'No uses yet.');
   const FS = { worked: ['Worked', 'green'], failed: ['Failed', 'red'], running: ['Running', 'amber'], unchecked: ['Not checked', ''] };
-  $('#nm_feed').innerHTML = tbl([['When'], ['Copywriter'], ['Tool'], ['Result'], ['Note']], (nums.feed || []).map(f => { const st = FS[f.status] || ['', '']; return `<tr><td>${agoText(f.at)}</td><td>${esc(f.name || f.email)}</td><td>${esc(f.label)}</td><td><span class="tag ${st[1]}">${st[0]}</span></td><td class="muted small">${esc(f.error || '')}</td></tr>`; }), 'Nothing yet. Actions show here as copywriters use the tools.');
+  $('#nm_feed').innerHTML = tbl([['When'], ['Copywriter'], ['Tool'], ['Result'], ['Note']], (nums.feed || []).filter(f => Date.now() - f.at < 86400000).map(f => { const st = FS[f.status] || ['', '']; return `<tr><td>${agoText(f.at)}</td><td>${esc(f.name || f.email)}</td><td>${esc(f.label)}</td><td><span class="tag ${st[1]}">${st[0]}</span></td><td class="muted small">${esc(f.error || '')}</td></tr>`; }), 'Nothing in the last 24 hours. Actions show here as copywriters use the tools, and drop off after a day.');
   $('#nm_updated').textContent = 'Updated ' + new Date(nums.now || Date.now()).toLocaleTimeString();
 }
 async function loadNumbers() {
