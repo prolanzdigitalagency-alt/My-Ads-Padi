@@ -519,6 +519,101 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
 .poblock .ownoffer summary{cursor:pointer;font-weight:600}
 .poblock .ownoffer[open] summary{margin-bottom:6px}
 
+/* ================= premium layer (v12) ================= */
+:root{
+  --canvas:#f6f5f2; --line:#e9e8e4; --line-2:#d9d8d3;
+  --r:20px; --r-sm:12px;
+  --shadow:0 1px 0 rgba(18,19,22,.03),0 1px 2px rgba(18,19,22,.04),0 12px 32px -16px rgba(18,19,22,.14);
+  --ring:0 0 0 4px rgba(225,13,28,.12);
+}
+body{letter-spacing:-.003em}
+h1{font-size:34px;font-weight:800;letter-spacing:-.03em}
+h2{font-size:22px;letter-spacing:-.02em}
+.head p,.card .cap p{line-height:1.6}
+.wrap{padding-top:48px}
+.head{margin-bottom:32px}
+
+/* sidebar */
+.side{padding:28px 16px 18px;background:linear-gradient(180deg,#17181d 0%,#121317 100%)}
+.nav button{padding:11px 14px;border-radius:12px;transition:background .15s,color .15s}
+.nav button svg{opacity:.85}
+.nav button[aria-current="page"]{background:rgba(255,255,255,.07);box-shadow:inset 3px 0 0 var(--yellow)}
+.side .foot{border-top-color:rgba(255,255,255,.08)}
+
+/* cards */
+.card{border-radius:var(--r);border-color:var(--line);padding:30px 32px}
+.card + .card{margin-top:20px}
+.card .cap{margin-bottom:22px}
+
+/* fields */
+.field label{font-size:13px;letter-spacing:0;color:var(--ink-2);margin-bottom:7px}
+.field input,.field select,.field textarea{padding:12px 15px;border-radius:var(--r-sm);border-color:var(--line-2);min-height:46px}
+.field textarea{min-height:100px;line-height:1.55}
+.field input:focus,.field select:focus,.field textarea:focus{box-shadow:var(--ring)}
+.field .hint{line-height:1.5}
+
+/* buttons */
+.btn{padding:12px 22px;border-radius:12px;font-weight:700;letter-spacing:-.005em;background:linear-gradient(180deg,#ec1626 0%,#d30c1b 100%);border-color:#c40b19;box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 8px 18px -10px rgba(225,13,28,.65);transition:background .15s,box-shadow .15s,transform .08s}
+.btn:hover{background:linear-gradient(180deg,#e0101f 0%,#bd0a17 100%);border-color:#b50b18}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+.btn.ghost{background:#fff;border-color:var(--line-2);box-shadow:0 1px 0 rgba(18,19,22,.03)}
+.btn.ghost:hover{background:#faf9f7;border-color:var(--grey-2)}
+.btn.soft{background:var(--red-tint);box-shadow:none;border-color:transparent}
+.btn.sm{padding:8px 14px;border-radius:10px}
+.actions{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+
+/* the 5 step bar: one tidy row, finished steps get a tick */
+#cmp_flow .rail{grid-template-columns:repeat(5,1fr);gap:8px;margin:0 0 26px}
+#cmp_flow .rail button{padding:0 4px 16px 0;gap:10px;border-bottom-width:2px;border-bottom-color:var(--line-2);min-width:0;font-size:13.5px;line-height:1.25;transition:color .15s,border-color .15s}
+#cmp_flow .rail button > span:last-child{min-width:0}
+#cmp_flow .rail button .n{width:28px;height:28px;font-size:12.5px;border-width:1.5px}
+#cmp_flow .rail button .s{font-size:11.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cmp_flow .rail button.done{border-bottom-color:var(--ink)}
+#cmp_flow .rail button.done .n{background:var(--ink);border-color:var(--ink);color:var(--ink);position:relative}
+#cmp_flow .rail button.done .n::after{content:"";position:absolute;width:5px;height:10px;border:solid var(--yellow);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+#cmp_flow .rail button[aria-current="step"]{border-bottom-color:var(--red)}
+#cmp_flow .rail button[aria-current="step"] .n{box-shadow:0 0 0 4px rgba(225,13,28,.14)}
+@media (max-width:900px){
+  #cmp_flow .rail{grid-template-columns:repeat(5,auto);justify-content:space-between;gap:6px}
+  #cmp_flow .rail button{padding:0 0 12px;flex-direction:column;gap:0}
+  #cmp_flow .rail button > span:last-child{display:none}
+  #cmp_flow .rail button[aria-current="step"] > span:last-child{display:block;position:absolute}
+  #cmp_flow .rail button .n{width:32px;height:32px}
+  .wrap{padding-top:28px}
+  h1{font-size:28px}
+}
+
+/* offer cards: calmer, equal weight, clear chosen state */
+.offer{border-radius:18px;transition:border-color .15s,box-shadow .15s}
+.offer:hover{border-color:var(--grey-2);box-shadow:0 10px 28px -18px rgba(18,19,22,.3)}
+.offer.chosen{background:linear-gradient(180deg,#fff 0%,#fff6f6 100%);box-shadow:0 0 0 1px var(--red),0 14px 32px -20px rgba(225,13,28,.5)}
+.offer .why:empty{display:none}
+
+/* toasts: one calm pill at a time, never on top of the work */
+.toasts{bottom:24px;gap:8px}
+.toast{background:rgba(20,21,26,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 18px;font-weight:600;box-shadow:0 18px 40px -16px rgba(0,0,0,.5);animation:none}
+.toast.err{background:#a80b17;border-color:rgba(255,255,255,.14)}
+.toast.ok svg{color:#4ade80}
+
+/* generating: a proper status panel instead of a thin bar */
+.working{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-top:22px;box-shadow:var(--shadow);color:var(--ink-2);font-weight:600;align-items:center;flex-wrap:wrap}
+.working .bar{order:3;flex:1 1 100%;max-width:none;height:5px;background:#efeeea}
+.working .bar i{width:35%;background:linear-gradient(90deg,var(--red),#ff5a4d)}
+.working span{flex:1;min-width:0;line-height:1.5}
+.working .elapsed{order:2;font-weight:700;font-variant-numeric:tabular-nums;color:var(--grey);font-size:13px}
+
+/* finished pieces and review screens */
+.copyblock,.concept,.bitem{border-radius:16px}
+.frame{border-radius:18px}
+.note{border-radius:14px}
+.tag,.pill{letter-spacing:0}
+table{border-collapse:separate;border-spacing:0}
+
+/* focus + selection polish */
+:focus-visible{outline:none}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shadow:var(--ring);border-radius:10px}
+::selection{background:#fde900;color:#121316}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -1022,7 +1117,7 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v11';
+const BUILD_ID = 'v12';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1124,7 +1219,7 @@ const pageText = html => { try { const d = new DOMParser().parseFromString(Strin
 function toast(msg, kind) {
   const t = document.createElement('div'); t.className = 'toast ' + (kind || '');
   t.innerHTML = (kind === 'ok' ? '<svg class="i"><use href="#i-check"/></svg>' : kind === 'err' ? '<svg class="i"><use href="#i-info"/></svg>' : '') + '<span>' + esc(msg) + '</span>';
-  const box = $('#toasts'); box.appendChild(t); while (box.children.length > 3) box.firstChild.remove(); setTimeout(() => t.remove(), kind === 'err' ? 7000 : String(msg).length > 90 ? 6500 : 3800);
+  const box = $('#toasts'); box.appendChild(t); while (box.children.length > 2) box.firstChild.remove(); setTimeout(() => t.remove(), kind === 'err' ? 7000 : String(msg).length > 90 ? 6500 : 3800);
 }
 // Brand Assets tells us when an upload was filed under the wrong category and moved it
 const noteMoved = r => { if (r && r.moved_to && r.message) toast(r.message, 'ok'); };
@@ -1172,8 +1267,13 @@ async function call(name, body) {
 async function run(btn, workingId, fn) {
   if (btn) { btn.disabled = true; btn.classList.add('busy'); }
   const w = workingId && $('#' + workingId); if (w) w.classList.remove('hidden');
+  let tick = null;
+  if (w && w.classList.contains('working')) {
+    let el = w.querySelector('.elapsed'); if (!el) { el = document.createElement('em'); el.className = 'elapsed'; el.style.fontStyle = 'normal'; w.insertBefore(el, w.querySelector('.bar') ? w.querySelector('.bar').nextSibling : null); }
+    const t0 = Date.now(); const paint = () => { const s = Math.floor((Date.now() - t0) / 1000); el.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }; paint(); tick = setInterval(paint, 1000);
+  }
   try { await fn(); } catch (e) { if (!e.auth) toast(e.message, 'err'); }
-  finally { if (btn) { btn.disabled = false; btn.classList.remove('busy'); } if (w) w.classList.add('hidden'); }
+  finally { if (tick) clearInterval(tick); if (btn) { btn.disabled = false; btn.classList.remove('busy'); } if (w) w.classList.add('hidden'); }
 }
 async function waitFor(check, every, max) {
   const t0 = Date.now();
@@ -1747,7 +1847,7 @@ function renderOffers() {
       return `<div class="offer ${ch ? 'chosen' : ''}" data-oid="${esc(o.offer_id)}" data-slot="${slot}"><span class="ribbon">Your pick</span>
       <div class="num">Offer ${esc(o.number)}</div><div class="title">${esc(o.title)}</div><div class="text">${markBlanks(txt)}</div>
       ${bl.length ? `<div class="fills"><span class="lead">Fill in the details only you know</span>${bl.map(b => `<label><span>${esc(b.slice(1, -1))}</span><input data-blank="${esc(b)}" value="${esc(offerDraft[o.offer_id + '|' + b] || '')}" placeholder="Type the real ${esc(b.slice(1, -1))}"></label>`).join('')}</div>` : ''}
-      <div class="why"><b>Why it works:</b> ${esc(o.why_it_works)}</div>
+      ${String(o.why_it_works || '').trim().length > 12 ? `<div class="why"><b>Why it works:</b> ${esc(o.why_it_works)}</div>` : ''}
       <button type="button" class="btn ${ch ? '' : 'ghost'} sm" data-offer="${esc(o.offer_id)}" data-slot="${slot}"><span class="spin"></span>${ch ? 'Chosen' : 'Use this offer'}</button></div>`;
     }).join('');
     const isOwn = x.offer_id === '__own'; const dk = 'own|' + slot; const draft = offerDraft[dk] !== undefined ? offerDraft[dk] : (isOwn ? String(x.offer || '') : '');
@@ -1855,6 +1955,7 @@ $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_workin
   if (!current || !allPicked()) { toast('Choose an offer for every product first.', 'err'); return showStep(4); }
   const items = $$('input[name="gen"]:checked').map(c => c.value); if (!items.length) throw new Error('Tick at least one thing to generate.');
   const plan = buildPlan(); const failed = [];
+  { const sp = $('#c_gen_working span'); if (sp && plan) { const n = (k, w) => { const v = plan.reduce((a, u) => a + (u[k] || 0), 0); return v && items.includes(w) ? v : 0; }; const bits = [[n('scripts', 'script'), 'video script'], [n('flyers', 'flyer_copy'), 'flyer'], [n('pages', 'landing_page_copy'), 'landing page']].filter(b => b[0]).map(b => b[0] + ' ' + b[1] + (b[0] === 1 ? '' : 's')); if (bits.length) sp.textContent = 'Writing ' + bits.join(', ') + ' and checking each one. About 3 minutes.'; } }
   if (plan) {
     // one shared page: a single page that covers every product, so only the first product carries the page
     const cnt = { script: plan.reduce((s, u) => s + u.scripts, 0), flyer_copy: plan.reduce((s, u) => s + u.flyers, 0), landing_page_copy: plan.reduce((s, u) => s + u.pages, 0) };
