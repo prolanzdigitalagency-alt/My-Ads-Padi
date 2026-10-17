@@ -1023,6 +1023,29 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
+const BUILD_ID = 'v9';
+/* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
+let updShown = false;
+async function checkBuild() {
+  if (updShown || !/^https?:$/.test(location.protocol)) return;
+  try {
+    const r = await fetch(location.pathname + '?_b=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+    const t = await r.text(); const m = /const BUILD_ID = '([^']+)'/.exec(t);
+    if (!m || m[1] === BUILD_ID) return;
+    updShown = true;
+    const bar = document.createElement('div'); bar.setAttribute('role', 'status');
+    bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;background:#121316;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.3);font:600 14px system-ui,sans-serif;display:flex;gap:12px;align-items:center;max-width:92vw';
+    let left = 25; const lab = document.createElement('span'); const btn = document.createElement('button');
+    btn.textContent = 'Reload now'; btn.style.cssText = 'background:#e10d1c;color:#fff;border:0;border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer';
+    bar.append(lab, btn); document.body.appendChild(bar);
+    const go = () => location.reload(); btn.addEventListener('click', go);
+    const tick = () => { if (document.querySelector('.btn.busy')) { lab.textContent = 'A new version is ready. It will reload when your current job finishes.'; return setTimeout(tick, 3000); } lab.textContent = 'A new version is ready. Reloading in ' + left + 's.'; if (left-- <= 0) return go(); setTimeout(tick, 1000); };
+    tick();
+  } catch (e) {}
+}
+setInterval(() => { if (!document.hidden) checkBuild(); }, 120000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkBuild(); });
+setTimeout(checkBuild, 15000);
 const DEFAULT_BASE = 'https://prolanz-digital-u76659.vm.elestio.app/webhook';
 const API = {
   login:          { path: '/ads-padi/auth/login',        live: true, open: true }, // {email, password} -> {ok, token, client_id, name, email, is_admin}
@@ -1277,7 +1300,7 @@ function refreshAll() {
   $('#cmp_pick').innerHTML = '<option value="">New campaign</option>' + folders().filter(f => byFolder[f.brand_key]).map(f => `<optgroup label="${esc(f.brand)}">` + byFolder[f.brand_key].map(c => `<option value="${esc(c.campaign_id)}">${esc(c.product || 'Untitled')} (${esc(progress(c)[1])})</option>`).join('') + '</optgroup>').join(''); $('#cmp_pick').value = current ? current.campaign_id : '';
   $('#brand_folders').innerHTML = folders().map(f => `<option value="${esc(f.brand)}"></option>`).join('');
   renderBrandPicker();
-  $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = (session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '') + ' . build v8';
+  $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = (session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '') + ' . build ' + BUILD_ID;
   $$('.admin-only').forEach(el => el.classList.toggle('hidden', !session.is_admin));
   const ae = document.activeElement; const typing = ae && ae.closest && ae.closest('#cmp_flow') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
   renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderProdPickers(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
@@ -1513,22 +1536,25 @@ const PKG_PER_MAX = { scripts: 10, flyers: 5, pages: 5 }; // most one product ca
 const MAX_PRODUCTS = 5, MAX_COMBOS = 3; // up to 5 products, plus up to 3 combos (2 or 3 of those products sold together)
 const itemLabel = (items, i) => { const combo = itemKind(items[i]); return (combo ? 'Combo ' : 'Product ') + (items.slice(0, i + 1).filter(q => itemKind(q) === itemKind(items[i])).length); };
 const itemKind = x => (x && x.kind === 'combo') ? 'combo' : '';
-const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '', active: isActive(x) }));
+const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), scripts: Number(x.scripts) || 0, flyers: Number(x.flyers) || 0, pages: Number(x.pages) || 0, includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '', active: isActive(x) }));
 // a new product added to a package gets this much: the package share for one product
 const unitOf = p => ({ scripts: Math.ceil(p.scripts / p.products), flyers: Math.ceil(p.flyers / p.products), pages: Math.ceil(p.pages / p.products) });
 // starting count for product i of a package: the first products share the package, extra products get one product's share
 const defCount = (p, ck, i) => i < p.products ? splitEven(p[ck], p.products)[i] : unitOf(p)[ck];
 function getPkg(cid) {
-  const v = store.get(key('pkg.' + cid), null);
-  if (v && pkgById(v.tier) && Array.isArray(v.products)) return v;
-  // not saved in this browser: rebuild it from what the backend saved with the campaign (another device, or cleared storage)
+  const local = store.get(key('pkg.' + cid), null);
+  const lv = local && pkgById(local.tier) && Array.isArray(local.products) ? local : null;
+  // the saved campaign on the server is the one truth: every account, device and browser rebuilds the package from it
   const c = campaigns.find(x => x.campaign_id === cid); const p = c && pkgById(c.package);
-  if (!p || !Array.isArray(c.products) || !c.products.length) return null;
+  if (!p || !Array.isArray(c.products) || !c.products.length) return lv;
   const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
   const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
-  return { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: x.active === false ? 0 : defCount(p, 'scripts', i), flyers: x.active === false ? 0 : defCount(p, 'flyers', i), pages: x.active === false ? 0 : defCount(p, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
+  const cnt = (x, ck, i) => x.active === false ? 0 : (Number.isFinite(Number(x[ck])) && x[ck] !== undefined && x[ck] !== null && x[ck] !== '' ? Math.max(0, Number(x[ck])) : defCount(p, ck, i));
+  const out = { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: cnt(x, 'scripts', i), flyers: cnt(x, 'flyers', i), pages: cnt(x, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
+  if (lv && lv.lp_mode) out.lp_mode = lv.lp_mode;
+  return out;
 }
-function setPkg(cid, v) { store.set(key('pkg.' + cid), v); }
+function setPkg(cid, v) { store.set(key('pkg.' + cid), v); if (v && Array.isArray(v.products) && campaigns.some(x => x.campaign_id === cid)) upsert({ campaign_id: cid, products: itemsToApi(v.products) }); }
 const pkgLine = p => p.products + (p.products === 1 ? ' product' : ' products') + ', ' + p.scripts + ' video scripts, ' + (p.flyers ? p.flyers + ' flyers' : 'no flyers') + ', ' + p.pages + (p.pages === 1 ? ' landing page' : ' landing pages');
 const splitEven = (total, n) => Array.from({ length: n }, (_, i) => Math.floor(total / n) + (i < total % n ? 1 : 0));
 let pkgDraft = null;
@@ -1585,7 +1611,7 @@ function renderPackage() {
   }).join('');
   const nProd = prodIdx.length, nCombo = d.products.length - nProd;
   box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
-    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build v8</b></div><div id="pkg_tot">${totals()}</div>`;
+    + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build ${BUILD_ID}</b></div><div id="pkg_tot">${totals()}</div>`;
   const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
   $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
   $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; while (d.products.filter(q => !itemKind(q)).length < 2) d.products.splice(d.products.filter(q => !itemKind(q)).length, 0, fresh('')); d.products.push(fresh('combo')); renderPackage(); });
@@ -1656,7 +1682,7 @@ async function writeSlotOffers(slot) {
   const fresh = (r.offers || []).map(o => Object.assign({}, o, { selected: false }));
   const patch = { campaign_id: current.campaign_id, offers: keep.concat(fresh) };
   const pk = getPkg(current.campaign_id); const it = pk && pk.products[slot - 1];
-  if (it) { it.offer_id = ''; it.offer = ''; it.ofn = itemKey(it); setPkg(current.campaign_id, pk); }
+  if (it) { it.offer_id = ''; it.offer = ''; it.ofn = itemKey(it); setPkg(current.campaign_id, pk); persistItems(); }
   if (slot === 1) { patch.chosen_offer_id = ''; patch.chosen_offer = ''; }
   upsert(patch);
   return r;
