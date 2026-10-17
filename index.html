@@ -734,7 +734,6 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
         <label><input type="checkbox" name="gen" value="landing_page_copy" checked><div>Landing page copy<span>Hero to FAQ</span></div></label>
       </div>
       <p class="muted small hidden" id="c_gen_none" style="margin:10px 0 0">This package has no video scripts, flyers or landing pages to write. Change the package in step 3.</p>
-      <div class="lpchoice hidden" id="c_gen_lp_wrap"><b>This client has more than one product. How many landing pages?</b><div class="muted small" id="c_gen_lp_names"></div><label class="chk"><input type="radio" name="lpmode" value="one"> One landing page for all the products</label><label class="chk"><input type="radio" name="lpmode" value="each"> A separate landing page for each product</label></div>
       <p class="muted small" style="margin:10px 0 0">The video script comes with creative direction: the creative type to shoot, who is on camera, the shot list and notes for the AI video. Short form scripts have their own screen.</p>
       <div class="actions"><button class="btn ghost" data-goto="4">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
       <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Writing and checking your copy. About 3 minutes.</span></div>
@@ -1023,7 +1022,7 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v10';
+const BUILD_ID = 'v11';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1851,28 +1850,15 @@ function renderGenTicks() {
   $$('input[name="gen"]').forEach(cb => { const lab = cb.closest('label'); const on = ok ? !!ok[cb.value] : true; if (lab) { lab.classList.toggle('locked', !on); const sp = lab.querySelector('span'); if (sp) { if (sp.dataset.was === undefined) sp.dataset.was = sp.textContent; sp.textContent = on ? sp.dataset.was : 'Not in this package'; } } cb.checked = on; cb.disabled = !on; });
   const note = $('#c_gen_none'); if (note) note.classList.toggle('hidden', !(ok && !Object.values(ok).some(Boolean)));
 }
-function renderGenLp() {
-  const w = $('#c_gen_lp_wrap'); if (!w) return;
-  const ask = genLpAsk(); w.classList.toggle('hidden', !ask); if (!ask) return;
-  const pk = getPkg(current.campaign_id); const cur = pk.lp_mode || '';
-  $$('input[name="lpmode"]').forEach(r => { r.checked = r.value === cur; });
-  $('#c_gen_lp_names').textContent = pk.products.filter(x => x.name).map(x => x.name).join(', ');
-}
-$$('input[name="lpmode"]').forEach(r => r.addEventListener('change', () => { const pk = current && getPkg(current.campaign_id); if (!pk) return; pk.lp_mode = r.value; setPkg(current.campaign_id, pk); }));
+function renderGenLp() {} // no question here: what step 3 selected is what gets written
 $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_working', async () => {
   if (!current || !allPicked()) { toast('Choose an offer for every product first.', 'err'); return showStep(4); }
   const items = $$('input[name="gen"]:checked').map(c => c.value); if (!items.length) throw new Error('Tick at least one thing to generate.');
-  let lpMode = '';
-  if (items.includes('landing_page_copy') && genLpAsk()) {
-    const r = $('input[name="lpmode"]:checked'); lpMode = r ? r.value : '';
-    if (!lpMode) throw new Error('Choose one landing page for all the products, or a separate landing page for each product.');
-  }
   const plan = buildPlan(); const failed = [];
   if (plan) {
     // one shared page: a single page that covers every product, so only the first product carries the page
-    const planOne = plan.map((u, i) => Object.assign({}, u, { pages: i === 0 ? 1 : 0 }));
-    const cnt = { script: plan.reduce((s, u) => s + u.scripts, 0), flyer_copy: plan.reduce((s, u) => s + u.flyers, 0), landing_page_copy: lpMode === 'one' ? 1 : plan.reduce((s, u) => s + u.pages, 0) };
-    for (const it of items.filter(k => cnt[k] > 0)) { const ex = it === 'landing_page_copy' && lpMode === 'one' ? { plan: planOne, shared_page: true } : { plan }; const r = await generateCopy([it], ex, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); fillForm(); renderGenResults(); }
+    const cnt = { script: plan.reduce((s, u) => s + u.scripts, 0), flyer_copy: plan.reduce((s, u) => s + u.flyers, 0), landing_page_copy: plan.reduce((s, u) => s + u.pages, 0) };
+    for (const it of items.filter(k => cnt[k] > 0)) { const ex = { plan }; const r = await generateCopy([it], ex, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); fillForm(); renderGenResults(); }
   } else { const r = await generateCopy(items, {}, 'c_gen_working'); (r.failed || []).forEach(k => failed.push(k)); }
   fillForm(); renderSources();
   if (failed.length) toast('Ready, but ' + failed.map(k => (ASSET_NAMES[k] || k).toLowerCase()).join(', ') + ' did not come through. Generate again for those.', 'err');
