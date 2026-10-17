@@ -1023,7 +1023,7 @@ mark.spoken{background:var(--yellow);color:#000;font-weight:800;padding:1px 3px;
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v9';
+const BUILD_ID = 'v10';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1671,7 +1671,8 @@ const staleAt = slot => { const it = itemAt(slot); return !!(it && it.ofn && it.
 const slotOffers = slot => { if (staleAt(slot)) return []; const all = (current && current.offers) || []; const own = all.filter(o => offerSlot(o) === slot); return own.length ? own : all.filter(o => offerSlot(o) === 0); };
 const legacyOffers = () => !((current && current.offers) || []).some(o => offerSlot(o) > 0);
 const offerDraft = {}; // what was typed in the blanks and own-offer boxes, kept while the cards redraw
-const itemPicked = x => x.ofn && x.ofn !== itemKey(x) && x.offer_id !== '__own' ? false : !!(x.offer_id && (x.offer_id !== '__own' || String(x.offer || '').trim())) || (!x.offer_id && legacyOffers() && !!(current && current.chosen_offer));
+const itemPicked0 = x => x.ofn && x.ofn !== itemKey(x) && x.offer_id !== '__own' ? false : !!(x.offer_id && (x.offer_id !== '__own' || String(x.offer || '').trim())) || (!x.offer_id && legacyOffers() && !!(current && current.chosen_offer));
+const itemPicked = x => itemPicked0(x) && !(x.offer_id && x.offer_id !== '__own' && blanksIn(itemOfferText(x)).length); // an offer that still has a [blank] is not picked: the server never keeps it
 const allPicked = () => { const pk = current && getPkg(current.campaign_id); const act = pk ? pk.products.filter(isActive) : []; return act.length > 0 && act.every(itemPicked); };
 const itemOfferTitle = x => { if (x.offer_id === '__own') return 'Own offer'; const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); if (o) return o.title; return (!x.offer_id && current && current.chosen_offer) ? String(current.chosen_offer).split('\n')[0] : ''; };
 const itemOfferText = x => { if (x.offer_id) { if (String(x.offer || '').trim()) return String(x.offer).trim(); const o = ((current && current.offers) || []).find(q => q.offer_id === x.offer_id); return o ? o.offer : ''; } return (current && current.chosen_offer) || ''; };
@@ -1743,7 +1744,7 @@ function renderOffers() {
     if (!offs.length) return `<section class="poblock" data-slot="${slot}">${head}<p class="muted small" style="margin:6px 0 0">No offers for this item yet.</p></section>`;
     const pickedId = x.offer_id || (legacyOffers() ? ((current && current.chosen_offer_id) || '') : '');
     const cards = offs.map(o => {
-      const ch = pickedId === o.offer_id; const txt = ch && x.offer_id && String(x.offer || '').trim() ? x.offer : o.offer; const bl = ch ? [] : blanksIn(txt);
+      const txt = pickedId === o.offer_id && x.offer_id && String(x.offer || '').trim() ? x.offer : o.offer; const ch = pickedId === o.offer_id && !blanksIn(txt).length; const bl = ch ? [] : blanksIn(txt);
       return `<div class="offer ${ch ? 'chosen' : ''}" data-oid="${esc(o.offer_id)}" data-slot="${slot}"><span class="ribbon">Your pick</span>
       <div class="num">Offer ${esc(o.number)}</div><div class="title">${esc(o.title)}</div><div class="text">${markBlanks(txt)}</div>
       ${bl.length ? `<div class="fills"><span class="lead">Fill in the details only you know</span>${bl.map(b => `<label><span>${esc(b.slice(1, -1))}</span><input data-blank="${esc(b)}" value="${esc(offerDraft[o.offer_id + '|' + b] || '')}" placeholder="Type the real ${esc(b.slice(1, -1))}"></label>`).join('')}</div>` : ''}
@@ -1773,9 +1774,10 @@ function renderOffers() {
     if (b.dataset.regen) { writeOffers(b, Number(b.dataset.regen)); return; }
     if (b.dataset.offer) run(b, null, async () => {
       const slot = Number(b.dataset.slot); const card = b.closest('.offer'); const o = ((current && current.offers) || []).find(x => x.offer_id === b.dataset.offer); if (!o) return;
-      const inputs = Array.from(card.querySelectorAll('[data-blank]')); let text = o.offer; let missing = false;
+      const inputs = Array.from(card.querySelectorAll('[data-blank]')); if (card.classList.contains('chosen')) return; let text = o.offer; let missing = false;
       inputs.forEach(i => { const v = i.value.trim().replace(/[\[\]]/g, ''); if (!v) { missing = true; i.classList.add('bad'); } else text = text.split(i.dataset.blank).join(v); });
       if (missing) { toast('Fill the highlighted details first. The offer goes into your ads exactly as written.', 'err'); return; }
+      if (blanksIn(text).length) { toast('Fill in every detail in square brackets first.', 'err'); return; }
       await pickOffer(slot, o.offer_id, text, false, inputs.length > 0);
       renderOffers(); toast('Offer saved', 'ok');
     });
