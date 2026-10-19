@@ -614,6 +614,11 @@ table{border-collapse:separate;border-spacing:0}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shadow:var(--ring);border-radius:10px}
 ::selection{background:#fde900;color:#121316}
 
+/* change a detail, then rewrite */
+.card-lite{border:1px solid var(--line);border-radius:var(--r);background:#fff;padding:12px 16px}
+.card-lite>summary{cursor:pointer;font-size:14.5px}
+.card-lite .eitem{border-top:1px solid var(--line);padding-top:14px}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -823,13 +828,19 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
     <div class="card step hidden" data-step="5">
       <div class="cap"><div><h2>Generate</h2><p>Tick what you need. The copy follows what is winning in your niche, built on the offer you chose and any competitor ads you picked in Spy on Competitors.</p></div></div>
       <div class="note hidden" id="c_gen_offer" style="margin-bottom:16px"><svg class="i"><use href="#i-star"/></svg><div></div></div>
+      <details class="card-lite" id="c_edit" style="margin-bottom:16px">
+        <summary><b>Changed a detail?</b> Update the campaign, then rewrite what you tick below.</summary>
+        <p class="muted small" style="margin:10px 0 14px">Whatever you save here becomes the campaign. Every screen and every new piece of copy follows it. The pieces you tick below are written again and replace the old ones.</p>
+        <div class="stack" id="c_edit_body"></div>
+        <div class="actions"><button class="btn ghost" id="c_edit_save"><span class="spin"></span>Save changes</button><button class="btn" id="c_edit_go"><span class="spin"></span>Save and rewrite what is ticked</button></div>
+      </details>
       <div class="ticks">
         <label><input type="checkbox" name="gen" value="script" checked><div>Video script<span>For your ad video</span></div></label>
         <label><input type="checkbox" name="gen" value="flyer_copy" checked><div>Flyer copy<span>Hook, offer, call to action</span></div></label>
         <label><input type="checkbox" name="gen" value="landing_page_copy" checked><div>Landing page copy<span>Hero to FAQ</span></div></label>
       </div>
       <p class="muted small hidden" id="c_gen_none" style="margin:10px 0 0">This package has no video scripts, flyers or landing pages to write. Change the package in step 3.</p>
-      <p class="muted small" style="margin:10px 0 0">The video script comes with creative direction: the creative type to shoot, who is on camera, the shot list and notes for the AI video. Short form scripts have their own screen.</p>
+      <p class="muted small" style="margin:10px 0 0">Short form scripts have their own screen.</p>
       <div class="actions"><button class="btn ghost" data-goto="4">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
       <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Writing and checking your copy. About 3 minutes.</span></div>
       <div class="stack hidden" id="c_gen_results" style="margin-top:20px"></div>
@@ -1117,7 +1128,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v12';
+const BUILD_ID = 'v13';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1565,7 +1576,7 @@ function fillForm() {
   $('#c_goal').value = f.goal || ''; $('#c_market').value = f.market || ''; $('#c_outcome').value = f.desired_outcome || ''; $('#c_details').value = f.additional_details || '';
   $('#c_audience').value = f.audience || ''; $('#c_age').value = f.age_range || ''; $('#c_location').value = f.location || '';
   $$('input[name="aw"]').forEach(r => { r.checked = r.value === (f.awareness || (current && current.awareness)); });
-  renderOffers(); renderGenResults();
+  renderOffers(); renderGenResults(); renderEditPanel();
 }
 
 /* ---------- navigation ---------- */
@@ -1964,6 +1975,58 @@ $('#c_gen_go').addEventListener('click', e => run(e.currentTarget, 'c_gen_workin
   fillForm(); renderSources();
   if (failed.length) toast('Ready, but ' + failed.map(k => (ASSET_NAMES[k] || k).toLowerCase()).join(', ') + ' did not come through. Generate again for those.', 'err');
   else toast('Your copy is ready', 'ok');
+}));
+/* ---------- change a detail, then rewrite ----------
+   The copywriter edits any detail of the campaign (business, audience, each product's name, price and offer).
+   It is saved to the server first, so it becomes the campaign for every screen, then the ticked pieces are written again and replace the old ones. */
+const EDIT_FIELDS = [['brand', 'Brand or business name', 'input'], ['industry', 'Industry', 'input'], ['product', 'Product or service to advertise', 'input'], ['price', 'Price', 'input'], ['market', 'Market', 'input'], ['location', 'Location', 'input'], ['audience', 'Who are you selling to?', 'textarea'], ['age_range', 'Age range', 'input'], ['desired_outcome', 'What does a win look like?', 'textarea'], ['additional_details', 'Additional details', 'textarea']];
+function renderEditPanel() {
+  const box = $('#c_edit_body'); if (!box) return;
+  const det = $('#c_edit'); if (det) det.classList.toggle('hidden', !(current && current.campaign_id));
+  if (!current || !current.campaign_id) { box.innerHTML = ''; return; }
+  if (box.contains(document.activeElement)) return; // never redraw under someone who is typing
+  const f = current.fields || {}; const pk = getPkg(current.campaign_id);
+  const fld = ([k, l, t]) => `<div class="field"><label for="e_${k}">${l}</label>${t === 'textarea' ? `<textarea id="e_${k}">${esc(f[k] || '')}</textarea>` : `<input id="e_${k}" value="${esc(f[k] || '')}">`}</div>`;
+  const aws = $$('input[name="aw"]').map(r => r.value); const awNow = f.awareness || current.awareness || '';
+  const items = pk ? pk.products.map((x, i) => !x.name && !isActive(x) ? '' : `<div class="eitem stack"><b>${esc(x.name || ('Item ' + (i + 1)))}${itemKind(x) ? ' (combo)' : ''}</b><div class="row"><div class="field"><label for="e_n_${i}">Name</label><input id="e_n_${i}" value="${esc(x.name || '')}"></div><div class="field"><label for="e_p_${i}">Price</label><input id="e_p_${i}" value="${esc(x.price || '')}"></div></div><div class="field"><label for="e_o_${i}">The offer</label><textarea id="e_o_${i}">${esc(isActive(x) ? itemOfferText(x) : '')}</textarea></div></div>`).join('') : '';
+  box.innerHTML = fld(EDIT_FIELDS[0]) + fld(EDIT_FIELDS[1]) + fld(EDIT_FIELDS[2]) + fld(EDIT_FIELDS[3])
+    + `<div class="field"><label for="e_goal">Campaign goal</label><select id="e_goal">${$('#c_goal').innerHTML}</select></div>`
+    + fld(EDIT_FIELDS[4]) + fld(EDIT_FIELDS[5]) + fld(EDIT_FIELDS[6]) + fld(EDIT_FIELDS[7])
+    + `<div class="field"><label for="e_awareness">Buyer stage</label><select id="e_awareness"><option value="">Choose a stage</option>${aws.map(a => `<option>${esc(a)}</option>`).join('')}</select></div>`
+    + fld(EDIT_FIELDS[8]) + fld(EDIT_FIELDS[9]) + items;
+  $('#e_goal').value = f.goal || ''; $('#e_awareness').value = awNow;
+}
+async function saveEdits() {
+  if (!current || !current.campaign_id) throw new Error('Open a campaign first.');
+  const cid = current.campaign_id; const t = s => String(s == null ? '' : s).trim();
+  // read every box first: saving redraws this panel from the saved values, so nothing may be read after that
+  const f = {}; EDIT_FIELDS.forEach(([k]) => { f[k] = t(($('#e_' + k) || {}).value); }); f.goal = $('#e_goal').value;
+  const aw = $('#e_awareness').value;
+  const typed = []; for (let i = 0; $('#e_n_' + i); i++) typed.push({ n: t($('#e_n_' + i).value), p: t($('#e_p_' + i).value), o: t($('#e_o_' + i).value) });
+  if (!f.brand || !f.product || !f.goal) throw new Error('Brand, product and goal cannot be empty.');
+  const pk0 = getPkg(cid);
+  if (pk0) pk0.products.forEach((x, i) => { if (typed[i] && isActive(x) && !typed[i].o) throw new Error('Every product needs an offer. Add the offer for ' + (typed[i].n || x.name || ('item ' + (i + 1))) + '.'); });
+  const r = await call('campaignSave', Object.assign({ campaign_id: cid }, f, aw ? { awareness: aw } : {}));
+  upsert({ campaign_id: cid, brand: f.brand, brand_key: r.brand_key || brandKeyOf(f.brand), product: f.product, goal: f.goal, awareness: aw || current.awareness, fields: Object.assign({}, current.fields || {}, f, aw ? { awareness: aw } : {}) });
+  const pk = getPkg(cid); const offerChanges = [];
+  if (pk) {
+    pk.products.forEach((x, i) => {
+      const ty = typed[i]; if (!ty) return;
+      const oldKey = itemKey(x); const oldText = itemOfferText(x); const fresh = !x.ofn || x.ofn === oldKey;
+      x.name = ty.n || x.name; x.price = ty.p;
+      if (fresh && x.ofn) x.ofn = itemKey(x); // a rename does not throw away the offer that was picked
+      if (isActive(x) && ty.o !== t(oldText)) offerChanges.push([i + 1, ty.o]);
+    });
+    setPkg(cid, pk);
+    for (const [slot, text] of offerChanges) await pickOffer(slot, '__own', text, true, false);
+    await persistItems();
+  }
+  fillForm(); renderProdPickers(); renderEditPanel();
+}
+$('#c_edit_save').addEventListener('click', e => run(e.currentTarget, null, async () => { await saveEdits(); toast('Saved. The campaign now follows these details.', 'ok'); }));
+$('#c_edit_go').addEventListener('click', e => run(e.currentTarget, null, async () => {
+  if (!$$('input[name="gen"]:checked').length) throw new Error('Tick what you want rewritten first.');
+  await saveEdits(); $('#c_gen_go').click();
 }));
 function renderGenResults() {
   const a = (current && current.assets) || {}; const keys = ['script', 'creative_direction', 'flyer_copy', 'landing_page_copy'].filter(k => a[k]); const box = $('#c_gen_results');
