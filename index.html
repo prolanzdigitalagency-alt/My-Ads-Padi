@@ -1128,7 +1128,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v13';
+const BUILD_ID = 'v14';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1221,7 +1221,8 @@ const key = s => 'adspadi.' + s + '.' + clientId();
 const blanksIn = t => Array.from(new Set(String(t || '').match(BLANK_RE) || []));
 // spoken lines (Talking head, Voiceover) stand out in bold on a yellow highlight, so the person reading the script sees at once what is said
 const SPOKEN_RE = /((?:Talking head|Voiceover|Voice over)\s*:[^\n]*?)(?=\s+(?:Visual|On[- ]screen text|Text on screen|End screen|Sound|Music|B-roll|Action)\s*:|\n|$)/gi;
-const markSpoken = t => markBlanks(t).replace(SPOKEN_RE, '<mark class="spoken">$1</mark>');
+const noDots = t => String(t || '').replace(/[ \t]*(?:\.{2,}|\u2026)[ \t]*(?=\n|$)/g, '.').replace(/[ \t]*(?:\.{2,}|\u2026)[ \t]*/g, ', ').replace(/,[ \t]*([?!.,])/g, '$1'); // older scripts may still carry dot marks
+const markSpoken = t => markBlanks(noDots(t)).replace(SPOKEN_RE, '<mark class="spoken">$1</mark>');
 const markBlanks = t => esc(t).replace(/\[[A-Za-z][^\[\]\n]{0,40}\]/g, m => '<mark class="blank">' + m + '</mark>');
 const dateLabel = v => { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
 const timeAgo = v => { const d = Date.parse(v); if (isNaN(d)) return ''; const m = Math.round((Date.now() - d) / 60000); if (m < 2) return 'just now'; if (m < 60) return m + ' minutes ago'; const h = Math.round(m / 60); return h < 24 ? h + (h === 1 ? ' hour ago' : ' hours ago') : dateLabel(v); };
