@@ -690,7 +690,6 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
     <button data-screen="research" title="Campaign Research"><svg class="i"><use href="#i-search"/></svg><span>Campaign Research</span></button>
     <button data-screen="campaign" title="New Campaign"><svg class="i"><use href="#i-rocket"/></svg><span>New Campaign</span></button>
     <button data-screen="brand" title="Brand Assets"><svg class="i"><use href="#i-folder"/></svg><span>Brand Assets</span></button>
-    <button data-screen="sfv" title="Short Form Videos"><svg class="i"><use href="#i-film"/></svg><span>Short Form Videos</span></button>
     <button data-screen="videos" title="AI Videos"><svg class="i"><use href="#i-video"/></svg><span>AI Videos</span></button>
     <button data-screen="graphics" title="AI Graphics"><svg class="i"><use href="#i-image"/></svg><span>AI Graphics</span></button>
     <button data-screen="landing" title="Landing Pages"><svg class="i"><use href="#i-layout"/></svg><span>Landing Pages</span></button>
@@ -840,7 +839,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         <label><input type="checkbox" name="gen" value="landing_page_copy" checked><div>Landing page copy<span>Hero to FAQ</span></div></label>
       </div>
       <p class="muted small hidden" id="c_gen_none" style="margin:10px 0 0">This package has no video scripts, flyers or landing pages to write. Change the package in step 3.</p>
-      <p class="muted small" style="margin:10px 0 0">Short form scripts have their own screen.</p>
+      <p class="muted small" style="margin:10px 0 0">Short form videos now live in Social Media Padi.</p>
       <div class="actions"><button class="btn ghost" data-goto="4">Back</button><button class="btn" id="c_gen_go"><span class="spin"></span>Generate</button></div>
       <div class="working hidden" id="c_gen_working"><div class="bar"><i></i></div><span>Writing and checking your copy. About 3 minutes.</span></div>
       <div class="stack hidden" id="c_gen_results" style="margin-top:20px"></div>
@@ -875,30 +874,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
   <div class="card"><div class="cap"><div><h2>Your assets</h2></div><div class="cats small" id="br_filter"></div></div><div class="gallery" id="br_list"></div><div class="empty" id="br_empty"><b>Nothing in this folder yet</b>Start with the logo and two or three product photos.</div></div>
 </section>
 
-<!-- ================= SHORT FORM VIDEOS ================= -->
-<section id="screen-sfv" class="screen hidden">
-  <div class="head"><div><h1>Short Form Videos</h1><p>Skits, reels and POVs for TikTok, Instagram and Facebook, written for the campaign you pick. Each one is short, simple to shoot with one creator and ends on a payoff.</p></div></div>
-  <div class="card">
-    <div class="row">
-      <div class="field"><label>Campaign</label><select class="pick-campaign" id="sf_campaign"></select></div>
-      <div class="field"><label for="sf_count">How many scripts</label><select id="sf_count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
-    </div>
-    <div class="row3 voicerow" style="margin-top:12px">
-      <div class="field"><label for="sf_len">Video length</label><select id="sf_len"><option value="15">15 seconds</option><option value="30" selected>30 seconds</option><option value="60">60 seconds</option></select></div>
-      <div class="field"><label for="sf_voice">Voice for videos and voiceovers</label><select id="sf_voice" class="voice-pick"></select></div>
-      <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="sf_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
-    </div>
-    <div class="field" style="margin-top:12px"><label>Product photos</label>
-      <div class="tray" id="sf_tray" data-where="Short Form Videos"></div>
-      <div class="hint">Every video you make below shows all the products you add here: up to 4 in a 15 second video, 3 in 30 and 60 second videos. No photo? It uses your first product image in Brand Assets.</div></div>
-    <p class="muted small" style="margin-top:10px">No offer yet? That is fine. Short form scripts can be written from the business details alone.</p>
-    <div class="actions"><button class="btn" id="sf_go"><span class="spin"></span>Write the scripts</button></div>
-    <div class="working hidden" id="sf_working"><div class="bar"><i></i></div><span>Checking what is trending in your niche and writing your scripts. About 2 minutes.</span></div>
-  </div>
-  <div class="note" style="margin-top:18px"><svg class="i"><use href="#i-video"/></svg><div><b>Turn any script into a video or a voiceover.</b> Make the video renders it with the voice above and your product photos, in about 5 to 15 minutes; it appears in AI Videos. Voiceover gives you just the spoken lines as an MP3 for your own shoot.</div></div>
-  <div class="sfvs" id="sf_list" style="margin-top:18px"></div>
-  <div class="empty" id="sf_empty" style="margin-top:18px"><b>No short form scripts yet</b>Pick a campaign and write them.</div>
-</section>
+
 
 <!-- ================= AI VIDEOS ================= -->
 <section id="screen-videos" class="screen hidden">
@@ -927,13 +903,19 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
       <div class="field"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
         <div class="tray" id="vd_tray" data-where="AI Videos"></div>
         <div class="hint">The video is built around these photos. No photo? It uses your first product image in Brand Assets.</div></div>
+      <div class="field"><label>On-camera person <span class="muted small" style="font-weight:600">(optional)</span></label>
+        <label class="small" style="display:flex;gap:8px;align-items:flex-start;font-weight:600"><input type="checkbox" id="vd_person_ok" style="margin-top:3px"> <span>I have this person's permission to use their face and voice in my ads.</span></label>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="vd_person_pick" disabled>Upload a photo or short video</button><span class="muted small" id="vd_person_state"></span></div>
+        <input type="file" id="vd_person_file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" class="hidden">
+        <div id="vd_person_view" class="hidden" style="display:flex;gap:12px;align-items:center;margin-top:10px"></div>
+        <div class="hint">The video is made in a Nigerian setting with this person speaking your script to camera. Use a clear, front-facing photo, or a short video where the face is easy to see. Up to 10 MB.</div></div>
       <div class="row" style="margin-top:14px">
         <div class="field"><label for="vd_len">Video length</label><select id="vd_len"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option></select></div>
         <div class="field"><label for="vd_count">How many videos</label><select id="vd_count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option><option value="4">4 videos</option><option value="5">5 videos</option></select></div>
       </div>
       <div class="row voicerow" style="margin-top:14px">
 
-        <div class="field"><label for="vd_voice">Voiceover</label><select id="vd_voice" class="voice-pick" data-none="1"></select><div class="hint">Reads the script with an ElevenLabs voice. Pick Video voice and the video speaks the lines itself.</div></div>
+        <div class="field"><label for="vd_voice">Voiceover</label><select id="vd_voice" class="voice-pick" data-none="1"></select><div class="hint" id="vd_voice_hint">Reads the script with an ElevenLabs voice. Pick Video voice and the video speaks the lines itself.</div></div>
         <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost" data-play="vd_voice"><svg class="i"><use href="#i-play"/></svg>Play sample</button></div>
       </div>
       <div class="field" style="margin-top:14px"><label>How the photos are used</label>
@@ -1128,7 +1110,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v14';
+const BUILD_ID = 'v15';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1177,8 +1159,9 @@ const API = {
   graphicsDesign: { path: '/ads-padi/graphics/design',   live: true }, // {campaign_id | flyer_copy, brand?, product_photo_urls?[], layout?: single|collection, variant?, variants?, size, contacts?} or {revise_media_id, changes} -> {ok, media_id, file_url, concept}
   landingBuild:   { path: '/ads-padi/landing/build',     live: true }, // {campaign_id | brief, reviews:{text, photos:[url], videos:[url]}, product_photo_urls?[], whatsapp?, page_id? + changes?} -> {ok, page_id, html, blanks}
   landingPublish: { path: '/ads-padi/landing/publish',   live: true }, // {page_id} -> {ok, live_url}; code "blanks" if the page still has [blanks]
-  videoGenerate:  { path: '/ads-padi/video/generate',    live: true }, // {campaign_id | brief, concept, format, product_photo_urls?[], variant?, variants?, voice?{voice_id, owner_id, voice_name}, script_text?} or {revise_media_id, changes} -> {ok, job_id, media_id, status: rendering}
+  videoGenerate:  { path: '/ads-padi/video/generate',    live: true }, // {campaign_id | brief, concept, format, product_photo_urls?[], variant?, variants?, voice?{voice_id, owner_id, voice_name}, script_text?, person_url?} or {revise_media_id, changes} -> {ok, job_id, media_id, status: rendering}
   videoStatus:    { path: '/ads-padi/video/status',      live: true }, // {media_id} -> {ok, status: Rendering|Ready|Failed, file_url}
+  personUpload:   { path: '/ads-padi/person/upload',     live: true }, // {file_name, file_type, file_base64, consent: true} -> {ok, person_id, kind, face_url, thumb_url}. A photo or short video of the on-camera person; face_url goes to videoGenerate as person_url.
   voiceList:      { path: '/ads-padi/voice/list',        live: true }, // {refresh?} -> {ok, voices:[{voice_id, owner_id, name, accent, gender, age, preview_url, source: library|mine}]}
   voiceGenerate:  { path: '/ads-padi/voice/generate',    live: true }, // {text, voice_id, owner_id?, voice_name?, campaign_id?, label?} -> {ok, media_id, file_url, duration, words}
   copyRevise:     { path: '/ads-padi/copy/revise',       live: true }, // {campaign_id, item: script|creative_direction|flyer_copy|landing_page_copy|sfv_scripts, index?, changes} -> {ok, content, part}
@@ -1414,7 +1397,7 @@ function refreshAll() {
   $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = (session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '') + ' . build ' + BUILD_ID;
   $$('.admin-only').forEach(el => el.classList.toggle('hidden', !session.is_admin));
   const ae = document.activeElement; const typing = ae && ae.closest && ae.closest('#cmp_flow') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
-  renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSfv(); renderSpyBar(); renderProdPickers(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
+  renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSpyBar(); renderProdPickers(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
   if (!$('#cs_detail').classList.contains('hidden') && (viewing || current) && !detailDirty) showDetail(false);
 }
 
@@ -1537,10 +1520,10 @@ function showDetail(scroll) {
     + block('Creative direction', txt(a.creative_direction) + (a.creative_direction ? changeBox('cs:' + c.campaign_id + ':creative_direction') : ''), !!a.creative_direction, a.creative_direction ? changeBtn('cs:' + c.campaign_id + ':creative_direction') : '')
     + block('Flyer copy', txt(a.flyer_copy) + (a.flyer_copy ? changeBox('cs:' + c.campaign_id + ':flyer_copy') : ''), !!a.flyer_copy, a.flyer_copy ? changeBtn('cs:' + c.campaign_id + ':flyer_copy') : '')
     + block('Landing page copy', txt(a.landing_page_copy) + (a.landing_page_copy ? changeBox('cs:' + c.campaign_id + ':landing_page_copy') : ''), !!a.landing_page_copy, a.landing_page_copy ? changeBtn('cs:' + c.campaign_id + ':landing_page_copy') : '')
-    + block('Short form scripts', txt(a.sfv_scripts) + (a.sfv_scripts ? '<span class="muted small" style="display:block;margin-top:8px">To change one script, open Short Form Videos and press Change on it.</span>' : ''), !!a.sfv_scripts)
+    + block('Short form scripts', txt(a.sfv_scripts) + (a.sfv_scripts ? '<span class="muted small" style="display:block;margin-top:8px">Short form scripts are now written in Social Media Padi. These were saved before the move.</span>' : ''), !!a.sfv_scripts)
     + block('Flyers', graphics.length ? `<div class="thumbs">${graphics.map(m => `<a href="${esc(m.file_url)}" target="_blank" rel="noopener" title="${esc(m.concept)}"><img src="${esc(m.file_url)}" alt="${esc(m.concept || 'Flyer')}" loading="lazy"></a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Graphics.</span>')
     + block('Landing pages', (c.pages || []).length ? `<div class="pagelist">${c.pages.map(p => `<div class="pg"><span>${p.live_url ? `<a href="${esc(p.live_url)}" target="_blank" rel="noopener">${esc(p.live_url.replace(/^https?:\/\//, ''))}</a>` : 'Draft page'}${p.status === 'Draft' && p.live_url ? ' <span class="tag amber">Changes not published</span>' : ''}</span><span class="muted small">${esc(timeAgo(p.updated_at))}</span></div>`).join('')}</div>` : '<span class="muted small">Not built yet.</span>')
-    + block('Videos', vids.length ? `<div class="media">${vids.map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><svg class="i" style="width:14px;height:14px"><use href="#i-video"/></svg>${esc(m.label)}</a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Videos or Short Form Videos.</span>')
+    + block('Videos', vids.length ? `<div class="media">${vids.map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><svg class="i" style="width:14px;height:14px"><use href="#i-video"/></svg>${esc(m.label)}</a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Videos.</span>')
     + (vos.length ? block('Voiceovers', vos.map(m => `<div class="small" style="font-weight:700;margin-top:6px">${esc(m.concept || 'Voiceover')}</div><audio controls preload="none" src="${esc(m.file_url)}"></audio>`).join('')) : '')
     + block('Competitor ads picked to model', c.spy_picks ? `<pre>${esc(c.spy_picks)}</pre>` : '<span class="muted small">None. Pick some in Spy on Competitors.</span>', false, c.spy_picks ? '<button class="btn ghost sm" id="sp_clear_campaign"><span class="spin"></span>Clear</button>' : '')
     + block('What is winning in the niche', rs ? `<pre>${esc([rs.competitors ? 'COMPETITORS\n' + rs.competitors : '', rs.audience ? 'AUDIENCE\n' + rs.audience : '', rs.offers ? 'OFFERS WORKING\n' + rs.offers : ''].filter(Boolean).join('\n\n'))}</pre>` : '<span class="muted small">Pulled from the ad library when you generate the copy.</span>')
@@ -1581,7 +1564,7 @@ function fillForm() {
 }
 
 /* ---------- navigation ---------- */
-const SCREENS = ['spy', 'research', 'campaign', 'brand', 'sfv', 'videos', 'graphics', 'landing', 'voice', 'admin'];
+const SCREENS = ['spy', 'research', 'campaign', 'brand', 'videos', 'graphics', 'landing', 'voice', 'admin'];
 function showScreen(name) {
   if (name === 'admin' && !(session && session.is_admin)) name = 'campaign';
   $$('.screen').forEach(s => s.classList.toggle('hidden', s.id !== 'screen-' + name));
@@ -1590,7 +1573,7 @@ function showScreen(name) {
   if (name === 'research') { if (!campaigns.length) $('#cs_loading').classList.remove('hidden'); syncQuietly(); }
   if (name === 'brand') loadBrand();
   if (name === 'landing') ensurePageHtml();
-  if (name === 'videos' || name === 'sfv' || name === 'voice') loadVoices();
+  if (name === 'videos' || name === 'voice') loadVoices();
   if (name === 'voice') { renderVoiceSource(mode.vo === 'campaign' && !$('#vo_text').value.trim()); renderVoiceList(); }
   if (name === 'admin') { loadUsers(); startNumbers(); } else stopNumbers();
 }
@@ -1926,7 +1909,7 @@ const prodSlot = k => { const sel = $('#' + k + '_prod'); const wrap = $('#' + k
 // several scripts, flyers or pages live in one text, each under a "==== SCRIPT 2 of 5 | Product ====" line
 const splitPieces = t => { const s = String(t || ''); if (!/^==== .+ ====$/m.test(s)) return s.trim() ? [{ title: '', text: s.trim() }] : []; const out = []; let cur = null; s.split('\n').forEach(l => { const m = l.match(/^==== (.+) ====$/); if (m) { cur = { title: m[1], text: '' }; out.push(cur); } else if (cur) cur.text += l + '\n'; }); return out.map(x => ({ title: x.title, text: x.text.trim() })); };
 
-/* ---------- copy generation (also used by Short Form Videos) ---------- */
+/* ---------- copy generation ---------- */
 async function generateCopy(items, extra, workingId) {
   const cid = current.campaign_id; const before = {}; items.forEach(k => { before[k] = ((current.assets || {})[k]) || ''; });
   try {
@@ -2177,7 +2160,7 @@ async function buildClientDoc(c, opts) {
     if (b.t === 'h') { add(P(b.text, { bold: true, size: 24, color: C.ink, before: 160, after: 80, keepNext: true })); return; }
     if (b.t === 'title') { add(new Paragraph({ children: runs(b.text, { bold: true, size: 28, color: C.ink }), spacing: { before: 280, after: 120 }, keepNext: true, border: { left: { style: BorderStyle.SINGLE, size: 24, color: C.red, space: 8 } } })); return; }
     if (b.t === 'p') { add(P(b.text)); return; }
-    if (b.t === 'li') { const t = pdfText(b.text); if (!t) return; add(new Paragraph({ children: [new TextRun({ text: b.n ? b.n + '.  ' : '•  ', font: FONT, size: 21, bold: true, color: C.red })].concat(runs(t)), spacing: { after: 80, line: 300 }, indent: { left: 360, hanging: 360 } })); return; }
+    if (b.t === 'li') { const t = pdfText(b.text); if (!t) return; add(b.n ? new Paragraph({ children: [new TextRun({ text: b.n + '.  ', font: FONT, size: 21, bold: true, color: C.red })].concat(runs(t)), spacing: { after: 80, line: 300 }, indent: { left: 360, hanging: 360 } }) : new Paragraph({ children: runs(t), spacing: { after: 120, line: 300 } })); return; }
     if (b.t === 'lab') { labRow(b); return; }
     if (b.t === 'scene') { add(P('Scene ' + b.n, { bold: true, size: 19, color: C.deep, before: 120, after: 60, keepNext: true })); b.rows.forEach(r => labRow(r)); gap(); return; }
     if (b.t === 'qa' || b.t === 'q') { add(P(b.t === 'qa' ? b.q : b.text, { bold: true, color: C.ink, after: 40, keepNext: true })); if (b.t === 'qa') add(P(b.a, { after: 160 })); return; }
@@ -2372,26 +2355,7 @@ $('#sp_use').addEventListener('click', e => run(e.currentTarget, null, async () 
   toast((r.picks_saved || ads.length) + ' competitor ads saved to ' + (c ? label(c) : 'the campaign') + '. Generate the copy and it models them.', 'ok');
 }));
 
-/* ---------- short form videos ---------- */
-function renderSfv() {
-  const keep = chgFocusSave();
-  const t = current && current.assets && current.assets.sfv_scripts;
-  const parts = t ? t.split(/\n-{5,}\n/).map(s => s.trim()).filter(Boolean) : [];
-  $('#sf_empty').classList.toggle('hidden', !!parts.length);
-  const titleOf = p => p.split('\n')[0].replace(/^SCRIPT \d+:\s*/i, '');
-  $('#sf_list').innerHTML = parts.map((p, i) => { const lines = p.split('\n'); return `<div class="sfv"><div class="top"><h3>${esc(titleOf(p))}</h3><button class="btn ghost sm" data-sfcopy="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></div><pre>${markBlanks(lines.slice(1).join('\n').trim())}</pre><div class="acts"><button class="btn soft sm" data-sfvideo="${i}"><span class="spin"></span>Make the video</button><button class="btn ghost sm" data-sfvoice="${i}"><svg class="i" style="width:15px;height:15px"><use href="#i-mic"/></svg>Voiceover</button>${changeBtn('sfv:' + current.campaign_id + ':' + i)}</div>${changeBox('sfv:' + current.campaign_id + ':' + i, 'Only this script is rewritten. The others stay as they are.')}</div>`; }).join('');
-  $$('#sf_list [data-sfcopy]').forEach(b => b.addEventListener('click', () => copyText(parts[Number(b.dataset.sfcopy)])));
-  $$('#sf_list [data-sfvideo]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
-    const p = parts[Number(b.dataset.sfvideo)];
-    if (blanksIn(p).length) throw new Error('Fill the blanks in this script first: ' + blanksIn(p).join(', ') + '.');
-    const secs = Number($('#sf_len').value) || 30;
-    const urls = await trayUrls(trays.sf_tray);
-    await startVideo({ campaign_id: current.campaign_id, concept: 'Short form', format: '9:16', seconds: secs, script_text: p, product_photo_urls: urls.slice(0, 4), voice: selectedVoice('sf_voice') }, 'Short form ' + secs + 's: ' + titleOf(p) + (urls.length > 1 ? ' (' + Math.min(4, urls.length) + ' products)' : ''));
-  })));
-  $$('#sf_list [data-sfvoice]').forEach(b => b.addEventListener('click', () => { const i = Number(b.dataset.sfvoice); openVoiceover(parts[i], 'Short form: ' + titleOf(parts[i])); }));
-  chgFocusRestore(keep);
-}
-// Change one short form script, or one piece of campaign copy. The same saved copy is updated, so every screen shows the new version.
+// Change one piece of campaign copy. The same saved copy is updated, so every screen shows the new version.
 async function reviseCopy(cid, item, index, text) {
   const body = { campaign_id: cid, item, changes: text }; if (index >= 0) body.index = index;
   const r = await runJob('copyRevise', body, { max: 300000 });
@@ -2400,15 +2364,8 @@ async function reviseCopy(cid, item, index, text) {
   syncQuietly();
   return r;
 }
-CHANGE_ACTIONS.sfv = async (rest, text) => { const [cid, i] = rest.split(':'); await reviseCopy(cid, 'sfv_scripts', Number(i), text); return 'Script changed'; };
 CHANGE_ACTIONS.copy = async (rest, text) => { const [cid, item] = rest.split(':'); await reviseCopy(cid, item, -1, text); fillForm(); renderSources(); return (ASSET_NAMES[item] || 'Copy') + ' changed'; };
 CHANGE_ACTIONS.cs = CHANGE_ACTIONS.copy;
-$('#sf_go').addEventListener('click', e => run(e.currentTarget, 'sf_working', async () => {
-  if (!current) { toast('Pick or start a campaign first.', 'err'); return; }
-  const r = await generateCopy(['sfv_scripts'], { sfv_count: Number($('#sf_count').value) || 3 }, 'sf_working');
-  renderSfv();
-  if (r.failed && r.failed.length) toast('The scripts did not come through. Please try again.', 'err'); else toast('Your short form scripts are ready', 'ok');
-}));
 
 /* ---------- source: campaign or written here ---------- */
 $$('.srcpanel').forEach(p => { const k = p.dataset.src; p.querySelectorAll('.srctabs button').forEach(b => b.addEventListener('click', () => { mode.touched = true; setMode(k, b.dataset.mode); })); });
@@ -2565,18 +2522,18 @@ async function trayUrls(t, say) {
   return t.items.map(i => i.url).filter(Boolean);
 }
 document.addEventListener('paste', e => {
-  const scr = ['graphics', 'videos', 'landing', 'sfv'].find(n => { const el = $('#screen-' + n); return el && !el.classList.contains('hidden') && el.offsetParent !== null; });
+  const scr = ['graphics', 'videos', 'landing'].find(n => { const el = $('#screen-' + n); return el && !el.classList.contains('hidden') && el.offsetParent !== null; });
   if (!scr) return;
   const tg = e.target; if (tg && (tg.tagName === 'TEXTAREA' || (tg.tagName === 'INPUT' && tg.type !== 'file'))) return;
   const files = Array.from((e.clipboardData && e.clipboardData.items) || []).filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile()).filter(Boolean);
   if (!files.length) return; e.preventDefault();
-  trayAddFiles(trays[{ graphics: 'gr_tray', videos: 'vd_tray', landing: 'lp_tray', sfv: 'sf_tray' }[scr]], files);
+  trayAddFiles(trays[{ graphics: 'gr_tray', videos: 'vd_tray', landing: 'lp_tray' }[scr]], files);
 });
 function segValue(id) { const b = $('#' + id + ' [aria-pressed="true"]'); return b ? b.dataset.layout : 'single'; }
 $$('.seg').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button[data-layout]'); if (!b || b.disabled) return; seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); seg.dispatchEvent(new CustomEvent('segchange')); }));
 
 /* ---------- change one thing: one small box per flyer, video, script or piece of copy ---------- */
-const CHANGE_HINTS = { gfx: 'Make the headline bigger. Use our red. Put the price on a sticker.', vid: 'Start on the product. Make it brighter. A woman speaks instead of a man.', sfv: 'Make the hook about school resumption. Shorter, under 20 seconds.', copy: 'Mention free delivery in Lagos. Make the hook shorter.', cs: 'Mention free delivery in Lagos. Make the hook shorter.' };
+const CHANGE_HINTS = { gfx: 'Make the headline bigger. Use our red. Put the price on a sticker.', vid: 'Start on the product. Make it brighter. A woman speaks instead of a man.', copy: 'Mention free delivery in Lagos. Make the hook shorter.', cs: 'Mention free delivery in Lagos. Make the hook shorter.' };
 function changeBtn(key) { return `<button type="button" class="btn ghost sm" data-chg-open="${esc(key)}" ${chg.busy.has(key) ? 'disabled' : ''}>${chg.busy.has(key) ? 'Changing...' : 'Change'}</button>`; }
 function changeBox(key, note) {
   if (!chg.open.has(key) && !chg.busy.has(key)) return '';
@@ -2585,7 +2542,7 @@ function changeBox(key, note) {
 }
 function chgFocusSave() { const a = document.activeElement; const box = a && a.closest && a.closest('[data-chg]'); return box && a.tagName === 'TEXTAREA' ? { key: box.dataset.chg, s: a.selectionStart, e: a.selectionEnd } : null; }
 function chgFocusRestore(f) { if (!f) return; const box = Array.from(document.querySelectorAll('[data-chg]')).find(b => b.dataset.chg === f.key && b.offsetParent !== null); const ta = box && box.querySelector('textarea'); if (ta && !ta.disabled) { ta.focus(); try { ta.setSelectionRange(f.s, f.e); } catch (e) {} } }
-function chgRefresh(key) { const f = chgFocusSave(); const k = key.split(':')[0]; if (k === 'gfx' || k === 'vid') renderMedia(); else if (k === 'sfv') renderSfv(); else if (k === 'copy') renderGenResults(); else if (k === 'cs') { detailDirty = false; showDetail(false); } chgFocusRestore(f); }
+function chgRefresh(key) { const f = chgFocusSave(); const k = key.split(':')[0]; if (k === 'gfx' || k === 'vid') renderMedia(); else if (k === 'copy') renderGenResults(); else if (k === 'cs') { detailDirty = false; showDetail(false); } chgFocusRestore(f); }
 document.addEventListener('input', e => { const box = e.target.closest && e.target.closest('[data-chg]'); if (box && e.target.tagName === 'TEXTAREA') { chg.text[box.dataset.chg] = e.target.value; if (box.dataset.chg.startsWith('cs:')) detailDirty = true; } });
 document.addEventListener('click', async e => {
   const o = e.target.closest && e.target.closest('[data-chg-open]');
@@ -2705,6 +2662,36 @@ $('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="con
 let vdLayoutTouched = false; // once the user picks a layout we keep it; until then 2 or more photos means all products in one video
 // "All products in one video" uses the photos added above; with fewer than 2 there, it fills up from the product photos in Brand Assets
 function vdBrandExtra() { const t = trays.vd_tray; const used = new Set(t ? t.items.map(i => i.url).filter(Boolean) : []); return productImages().map(f => f.file_url).filter(u => !used.has(u)); }
+
+/* on-camera person: the owner uploads a photo or short video of a real person (with their permission); the video is made with that person speaking the lines */
+let vdPerson = null; // { url, thumb, name, kind }
+function vdPersonRender() {
+  const box = $('#vd_person_view'); if (!box) return;
+  const voice = $('#vd_voice'), play = $('[data-play="vd_voice"]');
+  if (vdPerson) {
+    box.innerHTML = `<img src="${esc(vdPerson.thumb)}" alt="" width="64" height="64" style="border-radius:10px;object-fit:cover"><div><b>${esc(vdPerson.name)}</b><div class="muted small">${vdPerson.kind === 'video' ? 'A clear frame was taken from your video.' : 'Your photo is ready.'} This person will speak the script to camera.</div></div><button type="button" class="btn ghost sm" id="vd_person_rm">Remove</button>`;
+    box.classList.remove('hidden');
+  } else { box.innerHTML = ''; box.classList.add('hidden'); }
+  if (voice) { if (vdPerson) { voice.dataset.prev = voice.value; voice.value = ''; } else if (voice.dataset.prev !== undefined) { if (Array.from(voice.options).some(o => o.value === voice.dataset.prev)) voice.value = voice.dataset.prev; delete voice.dataset.prev; } voice.disabled = !!vdPerson; }
+  if (play) play.disabled = !!vdPerson;
+  const h = $('#vd_voice_hint'); if (h) h.textContent = vdPerson ? 'With an on-camera person the video speaks the lines itself, in its own voice, so the lips match.' : 'Reads the script with an ElevenLabs voice. Pick Video voice and the video speaks the lines itself.';
+  vdPlan();
+}
+$('#vd_person_file').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (!$('#vd_person_ok').checked) { toast('Tick the permission box first, then choose the file.', 'err'); return; }
+  if (f.size > 10 * 1024 * 1024) { toast('This file is bigger than 10 MB. Use a shorter video or a smaller photo.', 'err'); return; }
+  const st = $('#vd_person_state'); st.textContent = 'Uploading.'; $('#vd_person_pick').disabled = true;
+  try {
+    const r = await call('personUpload', { file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), consent: true });
+    vdPerson = { url: r.face_url, thumb: r.thumb_url || r.face_url, name: f.name.slice(0, 40), kind: r.kind };
+    st.textContent = ''; vdPersonRender();
+  } catch (er) { st.textContent = ''; if (!er.auth) toast(er.message, 'err'); else throw er; }
+  finally { $('#vd_person_pick').disabled = !$('#vd_person_ok').checked; }
+});
+$('#vd_person_ok').addEventListener('change', () => { $('#vd_person_pick').disabled = !$('#vd_person_ok').checked; });
+$('#vd_person_pick').addEventListener('click', () => $('#vd_person_file').click());
+$('#vd_person_view').addEventListener('click', e => { if (e.target.closest('#vd_person_rm')) { vdPerson = null; vdPersonRender(); } });
 function vdPlan() {
   const n = Number($('#vd_count').value) || 1; const t = trays.vd_tray; const p = t ? t.items.length : 0;
   const pool = p >= 2 ? p : p + vdBrandExtra().length;
@@ -2712,7 +2699,7 @@ function vdPlan() {
   if (p >= 2 && !vdLayoutTouched) $$('#vd_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'together'));
   if (pool < 2 && segValue('vd_layout') === 'together') $$('#vd_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'single'));
   const layout = segValue('vd_layout'); const vv = n === 1 ? '1 video' : n + ' videos'; let txt;
-  const maxP = Number($('#vd_len').value) > 15 ? 3 : 4; // longer videos also carry a photo of the person on camera
+  const maxP = (Number($('#vd_len').value) > 15 || vdPerson) ? 3 : 4; // longer videos, and videos with an uploaded person, carry one photo of the person on camera
   const many = n > 1 ? ', each opening a different way.' : '.';
   if (layout === 'together' && p >= 2) txt = vv + ', each showing ' + (p > maxP ? 'the first ' + maxP + ' of your ' + p : p === 2 ? 'both' : 'all ' + p) + ' products' + many;
   else if (layout === 'together') txt = vv + ', each showing ' + Math.min(pool, maxP) + ' products: ' + (p ? 'your photo and ' : '') + 'your product photos in Brand Assets' + many;
@@ -2723,11 +2710,10 @@ function vdPlan() {
   $$('#vd_concepts [data-concept] [data-label]').forEach(s => { s.textContent = n === 1 ? 'Generate video' : 'Generate ' + n + ' videos'; });
 }
 makeTray('vd_tray').root.addEventListener('traychange', vdPlan);
-makeTray('sf_tray');
 $('#vd_count').addEventListener('change', vdPlan); $('#vd_len').addEventListener('change', vdPlan); $('#vd_layout').addEventListener('segchange', () => { vdLayoutTouched = true; vdPlan(); }); vdPlan();
 $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () => run(b, 'vd_working', async () => {
   let base, fmt;
-  const voice = selectedVoice('vd_voice'); const n = Number($('#vd_count').value) || 1; const layout = segValue('vd_layout'); const secs = Number($('#vd_len').value) || 60;
+  const voice = vdPerson ? null : selectedVoice('vd_voice'); const n = Number($('#vd_count').value) || 1; const layout = segValue('vd_layout'); const secs = Number($('#vd_len').value) || 60;
   if (useCampaign('vd')) {
     if (!(current.assets && current.assets.script) && !current.chosen_offer) { toast('This campaign has no script or offer yet. Generate it in New Campaign, or describe the video here.', 'err'); return; }
     if (current.assets && blanksIn(current.assets.script).length) { toast('The script still has blanks: ' + blanksIn(current.assets.script).join(', ') + '. Pick an offer with the details filled in and generate the copy again.', 'err'); return; }
@@ -2742,12 +2728,13 @@ $$('#vd_concepts [data-concept]').forEach(b => b.addEventListener('click', () =>
   if (layout === 'together' && urls.length < 2) urls = urls.concat(productImages().map(f => f.file_url).filter(u => !urls.includes(u)));
   if (layout === 'together' && urls.length < 2) throw new Error('All products in one video needs 2 product photos or more. Add another photo, or pick One product per video.');
   say(n === 1 ? 'Starting your video.' : 'Starting your ' + n + ' videos.');
-  const lbl = b.dataset.concept + ' ' + secs + 's ' + fmt + (voice ? '' : ', video voice');
+  const lbl = b.dataset.concept + ' ' + secs + 's ' + fmt + (vdPerson ? ', with your person' : voice ? '' : ', video voice');
   let started = 0, firstErr = null;
   for (let i = 0; i < n; i++) {
     const body = Object.assign({}, base, { variant: i + 1, variants: n });
+    if (vdPerson) body.person_url = vdPerson.url;
     if (base.campaign_id && prodSlot('vd')) body.product_slot = prodSlot('vd');
-    if (layout === 'together') body.product_photo_urls = urls.slice(0, 4); else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
+    if (layout === 'together') body.product_photo_urls = urls.slice(0, vdPerson ? 3 : 4); else if (urls.length) body.product_photo_urls = [urls[i % urls.length]];
     try { await startVideo(body, lbl + (n > 1 ? ' (' + (i + 1) + ' of ' + n + ')' : ''), true); started++; }
     catch (e) { if (e.auth) throw e; firstErr = firstErr || e; }
   }
@@ -2871,8 +2858,6 @@ function scriptBody(t) { // the SCRIPT block of an ads script, without the hook 
 function voiceParts() {
   const a = (current && current.assets) || {}; const parts = [];
   if (a.script) parts.push({ id: 'script', label: 'Ads script', text: spokenLines(scriptBody(a.script)) });
-  const sf = a.sfv_scripts ? a.sfv_scripts.split(/\n-{5,}\n/).map(s => s.trim()).filter(Boolean) : [];
-  sf.forEach((p, i) => parts.push({ id: 'sfv' + i, label: 'Short form ' + (i + 1) + ': ' + p.split('\n')[0].replace(/^SCRIPT \d+:\s*/i, '').slice(0, 60), text: spokenLines(p) }));
   return parts;
 }
 let voDraft = { label: '' };
