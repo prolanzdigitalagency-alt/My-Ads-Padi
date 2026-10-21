@@ -904,11 +904,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         <div class="tray" id="vd_tray" data-where="AI Videos"></div>
         <div class="hint">The video is built around these photos. No photo? It uses your first product image in Brand Assets.</div></div>
       <div class="field"><label>On-camera person <span class="muted small" style="font-weight:600">(optional)</span></label>
-        <label class="small" style="display:flex;gap:8px;align-items:flex-start;font-weight:600"><input type="checkbox" id="vd_person_ok" style="margin-top:3px"> <span>I have this person's permission to use their face and voice in my ads.</span></label>
-        <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="vd_person_pick" disabled>Upload a photo or short video</button><span class="muted small" id="vd_person_state"></span></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="vd_person_pick">Upload a photo or short video</button><span class="muted small" id="vd_person_state"></span></div>
         <input type="file" id="vd_person_file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" class="hidden">
         <div id="vd_person_view" class="hidden" style="display:flex;gap:12px;align-items:center;margin-top:10px"></div>
-        <div class="hint">The video is made in a Nigerian setting with this person speaking your script to camera. Use a clear, front-facing photo, or a short video where the face is easy to see. Up to 10 MB.</div></div>
+        <div class="hint">The video is made in a Nigerian setting with this person speaking your script to camera. Use a clear, front-facing photo, or a short video where the face is easy to see. Up to 10 MB. Only use a person who has agreed to appear in your ads.</div></div>
       <div class="row" style="margin-top:14px">
         <div class="field"><label for="vd_len">Video length</label><select id="vd_len"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60" selected>60 seconds</option></select></div>
         <div class="field"><label for="vd_count">How many videos</label><select id="vd_count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option><option value="4">4 videos</option><option value="5">5 videos</option></select></div>
@@ -2679,7 +2678,6 @@ function vdPersonRender() {
 }
 $('#vd_person_file').addEventListener('change', async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
-  if (!$('#vd_person_ok').checked) { toast('Tick the permission box first, then choose the file.', 'err'); return; }
   if (f.size > 10 * 1024 * 1024) { toast('This file is bigger than 10 MB. Use a shorter video or a smaller photo.', 'err'); return; }
   const st = $('#vd_person_state'); st.textContent = 'Uploading.'; $('#vd_person_pick').disabled = true;
   try {
@@ -2687,9 +2685,8 @@ $('#vd_person_file').addEventListener('change', async e => {
     vdPerson = { url: r.face_url, thumb: r.thumb_url || r.face_url, name: f.name.slice(0, 40), kind: r.kind };
     st.textContent = ''; vdPersonRender();
   } catch (er) { st.textContent = ''; if (!er.auth) toast(er.message, 'err'); else throw er; }
-  finally { $('#vd_person_pick').disabled = !$('#vd_person_ok').checked; }
+  finally { $('#vd_person_pick').disabled = false; }
 });
-$('#vd_person_ok').addEventListener('change', () => { $('#vd_person_pick').disabled = !$('#vd_person_ok').checked; });
 $('#vd_person_pick').addEventListener('click', () => $('#vd_person_file').click());
 $('#vd_person_view').addEventListener('click', e => { if (e.target.closest('#vd_person_rm')) { vdPerson = null; vdPersonRender(); } });
 function vdPlan() {
