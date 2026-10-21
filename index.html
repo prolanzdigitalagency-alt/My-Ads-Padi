@@ -629,6 +629,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
 .concept.picked{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
 .concept .ptag{display:inline-block;margin-bottom:6px}
 
+/* AI Graphics: the inspiration flyer */
+.inspo{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.inspo .ipv{position:relative;width:84px;height:105px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#f6f6f6}
+.inspo .ipv img{width:100%;height:100%;object-fit:cover;display:block}
+.inspo .ipv button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-weight:700;font-size:14px;line-height:24px;padding:0}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -950,7 +956,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
 
 <!-- ================= AI GRAPHICS ================= -->
 <section id="screen-graphics" class="screen hidden">
-  <div class="head"><div><h1>AI Graphics</h1><p>Generate flyers from the copy in a campaign you have written, or type the flyer copy here. Add up to 5 product photos, pick how many flyers you want, and change any one of them after.</p></div></div>
+  <div class="head"><div><h1>AI Graphics</h1><p>Make flyers or a carousel from the copy in a campaign you have written, or type the copy here. Add product photos and a flyer you like, and change any one design after.</p></div></div>
   <div id="gr_body">
     <div class="card srcpanel" data-src="gr">
       <div class="srctabs"><button aria-pressed="true" data-mode="campaign">Use a campaign</button><button aria-pressed="false" data-mode="own">Write it here</button></div>
@@ -964,18 +970,27 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         <div class="field"><label for="gr_o_brand">Brand name</label><input id="gr_o_brand" placeholder="Skin by Ferry"></div>
       </div>
       <div class="field prodpick hidden" id="gr_prod_wrap"><label for="gr_prod">Which product is this flyer for?</label><select id="gr_prod"></select><div class="hint">This campaign has more than one product. Pick one, or keep all of them together.</div></div>
+      <div class="field" style="margin-top:18px"><label>What to make</label>
+        <div class="seg" id="gr_kind">
+          <button type="button" data-layout="flyers" aria-pressed="true"><b>Flyers</b><span>One to five single flyers, each in its own design.</span></button>
+          <button type="button" data-layout="carousel" aria-pressed="false"><b>Carousel</b><span>3 to 5 slides that are swiped in order. The AI writes each slide from the campaign.</span></button>
+        </div></div>
       <div class="field" style="margin-top:18px"><label>Product photos <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
         <div class="tray" id="gr_tray" data-where="AI Graphics"></div>
         <div class="hint">No photo? The design agent uses your first product image in Brand Assets, or makes a product photo with AI.</div></div>
       <div class="row" style="margin-top:14px">
-        <div class="field"><label for="gr_count">How many flyers</label><select id="gr_count"><option value="1">1 flyer</option><option value="2">2 flyers</option><option value="3">3 flyers</option><option value="4">4 flyers</option><option value="5">5 flyers</option></select></div>
+        <div class="field hidden" id="gr_slides_wrap"><label for="gr_slides">How many slides</label><select id="gr_slides"><option value="3">3 slides</option><option value="4">4 slides</option><option value="5" selected>5 slides</option></select></div>
+        <div class="field" id="gr_count_wrap"><label for="gr_count">How many flyers</label><select id="gr_count"><option value="1">1 flyer</option><option value="2">2 flyers</option><option value="3">3 flyers</option><option value="4">4 flyers</option><option value="5">5 flyers</option></select></div>
         <div class="field"><label for="gr_size">Size</label><select id="gr_size"><option value="portrait">Portrait 4:5, feed and status</option><option value="square">Square 1:1, feed and WhatsApp</option></select></div>
       </div>
-      <div class="field" style="margin-top:14px"><label>How the photos are used</label>
+      <div class="field" style="margin-top:14px" id="gr_layout_wrap"><label>How the photos are used</label>
         <div class="seg" id="gr_layout">
           <button type="button" data-layout="single" aria-pressed="true"><b>One product per flyer</b><span>Each flyer shows one photo. With several flyers, the photos take turns.</span></button>
           <button type="button" data-layout="collection" aria-pressed="false"><b>All products in one flyer</b><span>A collection flyer with 2 to 4 photos in a grid. Needs 2 photos or more.</span></button>
         </div></div>
+      <div class="field" style="margin-top:14px"><label>A flyer you like <span class="muted small" style="font-weight:600">(optional)</span></label>
+        <div class="inspo"><input type="file" id="gr_inspo" accept="image/jpeg,image/png,image/webp" hidden><div id="gr_inspo_pv"></div><button type="button" class="btn ghost sm" id="gr_inspo_pick">Add a flyer you like</button></div>
+        <div class="hint">The new design copies its layout and look. Its words, brand, product, people and prices are never used. It is not saved to Brand Assets.</div></div>
       <div class="note" id="gr_plan" style="margin-top:14px"><svg class="i"><use href="#i-image"/></svg><div></div></div>
       <div class="field" style="margin-top:12px"><label for="gr_contacts">Contact line on the flyer (optional)</label><input id="gr_contacts" placeholder="WhatsApp 0801 234 5678, @yourhandle, Lekki Phase 1"></div>
       <div class="actions"><button class="btn" id="gr_go"><span class="spin"></span><span data-label>Generate flyer</span></button></div>
@@ -1125,7 +1140,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
    carries the login token; the backend works out the
    account from it, so nobody can read another account's work.
 ================================================================== */
-const BUILD_ID = 'v16';
+const BUILD_ID = 'v17';
 /* Every browser runs the file it opened. This checks the published file now and then: when a newer build is up, everyone is told and reloaded, so nobody keeps working on an old copy. */
 let updShown = false;
 async function checkBuild() {
@@ -1171,6 +1186,8 @@ const API = {
   brandUpload:    { path: '/ads-padi/brand/upload',      live: true }, // {category, notes?, file_name, file_type, file_base64, content_hash? | link} -> {ok, file_id, file_url, extracted_notes}. The same content_hash updates the same item.
   brandList:      { path: '/ads-padi/brand/list',        live: true }, // {} -> {ok, files:[...], intelligence, updating}
   brandDelete:    { path: '/ads-padi/brand/delete',      live: true }, // {file_id} -> {ok}
+  graphicsInspo:  { path: '/ads-padi/graphics/inspo',    live: true }, // {file_name, file_type, file_base64} -> {ok, inspo_url}. A flyer the user likes; only its layout and look are used. Not saved to Brand Assets.
+  carouselPlan:   { path: '/ads-padi/graphics/carousel-plan', live: true }, // {campaign_id | flyer_copy + brand, slides: 3|4|5, product_slot?} -> {ok, carousel_id, slides:[{no, role, copy}]}
   graphicsDesign: { path: '/ads-padi/graphics/design',   live: true }, // {campaign_id | flyer_copy, brand?, product_photo_urls?[], layout?: single|collection, variant?, variants?, size, contacts?} or {revise_media_id, changes} -> {ok, media_id, file_url, concept}
   landingBuild:   { path: '/ads-padi/landing/build',     live: true }, // {campaign_id | brief, reviews:{text, photos:[url], videos:[url]}, product_photo_urls?[], whatsapp?, page_id? + changes?} -> {ok, page_id, html, blanks}
   landingPublish: { path: '/ads-padi/landing/publish',   live: true }, // {page_id} -> {ok, live_url}; code "blanks" if the page still has [blanks]
@@ -1537,7 +1554,7 @@ function showDetail(scroll) {
     + block('Flyer copy', txt(a.flyer_copy) + (a.flyer_copy ? changeBox('cs:' + c.campaign_id + ':flyer_copy') : ''), !!a.flyer_copy, a.flyer_copy ? changeBtn('cs:' + c.campaign_id + ':flyer_copy') : '')
     + block('Landing page copy', txt(a.landing_page_copy) + (a.landing_page_copy ? changeBox('cs:' + c.campaign_id + ':landing_page_copy') : ''), !!a.landing_page_copy, a.landing_page_copy ? changeBtn('cs:' + c.campaign_id + ':landing_page_copy') : '')
     + block('Short form scripts', txt(a.sfv_scripts) + (a.sfv_scripts ? '<span class="muted small" style="display:block;margin-top:8px">Short form scripts are now written in Social Media Padi. These were saved before the move.</span>' : ''), !!a.sfv_scripts)
-    + block('Flyers', graphics.length ? `<div class="thumbs">${graphics.map(m => `<a href="${esc(m.file_url)}" target="_blank" rel="noopener" title="${esc(m.concept)}"><img src="${esc(m.file_url)}" alt="${esc(m.concept || 'Flyer')}" loading="lazy"></a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Graphics.</span>')
+    + block('Flyers', graphics.length ? `<div class="thumbs">${graphics.map(m => `<a href="${esc(m.file_url)}" target="_blank" rel="noopener" title="${esc(gfxLabel(m.concept))}"><img src="${esc(m.file_url)}" alt="${esc(gfxLabel(m.concept))}" loading="lazy"></a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Graphics.</span>')
     + block('Landing pages', (c.pages || []).length ? `<div class="pagelist">${c.pages.map(p => `<div class="pg"><span>${p.live_url ? `<a href="${esc(p.live_url)}" target="_blank" rel="noopener">${esc(p.live_url.replace(/^https?:\/\//, ''))}</a>` : 'Draft page'}${p.status === 'Draft' && p.live_url ? ' <span class="tag amber">Changes not published</span>' : ''}</span><span class="muted small">${esc(timeAgo(p.updated_at))}</span></div>`).join('')}</div>` : '<span class="muted small">Not built yet.</span>')
     + block('Videos', vids.length ? `<div class="media">${vids.map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><svg class="i" style="width:14px;height:14px"><use href="#i-video"/></svg>${esc(m.label)}</a>`).join('')}</div>` : '<span class="muted small">None yet. Make one in AI Videos.</span>')
     + (vos.length ? block('Voiceovers', vos.map(m => `<div class="small" style="font-weight:700;margin-top:6px">${esc(m.concept || 'Voiceover')}</div><audio controls preload="none" src="${esc(m.file_url)}"></audio>`).join('')) : '')
@@ -2619,7 +2636,47 @@ document.addEventListener('click', async e => {
 
 /* ---------- AI graphics ---------- */
 const gfxPending = []; // flyers being designed: { tmp, label, status, error, campaign_id }
+// a carousel slide's name carries its set id in [brackets]; people only see "Carousel slide 2 of 5: ..."
+// the slides of one carousel stay together, in slide order, where the set's newest slide sits
+function sortSlides(list) {
+  const meta = list.map((m, i) => { const c = String(m.concept || ''); const id = (/\[(car_[a-z0-9]+)\]/i.exec(c) || [])[1] || ''; const no = Number((/^Carousel slide (\d+)/i.exec(c) || [])[1]) || 0; return { m, i, id, no }; });
+  const first = {}; meta.forEach(x => { if (x.id && first[x.id] == null) first[x.id] = x.i; });
+  return meta.sort((a, b) => { const ga = a.id ? first[a.id] : a.i, gb = b.id ? first[b.id] : b.i; return ga !== gb ? ga - gb : (a.no - b.no); }).map(x => x.m);
+}
+function gfxLabel(c) { return String(c || 'Flyer').replace(/\s*\[car_[a-z0-9]+\]/i, ''); }
+/* the inspiration flyer: kept in the browser until Generate, then saved once and reused */
+const inspo = { file: null, preview: '', url: '', hash: '' };
+function inspoRender() {
+  const pv = $('#gr_inspo_pv'); if (!pv) return;
+  pv.innerHTML = inspo.preview ? `<div class="ipv"><img src="${esc(inspo.preview)}" alt="Inspiration flyer"><button type="button" aria-label="Remove the inspiration flyer" id="gr_inspo_x">&times;</button></div>` : '';
+  $('#gr_inspo_pick').textContent = inspo.preview ? 'Use a different flyer' : 'Add a flyer you like';
+  const x = $('#gr_inspo_x'); if (x) x.addEventListener('click', () => { if (inspo.preview) URL.revokeObjectURL(inspo.preview); Object.assign(inspo, { file: null, preview: '', url: '', hash: '' }); $('#gr_inspo').value = ''; inspoRender(); grPlan(); });
+}
+$('#gr_inspo_pick').addEventListener('click', () => $('#gr_inspo').click());
+$('#gr_inspo').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { toast('Use a JPG, PNG or WEBP image for the flyer you like.', 'err'); e.target.value = ''; return; }
+  if (f.size > 8 * 1024 * 1024) { toast('That image is over 8 MB. Use a smaller one.', 'err'); e.target.value = ''; return; }
+  if (inspo.preview) URL.revokeObjectURL(inspo.preview);
+  Object.assign(inspo, { file: f, preview: URL.createObjectURL(f), url: '', hash: '' }); inspoRender(); grPlan();
+});
+async function inspoUrl(say) {
+  if (!inspo.file) return '';
+  if (inspo.url) return inspo.url;
+  if (say) say('Saving the flyer you like.');
+  const r = await call('graphicsInspo', { file_name: inspo.file.name, file_type: inspo.file.type, file_base64: await fileToBase64(inspo.file) });
+  inspo.url = r.inspo_url; return inspo.url;
+}
+inspoRender();
 function grPlan() {
+  const carousel = segValue('gr_kind') === 'carousel';
+  $('#gr_slides_wrap').classList.toggle('hidden', !carousel); $('#gr_count_wrap').classList.toggle('hidden', carousel); $('#gr_layout_wrap').classList.toggle('hidden', carousel);
+  if (carousel) {
+    const ns = Number($('#gr_slides').value) || 5; const tp = trays.gr_tray ? trays.gr_tray.items.length : 0;
+    $('#gr_plan div').textContent = 'A ' + ns + ' slide carousel. The AI writes each slide from the ' + (useCampaign('gr') ? 'campaign' : 'copy above') + ': the hook first, ' + (ns > 3 ? 'the problem and product, ' : '') + 'a real review if the campaign has one, then the offer and how to order on the last slide. Slide 1 is designed first and the others match it' + (inspo.file ? ', in the layout and look of the flyer you like' : '') + '. ' + (tp ? (tp === 1 ? 'Every slide shows your photo.' : 'Your photos take turns across the slides.') : 'No photo? It uses your first product image in Brand Assets, or an AI product photo.') + ' Each slide counts as one AI Graphics use.';
+    $('#gr_go [data-label]').textContent = 'Generate ' + ns + ' slide carousel';
+    return;
+  }
   const n = Number($('#gr_count').value) || 1; const t = trays.gr_tray; const p = t ? t.items.length : 0;
   const colBtn = $('#gr_layout [data-layout="collection"]'); colBtn.disabled = p < 2;
   if (p < 2 && segValue('gr_layout') === 'collection') { $$('#gr_layout button').forEach(b => b.setAttribute('aria-pressed', b.dataset.layout === 'single')); }
@@ -2629,11 +2686,11 @@ function grPlan() {
   else if (!p) txt = fl + (n > 1 ? ', each in a different design,' : '') + ' with your first product image in Brand Assets, or an AI product photo.';
   else if (p === 1) txt = fl + ' of the same product' + (n > 1 ? ', each in a different design.' : '.');
   else txt = fl + ': ' + Array.from({ length: n }, (x, i) => 'photo ' + ((i % p) + 1)).join(', ') + (n > 1 ? ', each in a different design.' : '.') + (n < p ? ' Photos ' + (n + 1) + (p - n > 1 ? ' to ' + p : '') + ' are not used. Pick ' + p + ' flyers to use them all.' : '');
-  $('#gr_plan div').textContent = txt;
+  $('#gr_plan div').textContent = txt + (inspo.file ? ' Each flyer follows the layout and look of the flyer you like.' : '');
   $('#gr_go [data-label]').textContent = n === 1 ? 'Generate flyer' : 'Generate ' + n + ' flyers';
 }
 makeTray('gr_tray').root.addEventListener('traychange', grPlan);
-$('#gr_count').addEventListener('change', grPlan); $('#gr_layout').addEventListener('segchange', grPlan); grPlan();
+$('#gr_count').addEventListener('change', grPlan); $('#gr_layout').addEventListener('segchange', grPlan); $('#gr_kind').addEventListener('segchange', grPlan); $('#gr_slides').addEventListener('change', grPlan); grPlan();
 function addFlyerToCampaign(cid, r) {
   if (cid) {
     const c = campaigns.find(x => x.campaign_id === cid); const old = (c && c.media) || [];
@@ -2664,7 +2721,8 @@ async function designFlyer(body, tmp) {
   } catch (e) { tmp.status = 'failed'; tmp.error = e.message; renderMedia(); throw e; }
 }
 $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', async () => {
-  const n = Number($('#gr_count').value) || 1; const layout = segValue('gr_layout');
+  const carousel = segValue('gr_kind') === 'carousel';
+  const n = Number($('#gr_count').value) || 1; const layout = carousel ? 'single' : segValue('gr_layout');
   const base = { size: $('#gr_size').value, contacts: $('#gr_contacts').value.trim() };
   if (useCampaign('gr')) {
     if (!(current.assets && current.assets.flyer_copy)) { toast('This campaign has no flyer copy yet. Generate it in New Campaign, step 5, or write it here.', 'err'); return; }
@@ -2676,6 +2734,8 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   store.set(key('contacts'), base.contacts);
   const say = m => { $('#gr_working span').textContent = m; };
   const urls = await trayUrls(trays.gr_tray, say);
+  const iu = await inspoUrl(say); if (iu) base.inspo_url = iu;
+  if (carousel) return makeCarousel(base, urls, say);
   if (layout === 'collection' && urls.length < 2) throw new Error('A collection flyer needs 2 photos or more. Add another photo, or pick One product per flyer.');
   say(n === 1 ? 'Designing your flyer. About a minute.' : 'Designing your ' + n + ' flyers at the same time. About a minute or two.');
   const cid = base.campaign_id || '';
@@ -2705,6 +2765,37 @@ $('#gr_go').addEventListener('click', e => run(e.currentTarget, 'gr_working', as
   else if (good) toast(good + ' of ' + n + ' flyers ready. ' + bad[0].reason.message, 'err');
   else throw bad[0].reason;
 }));
+/* a carousel: the AI writes the slides, slide 1 is designed first, then the other slides are drawn to match it */
+async function makeCarousel(base, urls, say) {
+  const ns = Number($('#gr_slides').value) || 5; const cid = base.campaign_id || '';
+  say('Writing the words for your ' + ns + ' slides.');
+  const planBody = { slides: ns };
+  if (cid) { planBody.campaign_id = cid; const slot = prodSlot('gr'); if (slot) planBody.product_slot = slot; }
+  else { planBody.flyer_copy = base.flyer_copy; planBody.brand = base.brand || ''; }
+  const plan = await call('carouselPlan', planBody);
+  const slides = plan.slides || [];
+  const seed = Math.floor(Math.random() * 1000);
+  const bodyFor = (sl, i) => {
+    const b = Object.assign({}, base, { flyer_copy: sl.copy, variant: 1, variants: 1, layout: 'single', style_seed: seed, slide_no: sl.no, slide_count: slides.length, slide_role: sl.role || '', carousel_id: plan.carousel_id });
+    if (cid && !b.brand) b.brand = plan.brand || '';
+    if (urls.length) b.product_photo_urls = [urls[i % urls.length]];
+    return b;
+  };
+  const tmps = slides.map((sl, i) => ({ tmp: 'tmp_' + Date.now().toString(36) + '_s' + i, label: 'Slide ' + sl.no + ' of ' + slides.length, status: 'working', campaign_id: cid, progress: i ? 'Waiting for slide 1' : 'Designing slide 1, about a minute' }));
+  tmps.forEach(t => gfxPending.push(t)); renderMedia(); $('#gr_list').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  say('Designing slide 1. The other slides are matched to it.');
+  let first;
+  try { first = await designFlyer(bodyFor(slides[0], 0), tmps[0]); }
+  catch (er) { tmps.slice(1).forEach(t => { const k = gfxPending.indexOf(t); if (k >= 0) gfxPending.splice(k, 1); }); renderMedia(); throw er; }
+  tmps.slice(1).forEach(t => { t.progress = 'Designing, about a minute'; }); renderMedia();
+  say('Designing slides 2 to ' + slides.length + ' to match slide 1.');
+  const rest = slides.slice(1).map((sl, j) => sleep(j * 1500).then(() => designFlyer(Object.assign(bodyFor(sl, j + 1), { series_ref_url: first.file_url }), tmps[j + 1])));
+  const res = await Promise.allSettled(rest);
+  const bad = res.filter(r => r.status === 'rejected'); renderMedia();
+  if (bad.some(r => r.reason && r.reason.auth)) return;
+  if (!bad.length) toast('Your ' + slides.length + ' slide carousel is ready', 'ok');
+  else toast((slides.length - bad.length) + ' of ' + slides.length + ' slides ready. ' + bad[0].reason.message, 'err');
+}
 CHANGE_ACTIONS.gfx = async (id, text) => {
   const r = await runJob('graphicsDesign', { revise_media_id: id, changes: text }, { max: 480000 });
   const cid = (campaigns.find(c => (c.media || []).some(m => m.media_id === id)) || {}).campaign_id || '';
@@ -2815,7 +2906,7 @@ function renderMedia() {
   const keep = chgFocusSave();
   const local = mediaList().filter(m => !m.campaign_id || (current && m.campaign_id === current.campaign_id));
   const media = (current && current.media) || [];
-  const serverGfx = media.filter(m => m.type === 'Graphic' && m.file_url).map(m => ({ kind: 'graphic', label: m.concept || 'Flyer', url: m.file_url, id: m.media_id, server: true, status: 'ready' }));
+  const serverGfx = sortSlides(media.filter(m => m.type === 'Graphic' && m.file_url)).map(m => ({ kind: 'graphic', label: gfxLabel(m.concept), url: m.file_url, id: m.media_id, server: true, status: 'ready' }));
   const localVid = local.filter(m => m.kind === 'video');
   const serverVid = media.filter(m => m.type === 'Video' && !localVid.some(l => l.id === m.media_id)).map(m => ({ kind: 'video', label: m.concept || 'Video', url: m.file_url || '', id: m.media_id, server: true, status: STATE[m.status] || (m.file_url ? 'ready' : 'rendering') }));
   localVid.forEach(l => { const s = media.find(m => m.media_id === l.id && m.type === 'Video' && m.file_url); if (s && !l.url) { l.url = s.file_url; l.status = 'ready'; } });
