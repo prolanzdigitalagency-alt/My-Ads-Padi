@@ -619,6 +619,16 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
 .card-lite>summary{cursor:pointer;font-size:14.5px}
 .card-lite .eitem{border-top:1px solid var(--line);padding-top:14px}
 
+/* content type chips in the package step, and the matching mark in AI Videos */
+.tchips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 6px}
+.tchip{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line-2);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px 7px 10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.tchip::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid var(--line-2);background:#fff;flex:none}
+.tchip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.tchip[aria-pressed="true"]::before{border-color:#fff;background:var(--red)}
+.tchip:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.concept.picked{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.concept .ptag{display:inline-block;margin-bottom:6px}
+
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
   .app.folded .logo div,.app.folded .nav button span,.app.folded .foot .who{display:block}
@@ -781,6 +791,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         </div>
         <div class="field"><label for="c_outcome">What does a win look like?</label><textarea id="c_outcome" placeholder="Thirty new WhatsApp orders a week from people ready to buy"></textarea></div>
         <div class="field"><label for="c_details">Additional details</label><textarea id="c_details" placeholder="We now deliver to Abuja. Try an angle for mothers buying gifts. Never call it cheap."></textarea><div class="hint">Not required. Anything else the agent should use or explore: new stock, a promo, delivery terms, ideas you want tried.</div></div>
+        <div class="field" id="rv_box"><label>Customer reviews <span class="muted small" style="font-weight:600">(optional, but they make the script convincing)</span></label>
+          <div class="hint" style="margin:0 0 8px">Add real reviews of this product: paste what a customer said, or upload a screenshot of a review. The script uses them as proof, word for word, and they stay attached to the script.</div>
+          <textarea id="rv_text" placeholder="Paste one review here, exactly as the customer wrote it" style="min-height:70px"></textarea>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center"><button type="button" class="btn ghost sm" id="rv_add_text">Add this review</button><button type="button" class="btn ghost sm" id="rv_pick">Upload review screenshots</button><span class="muted small" id="rv_state"></span></div>
+          <input type="file" id="rv_file" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
+          <div id="rv_list" style="display:grid;gap:10px;margin-top:12px"></div></div>
       </div>
       <div class="actions"><button class="btn" id="c_save1"><span class="spin"></span>Save and continue</button></div>
     </div>
@@ -1146,7 +1162,7 @@ const API = {
   campaignTransfer: { path: '/ads-padi/campaign/transfer', live: true }, // {action: recipients} -> {ok, recipients:[{client_id, name, role, me}]}; {action: move, campaign_ids:[...], to_client_id} -> {ok, moved, to_name}
   campaignDelete: { path: '/ads-padi/campaign/delete',   live: true }, // {campaign_ids:[...]} -> {ok, deleted}
   campaignList:   { path: '/ads-padi/campaign/list',     live: true }, // {html_for?:[page_id]} -> {ok, campaigns:[{campaign_id, brand, product, goal, awareness, fields, chosen_offer, offers, assets, media, pages, research, spy_picks, review_status, performance, performance_notes, review_url, blanks}]}
-  campaignSave:   { path: '/ads-padi/campaign/save',     live: true }, // {campaign_id?, ...fields} -> {ok, campaign_id, is_new, status}
+  campaignSave:   { path: '/ads-padi/campaign/save',     live: true }, // {campaign_id?, ...fields, reviews?[{type:'text',text}|{type:'image',url,name,notes}]} -> {ok, campaign_id, is_new, status}
   offersGenerate: { path: '/ads-padi/offers/generate',   live: true }, // {campaign_id} -> {ok, campaign_id, awareness, offers:[{offer_id, number, title, offer, why_it_works}]}
   offersSelect:   { path: '/ads-padi/offers/select',     live: true }, // {campaign_id, offer_id, offer_text?} -> {ok, campaign_id, chosen_offer_id, chosen_offer}; code "blanks" if a [blank] is left
   generate:       { path: '/ads-padi/campaign/generate', live: true }, // {campaign_id, items:[script|flyer_copy|landing_page_copy|sfv_scripts], sfv_count?} -> {ok, grounded, assets, winners, failed}
@@ -1176,6 +1192,7 @@ const VIDEO_CONCEPTS = [
   ['Testimonial', 'A happy customer explains the result they got.'],
   ['Before / After', 'The problem, then the change the product made.']
 ];
+const CONTENT_TYPES = ['Talking head'].concat(VIDEO_CONCEPTS.map(c => c[0])); // what a script can be written as; the same names as the AI Videos concepts
 const ASSET_NAMES = { script: 'Video script', creative_direction: 'Creative direction', flyer_copy: 'Flyer copy', landing_page_copy: 'Landing page copy', sfv_scripts: 'Short form scripts' };
 const REVIEW_STATES = ['Draft', 'Sent for approval', 'Approved', 'Sent to client', 'Client approved'];
 const PERF_STATES = ['Not running yet', 'Testing', 'Working', 'Not working'];
@@ -1338,7 +1355,7 @@ $('#logoutBtn').addEventListener('click', logout); $('#logoutBtn2').addEventList
 /* ---------- campaigns (the backend is the source; this browser keeps a copy) ---------- */
 let campaigns = [], current = null; const sel = new Set();
 const mode = { vd: 'campaign', gr: 'campaign', lp: 'campaign', vo: 'campaign', touched: false };
-function setMode(k, m) { mode[k] = m; const p = document.querySelector(`.srcpanel[data-src="${k}"]`); p.querySelectorAll('.srctabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m)); p.querySelectorAll('.srcbody').forEach(b => b.classList.toggle('hidden', b.dataset.mode !== m));  if (typeof renderProdPickers === 'function') renderProdPickers(); }
+function setMode(k, m) { mode[k] = m; setTimeout(() => { if (typeof vdTypeMark === 'function') vdTypeMark(); }, 0); const p = document.querySelector(`.srcpanel[data-src="${k}"]`); p.querySelectorAll('.srctabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m)); p.querySelectorAll('.srcbody').forEach(b => b.classList.toggle('hidden', b.dataset.mode !== m));  if (typeof renderProdPickers === 'function') renderProdPickers(); }
 function loadLocal() {
   campaigns = store.get(key('campaigns'), []);
   const want = store.get(key('current'), null);
@@ -1553,12 +1570,41 @@ function newCampaign() { current = null; store.set(key('current'), ''); refreshA
 $('#cmp_new').addEventListener('click', () => { newCampaign(); $('#c_brand').focus(); });
 $('#cmp_pick').addEventListener('change', e => { if (!e.target.value) newCampaign(); else { setCurrent(e.target.value); showStep(Math.min(progress(current)[0] + 1, 5), false); } });
 $$('[data-new-campaign]').forEach(b => b.addEventListener('click', newCampaign));
+
+/* ---------- customer reviews on a campaign (optional): pasted text or screenshots; the script uses them as proof ---------- */
+let cmpReviews = [];
+function rvRender() {
+  const box = $('#rv_list'); if (!box) return;
+  box.innerHTML = cmpReviews.map((r, i) => r.type === 'image'
+    ? `<div class="rvitem" data-i="${i}" style="display:flex;gap:10px;align-items:flex-start"><a href="${esc(r.url)}" target="_blank" rel="noopener"><img src="${esc(r.url)}" alt="" width="72" height="72" style="border-radius:10px;object-fit:cover;background:#eee"></a><div style="flex:1"><div class="muted small">What the screenshot says (fix it if it was read wrongly):</div><textarea data-rvnotes="${i}" style="min-height:60px">${esc(r.notes || '')}</textarea></div><button type="button" class="btn ghost sm" data-rvdel="${i}">Remove</button></div>`
+    : `<div class="rvitem" data-i="${i}" style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;padding:10px;border:1px solid var(--line,#ddd);border-radius:10px">"${esc(r.text)}"</div><button type="button" class="btn ghost sm" data-rvdel="${i}">Remove</button></div>`).join('');
+}
+function rvPayload() { return cmpReviews.map(r => r.type === 'image' ? { type: 'image', url: r.url, name: r.name || '', notes: (r.notes || '').trim() } : { type: 'text', text: r.text }); }
+$('#rv_add_text').addEventListener('click', () => { const t = $('#rv_text').value.trim(); if (!t) { toast('Paste a review first.', 'err'); return; } cmpReviews.push({ type: 'text', text: t }); $('#rv_text').value = ''; rvRender(); });
+$('#rv_pick').addEventListener('click', () => $('#rv_file').click());
+$('#rv_file').addEventListener('change', async e => {
+  const files = Array.from(e.target.files || []); e.target.value = ''; if (!files.length) return;
+  const brand = $('#c_brand').value.trim(); if (!brand) { toast('Enter the brand name first, then add the screenshots.', 'err'); return; }
+  const st = $('#rv_state'); $('#rv_pick').disabled = true; let n = 0;
+  try {
+    for (const f of files) {
+      if (f.size > 10 * 1024 * 1024) { toast(f.name + ' is bigger than 10 MB.', 'err'); continue; }
+      st.textContent = 'Reading ' + (++n) + ' of ' + files.length + '.';
+      const r = await call('brandUpload', { brand, category: 'Customer Reviews', notes: 'Customer review for ' + ($('#c_product').value.trim() || 'a campaign'), file_name: f.name, file_type: f.type, file_base64: await fileToBase64(f), content_hash: await hashFile(f) });
+      cmpReviews.push({ type: 'image', url: r.file_url, name: f.name.slice(0, 60), notes: String(r.extracted_notes || '').trim() }); rvRender();
+    }
+  } catch (er) { if (er.auth) throw er; toast(er.message, 'err'); }
+  finally { st.textContent = ''; $('#rv_pick').disabled = false; }
+});
+$('#rv_list').addEventListener('click', e => { const d = e.target.closest('[data-rvdel]'); if (d) { cmpReviews.splice(Number(d.dataset.rvdel), 1); rvRender(); } });
+$('#rv_list').addEventListener('input', e => { const t = e.target.closest('[data-rvnotes]'); if (t && cmpReviews[Number(t.dataset.rvnotes)]) cmpReviews[Number(t.dataset.rvnotes)].notes = t.value; });
 function fillForm() {
   const f = (current && current.fields) || {};
   $('#c_brand').value = f.brand || ''; $('#c_industry').value = f.industry || ''; $('#c_product').value = f.product || ''; $('#c_price').value = f.price || '';
   $('#c_goal').value = f.goal || ''; $('#c_market').value = f.market || ''; $('#c_outcome').value = f.desired_outcome || ''; $('#c_details').value = f.additional_details || '';
   $('#c_audience').value = f.audience || ''; $('#c_age').value = f.age_range || ''; $('#c_location').value = f.location || '';
   $$('input[name="aw"]').forEach(r => { r.checked = r.value === (f.awareness || (current && current.awareness)); });
+  cmpReviews = ((current && current.reviews) || []).map(r => Object.assign({}, r)); rvRender();
   renderOffers(); renderGenResults(); renderEditPanel();
 }
 
@@ -1597,9 +1643,9 @@ $$('.pick-campaign').forEach(sel => sel.addEventListener('change', e => { if (e.
 $('#c_save1').addEventListener('click', e => run(e.currentTarget, null, async () => {
   const f = { brand: $('#c_brand').value.trim(), industry: $('#c_industry').value.trim(), product: $('#c_product').value.trim(), price: $('#c_price').value.trim(), goal: $('#c_goal').value, market: $('#c_market').value.trim(), desired_outcome: $('#c_outcome').value.trim(), additional_details: $('#c_details').value.trim() };
   if (!validate([['c_brand', !!f.brand], ['c_product', !!f.product], ['c_goal', !!f.goal]])) return;
-  const body = Object.assign({}, f); if (current && current.campaign_id) body.campaign_id = current.campaign_id;
+  const body = Object.assign({}, f, { reviews: rvPayload() }); if (current && current.campaign_id) body.campaign_id = current.campaign_id;
   const r = await call('campaignSave', body);
-  upsert({ campaign_id: r.campaign_id, brand: f.brand, brand_key: r.brand_key || brandKeyOf(f.brand), product: f.product, goal: f.goal, fields: Object.assign({}, (current && current.campaign_id === r.campaign_id && current.fields) || {}, f) });
+  upsert({ campaign_id: r.campaign_id, brand: f.brand, brand_key: r.brand_key || brandKeyOf(f.brand), product: f.product, goal: f.goal, reviews: rvPayload(), fields: Object.assign({}, (current && current.campaign_id === r.campaign_id && current.fields) || {}, f) });
   toast(r.is_new ? 'Campaign saved in the ' + f.brand + ' folder' : 'Saved', 'ok'); showStep(2);
 }));
 $('#c_save2').addEventListener('click', e => run(e.currentTarget, null, async () => {
@@ -1629,7 +1675,7 @@ const PKG_PER_MAX = { scripts: 10, flyers: 5, pages: 5 }; // most one product ca
 const MAX_PRODUCTS = 5, MAX_COMBOS = 3; // up to 5 products, plus up to 3 combos (2 or 3 of those products sold together)
 const itemLabel = (items, i) => { const combo = itemKind(items[i]); return (combo ? 'Combo ' : 'Product ') + (items.slice(0, i + 1).filter(q => itemKind(q) === itemKind(items[i])).length); };
 const itemKind = x => (x && x.kind === 'combo') ? 'combo' : '';
-const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), scripts: Number(x.scripts) || 0, flyers: Number(x.flyers) || 0, pages: Number(x.pages) || 0, includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '', active: isActive(x) }));
+const itemsToApi = items => items.map((x, i) => ({ slot: i + 1, name: x.name, price: x.price, about: x.about, kind: itemKind(x), scripts: Number(x.scripts) || 0, flyers: Number(x.flyers) || 0, pages: Number(x.pages) || 0, types: (Array.isArray(x.types) ? x.types : []).filter(t => CONTENT_TYPES.includes(t)), includes: itemKind(x) ? (x.inc || []).map(j => (items[j] || {}).name).filter(Boolean) : [], offer_id: x.offer_id || '', offer: x.offer_id ? String(x.offer || '') : '', ofn: x.ofn || '', active: isActive(x) }));
 // a new product added to a package gets this much: the package share for one product
 const unitOf = p => ({ scripts: Math.ceil(p.scripts / p.products), flyers: Math.ceil(p.flyers / p.products), pages: Math.ceil(p.pages / p.products) });
 // starting count for product i of a package: the first products share the package, extra products get one product's share
@@ -1643,7 +1689,7 @@ function getPkg(cid) {
   const dl = Array.isArray(c.deliverables) ? c.deliverables.map(x => String(x).toLowerCase()) : [];
   const del = {}; DELIV.forEach(([k]) => { del[k] = !dl.length || dl.includes(k); });
   const cnt = (x, ck, i) => x.active === false ? 0 : (Number.isFinite(Number(x[ck])) && x[ck] !== undefined && x[ck] !== null && x[ck] !== '' ? Math.max(0, Number(x[ck])) : defCount(p, ck, i));
-  const out = { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: cnt(x, 'scripts', i), flyers: cnt(x, 'flyers', i), pages: cnt(x, 'pages', i), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
+  const out = { tier: p.id, del, products: c.products.map((x, i) => ({ name: x.name || '', price: x.price || '', about: x.about || '', kind: itemKind(x), inc: itemKind(x) ? (x.includes || []).map(n => c.products.findIndex(q => !itemKind(q) && q.name === n)).filter(j => j >= 0) : [], scripts: cnt(x, 'scripts', i), flyers: cnt(x, 'flyers', i), pages: cnt(x, 'pages', i), types: (Array.isArray(x.types) ? x.types : []).filter(t => CONTENT_TYPES.includes(t)), offer_id: x.offer_id || '', offer: x.offer || '', ofn: x.ofn || '' })) };
   if (lv && lv.lp_mode) out.lp_mode = lv.lp_mode;
   return out;
 }
@@ -1658,8 +1704,8 @@ function newPkgDraft(tier, old) {
   const n = Math.max(p.products, old && old.products ? old.products.length : 0);
   return { tier, del, products: Array.from({ length: n }, (_, i) => {
     const o = (old && old.products && old.products[i]) || null;
-    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind: '', inc: [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
-    if (o) { x.kind = itemKind(o); x.inc = (o.inc || []).slice(); ['name', 'price', 'about', 'offer_id', 'offer', 'ofn'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
+    const x = { name: i === 0 ? main : '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind: '', inc: [], types: [], scripts: defCount(p, 'scripts', i), flyers: defCount(p, 'flyers', i), pages: defCount(p, 'pages', i) };
+    if (o) { x.kind = itemKind(o); x.inc = (o.inc || []).slice(); x.types = (o.types || []).slice(); ['name', 'price', 'about', 'offer_id', 'offer', 'ofn'].forEach(f => { if (o[f] !== undefined && (o[f] !== '' || f !== 'name')) x[f] = o[f]; }); if (old.tier === tier) ['scripts', 'flyers', 'pages'].forEach(f => { x[f] = o[f]; }); }
     return x;
   }) };
 }
@@ -1685,6 +1731,7 @@ function renderPackage() {
   const prodIdx = d.products.map((x, i) => i).filter(i => !itemKind(d.products[i]));
   let pn = 0, cn = 0;
   const counts = (x, i) => `<div class="pkgcnts">${PKG_COUNTS.filter(([k]) => on(k)).map(([k, n]) => `<div class="field cnt"><label for="pp_${k}${i}">${n}</label><input id="pp_${k}${i}" data-f="${k}" type="number" min="0" max="${PKG_PER_MAX[k]}" value="${x[k]}"></div>`).join('')}</div>`;
+  const typeChips = (x, i) => { if (!on('scripts')) return ''; const eff = x.types && x.types.length ? x.types : ['Talking head']; return `<div class="field tchipbox"><label id="ty_l${i}">What kind of videos should the scripts be? Pick one or more</label><div class="tchips" role="group" aria-labelledby="ty_l${i}">${CONTENT_TYPES.map(t => `<button type="button" class="tchip" data-ty="${esc(t)}" aria-pressed="${eff.includes(t)}">${esc(t)}</button>`).join('')}</div><span class="muted small">Scripts are shared out across the types you pick, one after the other. The same types are marked for you in AI Videos.</span></div>`; };
   const cards = d.products.map((x, i) => {
     if (itemKind(x)) {
       cn++;
@@ -1693,22 +1740,23 @@ function renderPackage() {
     <div class="pkgrow"><div class="field"><label for="pp_n${i}">Combo name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="Glow Duo"></div><div class="field"><label for="pp_p${i}">Combo price</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N40,000"></div></div>
     <div class="field"><label>Products in this combo (pick 2 or 3)</label>${named.length >= 2 ? `<div class="pkgdel-row">${named.map(j => `<label class="chk"><input type="checkbox" data-inc="${j}" ${x.inc.includes(j) ? 'checked' : ''} ${!x.inc.includes(j) && x.inc.length >= 3 ? 'disabled' : ''}><span data-incname="${j}">${esc(d.products[j].name || ('Product ' + (named.indexOf(j) + 1)))}</span></label>`).join('')}</div>` : '<span class="muted small">Add at least 2 products above first.</span>'}</div>
     <div class="field"><label for="pa_${i}">About this combo (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: save N5,000, free delivery when you buy both"></div>
-    ${counts(x, i)}</div>`;
+    ${counts(x, i)}${typeChips(x, i)}</div>`;
     }
     pn++;
     const onlyCombo = !isActive(x) && d.products.some(q => itemKind(q) && isActive(q) && (q.inc || []).includes(i));
     return `<div class="pkgprod" data-i="${i}"><div class="pkghead"><b>Product ${pn}</b>${onlyCombo ? '<span class="tag green">Only sold inside a combo</span>' : ''}${i > 0 ? `<button type="button" class="btn ghost sm" data-rm="${i}">Remove</button>` : ''}</div>
     <div class="pkgrow"><div class="field"><label for="pp_n${i}">Name</label><input id="pp_n${i}" data-f="name" value="${esc(x.name)}" placeholder="${i === 0 ? 'Main product' : 'Another product'}"></div><div class="field"><label for="pp_p${i}">Price (optional)</label><input id="pp_p${i}" data-f="price" value="${esc(x.price)}" placeholder="N25,000"></div></div>
     <div class="field"><label for="pa_${i}">About this product (optional)</label><input id="pa_${i}" data-f="about" maxlength="300" value="${esc(x.about || '')}" placeholder="For example: 3 piece lace, free delivery in Lagos"></div>
-    ${counts(x, i)}</div>`;
+    ${counts(x, i)}${typeChips(x, i)}</div>`;
   }).join('');
   const nProd = prodIdx.length, nCombo = d.products.length - nProd;
   box.innerHTML = delHtml + `<p class="muted small" style="margin:16px 0 8px">Add each product the client is paying for. Every product gets its own copy, so set how many video scripts, flyers and landing pages each one needs. Selling two or three products together? Add a combo under them.</p>` + cards
     + `<div class="pkgadd"><button type="button" class="btn soft sm" id="pkg_add" ${nProd >= MAX_PRODUCTS ? 'disabled' : ''}>+ Add product</button><button type="button" class="btn soft sm" id="pkg_add_combo" ${nCombo >= MAX_COMBOS ? 'disabled' : ''}>+ Add combo</button>${nProd >= MAX_PRODUCTS ? `<span class="muted small">Up to ${MAX_PRODUCTS} products.</span>` : ''}${nCombo >= MAX_COMBOS ? `<span class="muted small">Up to ${MAX_COMBOS} combos.</span>` : ''}</div><div class="muted small" id="pkg_combo_hint" style="margin:-2px 0 6px">A combo bundles 2 or 3 of your products under one name and price. Click + Add combo, name it, set its price and tick the 2 or 3 products inside it. If you only have one product so far, a second one is added for you. Selling combos only? Set a product's video scripts, flyers and landing pages to 0 and give those pieces to the combo: the product's details still go into the combo's copy. <b>Combos build ${BUILD_ID}</b></div><div id="pkg_tot">${totals()}</div>`;
-  const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
+  const fresh = kind => { const x = { name: '', price: '', about: '', offer_id: '', offer: '', ofn: '', kind, inc: [], types: [] }; PKG_COUNTS.forEach(([k]) => { x[k] = on(k) ? unitOf(p)[k] : 0; }); return x; };
   $('#pkg_add').addEventListener('click', () => { if (nProd >= MAX_PRODUCTS) return; d.products.splice(nProd, 0, fresh('')); renderPackage(); });
   $('#pkg_add_combo').addEventListener('click', () => { if (nCombo >= MAX_COMBOS) return; while (d.products.filter(q => !itemKind(q)).length < 2) d.products.splice(d.products.filter(q => !itemKind(q)).length, 0, fresh('')); d.products.push(fresh('combo')); renderPackage(); });
   $$('#c_pkg_products [data-rm]').forEach(b => b.addEventListener('click', () => { const at = Number(b.dataset.rm); const gone = d.products[at]; d.products.splice(at, 1); if (!itemKind(gone)) d.products.forEach(q => { if (itemKind(q)) q.inc = (q.inc || []).filter(j => j !== at).map(j => j > at ? j - 1 : j); }); renderPackage(); }));
+  $$('#c_pkg_products [data-ty]').forEach(b => b.addEventListener('click', () => { const row = b.closest('.pkgprod'); const x = d.products[Number(row.dataset.i)]; const cur = x.types && x.types.length ? x.types.slice() : ['Talking head']; const t = b.dataset.ty; x.types = cur.includes(t) ? cur.filter(v => v !== t) : cur.concat(t); const eff = x.types.length ? x.types : ['Talking head']; row.querySelectorAll('[data-ty]').forEach(o => o.setAttribute('aria-pressed', String(eff.includes(o.dataset.ty)))); }));
   $$('#c_pkg_products [data-inc]').forEach(cb => cb.addEventListener('change', () => { const x = d.products[Number(cb.closest('.pkgprod').dataset.i)]; const j = Number(cb.dataset.inc); x.inc = (x.inc || []).filter(v => v !== j); if (cb.checked) x.inc.push(j); renderPackage(); }));
   $$('#c_pkg_products [data-del]').forEach(cb => cb.addEventListener('change', () => {
     d.del[cb.dataset.del] = cb.checked;
@@ -1889,7 +1937,7 @@ function buildPlan() {
     if (!isActive(x)) return null;
     const offer = itemOfferText(x);
     const combo = itemKind(x) === 'combo';
-    return { slot: i + 1, product: x.name, kind: combo ? 'combo' : '', includes: combo ? (x.inc || []).map(j => (pk.products[j] || {}).name).filter(Boolean).join(' + ') : '', price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages };
+    return { slot: i + 1, product: x.name, kind: combo ? 'combo' : '', includes: combo ? (x.inc || []).map(j => (pk.products[j] || {}).name).filter(Boolean).join(' + ') : '', price: x.price || '', offer, scripts: x.scripts, flyers: x.flyers, pages: x.pages, types: (x.types && x.types.length) ? x.types : ['Talking head'] };
   }).filter(Boolean);
 }
 /* ---------- one product at a time: flyers, pages and videos can focus on one saved product ---------- */
@@ -2018,7 +2066,9 @@ function renderGenResults() {
   const blankNote = bl.length ? `<div class="note"><svg class="i"><use href="#i-info"/></svg><div><b>Some details are left as blanks</b> because the agent does not know them: ${bl.map(k => esc(ASSET_NAMES[k]) + ' (' + blanksIn(a[k]).map(esc).join(', ') + ')').join('; ')}. Fill them when you use the copy, or add the details to the campaign and generate again. The document lists them near the end so the client can send them.</div></div>` : '';
   const pdfBar = `<div class="note pdfbar"><svg class="i"><use href="#i-download"/></svg><div><b>Send it to the client for approval</b><br>One document with the campaign summary, the offer and all the copy${a.sfv_scripts ? ', including the short form scripts' : ''}, ready to send. It opens in Google Docs, where you can edit it and share it.</div><span class="chipline"><button class="btn sm" id="c_gdoc"><span class="spin"></span>Open in Google Docs</button><button class="btn ghost sm" id="c_pdf"><span class="spin"></span>Word file</button></span></div>`;
   const keep = chgFocusSave(); const cid = current ? current.campaign_id : '';
-  box.innerHTML = pdfBar + blankNote + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${(k === 'script' ? markSpoken : markBlanks)(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
+  const rvs = ((current && current.reviews) || []).filter(r => (r.type === 'image' ? (r.notes || r.url) : r.text));
+  const rvBlock = rvs.length ? `<div class="result"><div class="top"><h3>Customer reviews attached to the script</h3></div><div style="display:grid;gap:10px">${rvs.map(r => r.type === 'image' ? `<div style="display:flex;gap:10px;align-items:flex-start"><a href="${esc(r.url)}" target="_blank" rel="noopener"><img src="${esc(r.url)}" alt="" width="72" height="72" style="border-radius:10px;object-fit:cover"></a><div>${esc(r.notes || '')}</div></div>` : `<div>"${esc(r.text)}"</div>`).join('')}</div></div>` : '';
+  box.innerHTML = pdfBar + blankNote + rvBlock + keys.map(k => `<div class="result"><div class="top"><h3>${ASSET_NAMES[k]}</h3><span class="chipline">${changeBtn('copy:' + cid + ':' + k)}<button class="btn ghost sm" data-copy="${k}"><svg class="i" style="width:15px;height:15px"><use href="#i-copy"/></svg>Copy</button></span></div><pre>${(k === 'script' ? markSpoken : markBlanks)(a[k])}</pre>${changeBox('copy:' + cid + ':' + k, 'Only this piece is rewritten. Everything else stays.')}</div>`).join('');
   chgFocusRestore(keep);
   $$('#c_gen_results [data-copy]').forEach(b => b.addEventListener('click', () => copyText(a[b.dataset.copy])));
   const gb = $('#c_gdoc'); if (gb) gb.addEventListener('click', e => { const w = window.open('', '_blank'); run(e.currentTarget, null, async () => {
@@ -2388,9 +2438,17 @@ function renderSources() {
     copyBlock($('#lp_copy'), a.landing_page_copy, 'No landing page copy yet. Generate it in New Campaign, step 5, and it appears here.', 5, 'Generate the landing page copy');
     $('#lp_source').innerHTML = '<span>Also on the page:</span>' + srcTag(!!c.chosen_offer, 'Offer', 4) + srcTag(brandOk, 'Brand assets', 'brand') + (((c.media || []).some(m => m.type === 'Graphic' && m.file_url)) ? '<span class="tag green">Flyer</span>' : '');
   }
+  vdTypeMark();
   $$('[data-fix]').forEach(b => b.onclick = () => { const f = String(b.dataset.fix); if (f.startsWith('own:')) { mode.touched = true; setMode(f.slice(4), 'own'); } else if (f === 'brand') showScreen('brand'); else { showScreen('campaign'); showStep(Number(f)); } });
 }
 
+/* the content types picked in the package are marked on the matching AI Videos concepts */
+function vdTypeMark() {
+  const cards = $$('#vd_concepts .concept'); if (!cards.length) return;
+  const want = []; const pk = current && useCampaign('vd') ? getPkg(current.campaign_id) : null;
+  if (pk) { const slot = prodSlot('vd'); (slot ? [pk.products[slot - 1]] : pk.products.filter(isActive)).forEach(x => ((x && x.types) || []).forEach(t => { if (!want.includes(t)) want.push(t); })); }
+  cards.forEach(c => { const n = c.querySelector('[data-concept]').dataset.concept; const hit = want.includes(n); c.classList.toggle('picked', hit); let tg = c.querySelector('.ptag'); if (hit && !tg) { tg = document.createElement('div'); tg.className = 'tag green ptag'; tg.textContent = 'Picked in your package'; c.querySelector('.body').prepend(tg); } if (!hit && tg) tg.remove(); });
+}
 /* ---------- AI videos: Higgsfield (Kling 3.0) with an ElevenLabs voiceover or the video's own voice ---------- */
 const videoWatch = new Set();
 async function startVideo(body, lbl, quiet) {
@@ -2658,6 +2716,7 @@ CHANGE_ACTIONS.gfx = async (id, text) => {
 /* ---------- AI videos: several photos, how many videos, change one ---------- */
 const ICONS = ['i-video', 'i-rocket', 'i-star', 'i-image', 'i-layout', 'i-video', 'i-star', 'i-rocket'];
 $('#vd_concepts').innerHTML = VIDEO_CONCEPTS.map(([n, d], i) => `<div class="concept"><div class="art"><svg class="i"><use href="#${ICONS[i]}"/></svg></div><div class="body"><b>${esc(n)}</b><span>${esc(d)}</span><button class="btn sm" data-concept="${esc(n)}"><span class="spin"></span><span data-label>Generate video</span></button></div></div>`).join('');
+{ const vp = $('#vd_prod'); if (vp) vp.addEventListener('change', vdTypeMark); vdTypeMark(); }
 let vdLayoutTouched = false; // once the user picks a layout we keep it; until then 2 or more photos means all products in one video
 // "All products in one video" uses the photos added above; with fewer than 2 there, it fills up from the product photos in Brand Assets
 function vdBrandExtra() { const t = trays.vd_tray; const used = new Set(t ? t.items.map(i => i.url).filter(Boolean) : []); return productImages().map(f => f.file_url).filter(u => !used.has(u)); }
