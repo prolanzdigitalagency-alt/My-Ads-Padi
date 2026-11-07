@@ -634,6 +634,15 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
 .inspo .ipv{position:relative;width:84px;height:105px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#f6f6f6}
 .inspo .ipv img{width:100%;height:100%;object-fit:cover;display:block}
 .inspo .ipv button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-weight:700;font-size:14px;line-height:24px;padding:0}
+.inspo .ipv.logo{width:140px;height:84px;background:#fff}.inspo .ipv.logo img{object-fit:contain;padding:8px}
+.bcols{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.bcol{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:6px 8px;background:#fff}
+.bcol input[type=color]{width:40px;height:40px;border:0;border-radius:8px;padding:0;background:none;cursor:pointer;flex:none}
+.bcol input[type=color].empty{opacity:.35}
+.bcol input:not([type=color]){flex:1;min-width:0;border:0;outline:0;font:inherit;background:transparent;padding:8px 4px;text-transform:uppercase}
+.bcol:focus-within{border-color:var(--red)}.bcol input:not([type=color]):focus{box-shadow:none;outline:0}
+.bcol .bcx{border:0;background:none;font-size:20px;line-height:1;color:var(--muted,#777);cursor:pointer;padding:4px 6px}
+#lp_o_cols_err{display:none}#lp_o_cols_err.on{display:block;color:var(--red,#E10D1C)}
 
 @media (max-width:900px){
   .app,.app.folded{grid-template-columns:1fr}
@@ -1026,6 +1035,15 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:none;box-shad
         <div class="field"><label for="lp_o_type">Business type</label><select id="lp_o_type"><option value="">Let the agent decide</option><option value="product">Product</option><option value="service">Service</option></select></div>
       </div>
       <div class="field"><label for="lp_o_offer">The offer</label><textarea id="lp_o_offer" placeholder="Pay on delivery in Lagos. Free face towel with every set this month."></textarea><div class="err">Add the offer.</div></div>
+      <div class="field" style="margin-top:16px"><label>Logo <span class="muted small" style="font-weight:600">(optional)</span></label>
+        <div class="inspo"><input type="file" id="lp_o_logo" accept="image/jpeg,image/png,image/webp,image/svg+xml" hidden><div id="lp_o_logo_pv"></div><button type="button" class="btn ghost sm" id="lp_o_logo_pick">Upload logo</button></div>
+        <div class="hint">It goes at the top of the page. It is also saved to Brand Assets.</div></div>
+      <div class="field" style="margin-top:16px"><label>Brand colours <span class="muted small" style="font-weight:600">(optional, pick 2)</span></label>
+        <div class="bcols">
+          <div class="bcol"><input type="color" id="lp_o_c1_pick" value="#E10D1C" aria-label="Pick the main colour"><input id="lp_o_c1" placeholder="Main colour, e.g. #E10D1C" maxlength="7" autocomplete="off"><button type="button" class="bcx" data-for="lp_o_c1" aria-label="Clear the main colour">&times;</button></div>
+          <div class="bcol"><input type="color" id="lp_o_c2_pick" value="#FFC20E" aria-label="Pick the second colour"><input id="lp_o_c2" placeholder="Second colour, e.g. #FFC20E" maxlength="7" autocomplete="off"><button type="button" class="bcx" data-for="lp_o_c2" aria-label="Clear the second colour">&times;</button></div>
+        </div>
+        <div class="hint">The page uses these 2 colours. Leave them empty and the agent picks colours that fit.</div><div class="err" id="lp_o_cols_err">Use a colour code like #E10D1C.</div></div>
     </div>
     <div class="field prodpick hidden" id="lp_prod_wrap"><label for="lp_prod">Which product is this page for?</label><select id="lp_prod"></select><div class="hint">This campaign has more than one product. Pick one, or keep all of them together.</div></div>
       <div class="field" style="margin-top:16px"><label>Product photos for the page <span class="muted small" style="font-weight:600">(optional, up to 5)</span></label>
@@ -1427,7 +1445,7 @@ function refreshAll() {
   $('#cmp_pick').innerHTML = '<option value="">New campaign</option>' + folders().filter(f => byFolder[f.brand_key]).map(f => `<optgroup label="${esc(f.brand)}">` + byFolder[f.brand_key].map(c => `<option value="${esc(c.campaign_id)}">${esc(c.product || 'Untitled')} (${esc(progress(c)[1])})</option>`).join('') + '</optgroup>').join(''); $('#cmp_pick').value = current ? current.campaign_id : '';
   $('#brand_folders').innerHTML = folders().map(f => `<option value="${esc(f.brand)}"></option>`).join('');
   renderBrandPicker();
-  $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = (session.email ? session.email + (session.is_admin ? ' (super admin)' : '') : '') + ' . build ' + BUILD_ID;
+  $('#whoName').textContent = session.name || 'Your account'; $('#whoId').textContent = (session.email ? session.email + (session.is_admin ? ' (' + roleLabel(session).toLowerCase() + ')' : '') : '') + ' . build ' + BUILD_ID;
   $$('.admin-only').forEach(el => el.classList.toggle('hidden', !session.is_admin));
   const ae = document.activeElement; const typing = ae && ae.closest && ae.closest('#cmp_flow') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
   renderLibrary(); if (typing) renderGenResults(); else fillForm(); renderPhotoOptions(); renderMedia(); renderSources(); renderSpyBar(); renderProdPickers(); renderLandingState(); renderVoiceSource(!$('#screen-voice').classList.contains('hidden') && mode.vo === 'campaign' && !$('#vo_text').value.trim());
@@ -1486,7 +1504,7 @@ async function setupMove(cid) {
     const sel2 = $('#mv_to'), go = $('#mv_go'); if (!sel2 || !go || !moveNames || go.dataset.bound) return; go.dataset.bound = '1';
     const c = viewing || current; const ownerId = viewing ? viewing.owner : session.client_id;
     const list = moveNames.filter(x => x.client_id !== ownerId);
-    sel2.innerHTML = list.length ? '<option value="">Choose who gets it</option>' + list.map(x => `<option value="${esc(x.client_id)}" data-name="${esc(x.name)}">${esc(x.name)}${x.role === 'super_admin' ? ' (super admin)' : ''}${x.me ? ' (you)' : ''}</option>`).join('') : '<option value="">No one else to move it to</option>';
+    sel2.innerHTML = list.length ? '<option value="">Choose who gets it</option>' + list.map(x => `<option value="${esc(x.client_id)}" data-name="${esc(x.name)}">${esc(x.name)}${x.role === 'super_admin' ? ' (' + roleLabel(x).toLowerCase() + ')' : ''}${x.me ? ' (you)' : ''}</option>`).join('') : '<option value="">No one else to move it to</option>';
     sel2.addEventListener('change', () => { go.disabled = !sel2.value; });
     go.addEventListener('click', () => {
       const to = sel2.value; if (!to) return; const nm = sel2.selectedOptions[0].dataset.name || 'this person';
@@ -3092,6 +3110,47 @@ async function uploadReviewFiles() {
   }
   return out;
 }
+/* Describe it here: the logo and 2 brand colours the page uses (they win over Brand Assets) */
+const lpLogo = { file: null, preview: '', url: '', hash: '' };
+function lpLogoRender() {
+  const pv = $('#lp_o_logo_pv'); if (!pv) return;
+  pv.innerHTML = lpLogo.preview ? `<div class="ipv logo"><img src="${esc(lpLogo.preview)}" alt="Logo"><button type="button" aria-label="Remove the logo" id="lp_o_logo_x">&times;</button></div>` : '';
+  $('#lp_o_logo_pick').textContent = lpLogo.preview ? 'Use a different logo' : 'Upload logo';
+  const x = $('#lp_o_logo_x'); if (x) x.addEventListener('click', () => { if (lpLogo.preview) URL.revokeObjectURL(lpLogo.preview); Object.assign(lpLogo, { file: null, preview: '', url: '', hash: '' }); $('#lp_o_logo').value = ''; lpLogoRender(); });
+}
+$('#lp_o_logo_pick').addEventListener('click', () => $('#lp_o_logo').click());
+$('#lp_o_logo').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  if (!/^image\/(jpeg|png|webp|svg\+xml)$/.test(f.type)) { toast('Use a JPG, PNG, WEBP or SVG image for the logo.', 'err'); e.target.value = ''; return; }
+  if (f.size > 5 * 1024 * 1024) { toast('That logo is over 5 MB. Use a smaller one.', 'err'); e.target.value = ''; return; }
+  if (lpLogo.preview) URL.revokeObjectURL(lpLogo.preview);
+  Object.assign(lpLogo, { file: f, preview: URL.createObjectURL(f), url: '', hash: '' }); lpLogoRender();
+});
+lpLogoRender();
+async function lpLogoUrl(say) {
+  if (!lpLogo.file) return '';
+  if (lpLogo.url) return lpLogo.url;
+  if (say) say('Saving your logo.');
+  const r = await call('brandUpload', { brand: $('#lp_o_brand').value.trim(), category: 'Logo and brand colours', notes: 'Logo added on the Landing Pages screen', file_name: lpLogo.file.name, file_type: lpLogo.file.type, file_base64: await fileToBase64(lpLogo.file), content_hash: await hashFile(lpLogo.file) });
+  noteMoved(r);
+  lpLogo.url = r.file_url || ''; return lpLogo.url;
+}
+const HEX = /^#[0-9A-F]{6}$/;
+const normHex = v => { let t = String(v || '').trim().toUpperCase(); if (t && t[0] !== '#') t = '#' + t; if (/^#[0-9A-F]{3}$/.test(t)) t = '#' + t.slice(1).split('').map(c => c + c).join(''); return t; };
+['lp_o_c1', 'lp_o_c2'].forEach(id => {
+  const txt = $('#' + id), pick = $('#' + id + '_pick');
+  const sync = () => { const v = normHex(txt.value); pick.classList.toggle('empty', !HEX.test(v)); if (HEX.test(v)) pick.value = v.toLowerCase(); };
+  pick.addEventListener('input', () => { txt.value = pick.value.toUpperCase(); sync(); $('#lp_o_cols_err').classList.remove('on'); });
+  txt.addEventListener('input', () => { sync(); $('#lp_o_cols_err').classList.remove('on'); });
+  txt.addEventListener('blur', () => { const v = normHex(txt.value); if (HEX.test(v)) txt.value = v; });
+  sync();
+});
+document.querySelectorAll('.bcx').forEach(b => b.addEventListener('click', () => { const t = $('#' + b.dataset.for); t.value = ''; t.dispatchEvent(new Event('input')); }));
+function lpColours() {
+  const vals = ['lp_o_c1', 'lp_o_c2'].map(id => normHex($('#' + id).value)).filter(Boolean);
+  if (vals.some(v => !HEX.test(v))) return null;
+  return Array.from(new Set(vals));
+}
 async function buildPage(btn, changes) {
   await run(btn, 'lp_working', async () => {
     const wa = $('#lp_whatsapp').value.replace(/[^0-9]/g, '');
@@ -3108,6 +3167,11 @@ async function buildPage(btn, changes) {
     } else {
       const o = { brand: $('#lp_o_brand').value.trim(), product: $('#lp_o_product').value.trim(), price: $('#lp_o_price').value.trim(), audience: $('#lp_o_audience').value.trim(), goal: $('#lp_o_goal').value, offer: $('#lp_o_offer').value.trim(), business_type: $('#lp_o_type').value };
       if (!o.brand || !o.product || !o.offer) { mode.touched = true; setMode('lp', 'own'); validate([['lp_o_brand', !!o.brand], ['lp_o_product', !!o.product], ['lp_o_offer', !!o.offer]]); return; }
+      const cols = lpColours();
+      if (cols === null) { mode.touched = true; setMode('lp', 'own'); $('#lp_o_cols_err').classList.add('on'); $('#lp_o_c1').focus(); return; }
+      if (cols.length) o.colors = cols;
+      const lg = await lpLogoUrl(m => { $('#lp_working_txt').textContent = m; });
+      if (lg) o.logo_url = lg;
       body = { brief: o };
     }
     if (wa) body.whatsapp = wa;
@@ -3263,9 +3327,11 @@ function renderPhotoOptions() { trayRenderAll(); } // the photo trays list the p
 /* ---------- admin: accounts ---------- */
 let users = [];
 const ROLE_NAMES = { super_admin: 'Super admin', copywriter: 'Copywriter' };
+/* the owner account shows as Developer (same powers as a super admin) */
+function roleLabel(u) { u = u || {}; if (String(u.email || '').toLowerCase() === 'olayodeaboyade49@gmail.com') return 'Developer'; return u.role === 'super_admin' || u.is_admin ? 'Super admin' : 'Copywriter'; }
 function renderUsers() {
   $('#ad_users_empty').classList.toggle('hidden', !!users.length);
-  $('#ad_users').innerHTML = users.map(u => { const me = u.client_id === session.client_id; const owner = String(u.email || '').toLowerCase() === 'olayodeaboyade49@gmail.com'; return `<div class="user"><div class="who"><b>${esc(u.name || u.email)}${me ? ' <span class="muted small">(you)</span>' : ''}</b><span>${esc(u.email)}</span></div><span class="pill ${u.role === 'super_admin' ? 'red' : ''}">${esc(ROLE_NAMES[u.role] || u.role)}</span><span class="chipline">${(owner && !me) ? '' : `<button class="btn ghost sm" data-upass="${esc(u.client_id)}">New password</button>`}${(me || owner) ? '' : `<button class="btn ghost sm danger" data-uremove="${esc(u.client_id)}"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg>Remove</button>`}</span></div>`; }).join('');
+  $('#ad_users').innerHTML = users.map(u => { const me = u.client_id === session.client_id; const owner = String(u.email || '').toLowerCase() === 'olayodeaboyade49@gmail.com'; return `<div class="user"><div class="who"><b>${esc(u.name || u.email)}${me ? ' <span class="muted small">(you)</span>' : ''}</b><span>${esc(u.email)}</span></div><span class="pill ${u.role === 'super_admin' ? 'red' : ''}">${esc(roleLabel(u))}</span><span class="chipline">${(owner && !me) ? '' : `<button class="btn ghost sm" data-upass="${esc(u.client_id)}">New password</button>`}${(me || owner) ? '' : `<button class="btn ghost sm danger" data-uremove="${esc(u.client_id)}"><svg class="i" style="width:15px;height:15px"><use href="#i-trash"/></svg>Remove</button>`}</span></div>`; }).join('');
   $$('#ad_users [data-upass]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     const u = users.find(x => x.client_id === b.dataset.upass); if (!u) return;
     const password = prompt('New password for ' + (u.name || u.email) + ' (at least 8 characters):'); if (password == null) return;
@@ -3309,7 +3375,7 @@ function renderNumbers() {
   const h = nums.health || [];
   $('#nm_health').innerHTML = tbl([['Workflow'], ['Status'], ['Runs, 24 h', 'num'], ['Errors, 24 h', 'num'], ['Last run']], h.map(w => { const st = STATE[w.state] || ['', '']; return `<tr><td>${esc(w.name)}</td><td><span class="tag ${st[1]}">${st[0]}</span></td><td class="num">${w.runs_24h}</td><td class="num">${w.errors_24h}</td><td>${agoText(w.last_run)}</td></tr>`; }), 'Workflow health is not connected yet. The n8n API key needs to be saved as a credential.');
   const ppl = (nums.people || []);
-  $('#nm_people').innerHTML = tbl([['Copywriter'], ['Today', 'num'], ['This week', 'num'], ['This month', 'num'], ['Spent this month', 'num'], ['', 'act']], ppl.map(p => `<tr><td><b>${esc(p.name || p.email)}</b>${p.role === 'super_admin' ? ' <span class="pill red">Super admin</span>' : ''}<div class="muted small">${esc(p.email)}</div></td><td class="num">${p.periods.today.uses}</td><td class="num">${p.periods.week.uses}</td><td class="num">${p.periods.month.uses}</td><td class="num">${money(p.periods.month.cost)}</td><td class="act">${p.role === 'copywriter' ? `<button class="btn ghost sm" data-reset="${esc(p.client_id)}">Reset limits</button>` : ''}</td></tr>`), 'No accounts yet.');
+  $('#nm_people').innerHTML = tbl([['Copywriter'], ['Today', 'num'], ['This week', 'num'], ['This month', 'num'], ['Spent this month', 'num'], ['', 'act']], ppl.map(p => `<tr><td><b>${esc(p.name || p.email)}</b>${p.role === 'super_admin' ? ' <span class="pill red">' + esc(roleLabel(p)) + '</span>' : ''}<div class="muted small">${esc(p.email)}</div></td><td class="num">${p.periods.today.uses}</td><td class="num">${p.periods.week.uses}</td><td class="num">${p.periods.month.uses}</td><td class="num">${money(p.periods.month.cost)}</td><td class="act">${p.role === 'copywriter' ? `<button class="btn ghost sm" data-reset="${esc(p.client_id)}">Reset limits</button>` : ''}</td></tr>`), 'No accounts yet.');
   $$('#nm_people [data-reset]').forEach(b => b.addEventListener('click', () => run(b, null, async () => {
     if (!confirm('Reset every daily limit for this copywriter?')) return;
     await call('adminNumbers', { action: 'reset', target_client_id: b.dataset.reset }); toast('Limits reset', 'ok'); await loadNumbers();
@@ -3332,7 +3398,7 @@ function stopNumbers() { if (numsTimer) { clearInterval(numsTimer); numsTimer = 
 
 /* ---------- account and settings ---------- */
 $('#settingsBtn').addEventListener('click', () => {
-  $('#acctLine').textContent = (session.name || '') + (session.email ? ' (' + session.email + ')' : '') + (session.is_admin ? ', super admin' : ', copywriter');
+  $('#acctLine').textContent = (session.name || '') + (session.email ? ' (' + session.email + ')' : '') + (session.is_admin ? ', ' + roleLabel(session).toLowerCase() : ', copywriter');
   $('#apiBase').value = settings.base;
   $('#settings').classList.remove('hidden');
 });
